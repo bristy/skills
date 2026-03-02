@@ -47,7 +47,7 @@ export class TaskDetector {
         event: 'TASK_FAILED',
         task_id: null,
         confidence: 0.7,
-        intent_summary: msg.slice(0, 120),
+        intent_summary: '',
       }
     }
 
@@ -57,7 +57,7 @@ export class TaskDetector {
         event: 'TASK_COMPLETE',
         task_id: null,
         confidence: 0.7,
-        intent_summary: msg.slice(0, 120),
+        intent_summary: '',
       }
     }
 
@@ -67,7 +67,7 @@ export class TaskDetector {
         event: 'TASK_START',
         task_id: null,
         confidence: 0.6,
-        intent_summary: msg.slice(0, 120),
+        intent_summary: '',
       }
     }
 

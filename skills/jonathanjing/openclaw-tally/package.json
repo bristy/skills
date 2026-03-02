@@ -1,6 +1,6 @@
 {
   "name": "openclaw-tally",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "Task-level efficiency analytics for OpenClaw. Know what your AI actually did — and what it cost.",
   "main": "src/index.js",

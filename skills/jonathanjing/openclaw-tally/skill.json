@@ -1,7 +1,7 @@
 {
   "name": "openclaw-tally",
   "displayName": "OpenClaw Tally",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Tokens tell you how much you paid. Tasks tell you what you got. Tally tracks every OpenClaw task from start to finish — cost, complexity, and efficiency score.",
   "author": "jonyjing",
   "slug": "openclaw-tally",

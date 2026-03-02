@@ -2,7 +2,7 @@
 name: openclaw-tally
 description: "Tokens tell you how much you paid. Tasks tell you what you got. Tally tracks every OpenClaw task from start to finish — cost, complexity, and efficiency score."
 metadata:
-  {"openclaw": {"emoji": "📊", "requires": {"anyBins": []}}}
+  {"openclaw": {"emoji": "📊", "runtime": "node", "requires": {"anyBins": ["node", "npm"]}}}
 ---
 
 # OpenClaw Tally
@@ -13,8 +13,9 @@ Reframes AI usage from token-counting to task-completion economics. Instead of "
 
 - **Hook**: This skill registers a `message-post` hook and processes **every message**.
 - **Local only**: All processing is purely local. No data is sent to any external server.
-- **No message content**: Only reads metadata (token count, model, session_id). Does **not** read or store message text.
-- **Sandboxed storage**: SQLite database is hardcoded to `~/.openclaw/tally/tally.db`. No writes outside this directory.
+- **Message content**: The task detector reads message text to identify task boundaries (start/complete/fail signals) using regex pattern matching. **No message text is stored** — only metadata (token count, model, session_id, complexity score) is persisted to the database.
+- **Sandboxed storage**: SQLite database defaults to `~/.openclaw/tally/tally.db`. A custom path can be provided for testing.
+- **Native dependency**: Requires `better-sqlite3` (native Node.js addon). Installation runs `npm install` which triggers a native build step.
 - **Permissions**: No network access. No exec permissions. Filesystem limited to `~/.openclaw/tally/`.
 
 ## What It Does

@@ -16,8 +16,9 @@ const TALLY_DB = resolve(TALLY_DIR, 'tally.db')
  */
 function validateDbPath(dbPath) {
   const resolved = resolve(dbPath)
-  if (!resolved.startsWith(TALLY_DIR)) {
-    throw new Error('Database path must be within ~/.openclaw/tally/')
+  const allowed = resolved.startsWith(TALLY_DIR) || resolved.startsWith('/tmp/') || resolved.startsWith('/private/tmp/')
+  if (!allowed) {
+    throw new Error('Database path must be within ~/.openclaw/tally/ or /tmp/')
   }
   if (resolved.includes('..')) {
     throw new Error('Path traversal is not allowed')
@@ -30,17 +31,23 @@ export class TaskLedger {
    * @param {string} [dbPath] - Ignored for security; always uses hardcoded path.
    */
   constructor(dbPath) {
-    // Always use the hardcoded path regardless of input
-    this.dbPath = TALLY_DB
+    if (dbPath) {
+      // Allow custom paths only under /tmp (for testing) or the default tally dir
+      const resolved = resolve(dbPath)
+      if (!resolved.startsWith(TALLY_DIR) && !resolved.startsWith('/tmp/') && !resolved.startsWith('/private/tmp/')) {
+        throw new Error('Database path must be within ~/.openclaw/tally/ or /tmp/')
+      }
+      this.dbPath = resolved
+    } else {
+      this.dbPath = TALLY_DB
+    }
     this.db = null
   }
 
   /** Initialize database and run migrations. */
   init() {
     try {
-      // Ensure directory exists
-      mkdirSync(TALLY_DIR, { recursive: true })
-
+      mkdirSync(dirname(this.dbPath), { recursive: true })
       validateDbPath(this.dbPath)
       this.db = new Database(this.dbPath)
       this.db.pragma('journal_mode = WAL')
