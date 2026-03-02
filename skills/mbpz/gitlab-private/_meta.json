@@ -1,0 +1,11 @@
+{
+  "owner": "mbpz",
+  "slug": "gitlab-private",
+  "displayName": "GitLab Private",
+  "latest": {
+    "version": "0.4.0",
+    "publishedAt": 1772435683698,
+    "commit": null
+  },
+  "history": []
+}
