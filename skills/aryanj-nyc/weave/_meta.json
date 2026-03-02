@@ -3,11 +3,16 @@
   "slug": "weave",
   "displayName": "Weave",
   "latest": {
-    "version": "0.0.2",
-    "publishedAt": 1772295681046,
-    "commit": "https://github.com/openclaw/skills/commit/1542a8582da870db447813793c1e8d2705abd3d8"
+    "version": "0.1.5",
+    "publishedAt": 1772467200098,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.0.2",
+      "publishedAt": 1772295681046,
+      "commit": "https://github.com/openclaw/skills/commit/1542a8582da870db447813793c1e8d2705abd3d8"
+    },
     {
       "version": "0.1.0",
       "publishedAt": 1772228266927,

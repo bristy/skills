@@ -35,10 +35,28 @@ fi
 
 failures=0
 
+has_rg=0
+if command -v rg >/dev/null 2>&1; then
+  has_rg=1
+fi
+
+run_search() {
+  local pattern="$1"
+  local path="$2"
+  local output_path="$3"
+
+  if [[ "${has_rg}" == "1" ]]; then
+    rg -n --no-heading -e "${pattern}" "${path}" >"${output_path}" 2>/dev/null
+    return $?
+  fi
+
+  grep -RInE "${pattern}" "${path}" >"${output_path}" 2>/dev/null
+}
+
 fail_match() {
   local label="$1"
   local pattern="$2"
-  if rg -n --pcre2 "${pattern}" "${skill_dir}" >/tmp/weave-security-check.out 2>/dev/null; then
+  if run_search "${pattern}" "${skill_dir}" "/tmp/weave-security-check.out"; then
     echo "FAIL: ${label}" >&2
     cat /tmp/weave-security-check.out >&2
     echo >&2
@@ -51,21 +69,51 @@ echo "Running security checks in ${skill_dir}..."
 # Build regex fragments without embedding common suspicious one-liners as plain text.
 downloader='(c'"'"'url|w'"'"'get)'
 shell_target='(ba'"'"'sh|sh)'
-pipe_to_shell_regex="^\\s*${downloader}[^\\n]*\\|\\s*${shell_target}\\b"
-base64_pipe_regex="^\\s*base64[^\\n]*\\|\\s*${shell_target}\\b"
+space='[[:space:]]*'
+pipe_to_shell_regex="^${space}${downloader}.*\\|${space}${shell_target}([[:space:]]|$)"
+base64_pipe_regex="^${space}base64.*\\|${space}${shell_target}([[:space:]]|$)"
 
 fail_match "Detected pipe-to-shell installer pattern." "${pipe_to_shell_regex}"
 fail_match "Detected base64 decode piped to shell." "${base64_pipe_regex}"
 fail_match "Detected URL shortener usage." '(bit\.ly|tinyurl\.com|t\.co/|goo\.gl|is\.gd)'
 
-if rg -n --pcre2 '^\s*-?\s*kind:\s*(?!brew|node|go|uv)\w+' "${skill_md}" >/tmp/weave-security-check.out 2>/dev/null; then
+awk '
+  {
+    line = $0
+    if (match(line, /^[[:space:]-]*kind:[[:space:]]*[A-Za-z0-9_]+/)) {
+      value = line
+      sub(/^[[:space:]-]*kind:[[:space:]]*/, "", value)
+      sub(/[[:space:]].*$/, "", value)
+      if (value != "brew" && value != "node" && value != "go" && value != "uv") {
+        print FNR ":" line
+      }
+    }
+  }
+' "${skill_md}" >/tmp/weave-security-check.out
+
+if [[ -s /tmp/weave-security-check.out ]]; then
   echo "FAIL: Detected unsupported install kind (allowed: brew|node|go|uv)." >&2
   cat /tmp/weave-security-check.out >&2
   echo >&2
   failures=$((failures + 1))
 fi
 
-if ! rg -q --pcre2 '^\s*-?\s*kind:\s*(brew|node|go|uv)\b' "${skill_md}"; then
+if ! awk '
+  {
+    line = $0
+    if (match(line, /^[[:space:]-]*kind:[[:space:]]*[A-Za-z0-9_]+/)) {
+      value = line
+      sub(/^[[:space:]-]*kind:[[:space:]]*/, "", value)
+      sub(/[[:space:]].*$/, "", value)
+      if (value == "brew" || value == "node" || value == "go" || value == "uv") {
+        found = 1
+      }
+    }
+  }
+  END {
+    exit(found ? 0 : 1)
+  }
+' "${skill_md}"; then
   echo "FAIL: No compliant install section found in SKILL.md frontmatter." >&2
   failures=$((failures + 1))
 fi

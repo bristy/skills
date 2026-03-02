@@ -92,7 +92,14 @@ go install github.com/AryanJ-NYC/weave-cash/apps/cli/cmd/weave@latest
 weave --help
 ```
 
-- if Go is not available, direct user to official install docs (no pipe-to-shell commands)
+- if Go is not available, fallback to:
+
+```bash
+npm i -g weave-cash-cli
+weave --help
+```
+
+- if both Go and npm are unavailable, report missing prerequisites clearly
 - do not auto-execute install commands
 
 ## Manual Prompt Test Matrix

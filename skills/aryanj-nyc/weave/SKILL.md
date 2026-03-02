@@ -1,6 +1,6 @@
 ---
 name: weave
-description: Use when creating Weave Cash crypto-to-crypto invoices, generating payment quotes, or monitoring invoice payment status with the weave CLI.
+description: Create crypto invoices and stablecoin invoices (USDC/USDT), generate payment quotes, and monitor invoice payment status with the Weave CLI.
 license: AGPL-3.0-or-later
 metadata:
   openclaw:
@@ -12,8 +12,14 @@ metadata:
         module: github.com/AryanJ-NYC/weave-cash/apps/cli/cmd/weave
         bins:
           - weave
-    emoji: "🧶"
-    homepage: "https://www.weavecash.com"
+      - id: node
+        kind: node
+        package: weave-cash-cli
+        label: Fallback: Install Weave CLI (npm)
+        bins:
+          - weave
+    emoji: '🧶'
+    homepage: 'https://www.weavecash.com'
   clawdbot:
     requires:
       bins:
@@ -23,11 +29,19 @@ metadata:
         module: github.com/AryanJ-NYC/weave-cash/apps/cli/cmd/weave
         bins:
           - weave
-    emoji: "🧶"
-    homepage: "https://www.weavecash.com"
+      - id: node
+        kind: node
+        package: weave-cash-cli
+        label: Fallback: Install Weave CLI (npm)
+        bins:
+          - weave
+    emoji: '🧶'
+    homepage: 'https://www.weavecash.com'
 ---
 
 # Weave
+
+Weave is a CLI for crypto invoicing: create USDC invoices, USDT invoices, and cross-token payment quotes, then track settlement status. Use this when you need a crypto invoice generator for agent workflows or operations.
 
 ## Overview
 
@@ -72,7 +86,14 @@ go install github.com/AryanJ-NYC/weave-cash/apps/cli/cmd/weave@latest
 weave --help
 ```
 
-If Go is unavailable, direct the user to official installation docs and avoid remote shell one-liners.
+If Go is unavailable, use npm fallback:
+
+```bash
+npm i -g weave-cash-cli
+weave --help
+```
+
+If both Go and npm are unavailable, report the missing prerequisites.
 
 ## Compliant Install Policy
 

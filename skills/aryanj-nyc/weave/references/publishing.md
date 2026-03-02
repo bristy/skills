@@ -18,6 +18,10 @@ This guide is for publishing:
    - `name: weave`
    - `metadata.openclaw.requires.bins` includes `weave`
    - `metadata.clawdbot.requires.bins` includes `weave`
+   - `metadata.openclaw.install` includes preferred `kind: go` with module `github.com/AryanJ-NYC/weave-cash/apps/cli/cmd/weave`
+   - `metadata.openclaw.install` includes fallback `kind: node` with package `weave-cash-cli`
+   - `metadata.clawdbot.install` includes preferred `kind: go` with module `github.com/AryanJ-NYC/weave-cash/apps/cli/cmd/weave`
+   - `metadata.clawdbot.install` includes fallback `kind: node` with package `weave-cash-cli`
 
 ## Pre-Publish Checks
 
@@ -65,10 +69,18 @@ Codified local release script:
 
 ```bash
 bash skills/weave/scripts/release.sh 0.1.1
+bash skills/weave/scripts/release.sh --no-check-skills-sh 0.1.1
 bash skills/weave/scripts/release.sh --create-git-tag 0.1.1
 bash skills/weave/scripts/release.sh --publish-clawhub 0.1.1 "Security-hardening release for weave skill install guidance and publish checks."
+bash skills/weave/scripts/release.sh --skills-install-smoke --publish-clawhub 0.1.1 "Security-hardening release for weave skill install guidance and publish checks."
 bash skills/weave/scripts/release.sh --create-git-tag --publish-clawhub 0.1.1 "Security-hardening release for weave skill install guidance and publish checks."
 ```
+
+Notes:
+
+- `release.sh` runs `skills/weave/scripts/check-skills-sh.sh` by default to verify skills.sh listing visibility.
+- Use `--no-check-skills-sh` to skip skills.sh verification.
+- Use `--skills-install-smoke` to include install smoke-check in the skills.sh step.
 
 ## Versioning Rules
 
@@ -131,34 +143,51 @@ clawhub inspect weave --files
 clawhub search weave
 ```
 
-## skills.sh Listing Notes
+## skills.sh Publish Flow
 
-- `skills.sh` indexes skills from public GitHub repositories.
-- This skill should resolve as `AryanJ-NYC/weave-cash@weave`.
-- Indexing is not always immediate after push/publish; allow a short delay.
+`skills.sh` does not use a separate publish API for this repo-based flow.
+For `skills.sh`, "publish" means: push the skill files to the public GitHub repository, then verify the source resolves.
 
-Validation commands:
+Canonical source identifier:
+
+- `AryanJ-NYC/weave-cash@weave`
+
+Steps:
+
+1. Push your skill changes to the default branch:
+
+```bash
+git push origin master
+```
+
+2. Verify `skills.sh` can resolve the skill from GitHub source:
+
+```bash
+bash skills/weave/scripts/check-skills-sh.sh
+```
+
+3. Optional install smoke check:
+
+```bash
+RUN_INSTALL_CHECK=1 bash skills/weave/scripts/check-skills-sh.sh
+```
+
+Direct `npx` equivalents:
 
 ```bash
 npm_config_cache=/tmp/npm-cache npx -y skills add AryanJ-NYC/weave-cash@weave --list
 npm_config_cache=/tmp/npm-cache npx -y skills find "weave cash"
-```
-
-Optional end-to-end install check:
-
-```bash
 npm_config_cache=/tmp/npm-cache npx -y skills add AryanJ-NYC/weave-cash@weave --yes --agent claude-code
 ```
 
-Quick script:
+Notes:
 
-```bash
-bash skills/weave/scripts/check-skills-sh.sh
-RUN_INSTALL_CHECK=1 bash skills/weave/scripts/check-skills-sh.sh
-```
+- Search ranking can lag even when source resolution succeeds; rely on `skills add ... --list` as the primary publish signal.
+- This flow is separate from Clawhub registry publish (`clawhub publish ...`).
 
 ## Operational Notes
 
 - Keep crypto-only scope; do not add fiat assumptions.
+- Keep `weave-cash-cli` published and current for npm fallback installs.
 - Runtime token/network support can drift from local docs; `weave tokens` is the live source of truth.
 - Do not publish secrets or credential-bearing examples in skill files.
