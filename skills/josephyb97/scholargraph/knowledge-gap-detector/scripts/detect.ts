@@ -1,7 +1,7 @@
 /**
  * Knowledge Gap Detector - Core Module
  * 知识盲区检测核心模块
- * 
+ *
  * 主动识别知识缺口：
  * - 基于领域知识图谱分析
  * - 识别相关但未探索的方向
@@ -9,7 +9,10 @@
  * - 推荐学习优先级
  */
 
-import ZAI from 'z-ai-web-dev-sdk';
+import { createAIProvider, type AIProvider } from '../../shared/ai-provider';
+import { extractJson } from '../../shared/utils';
+import { ApiInitializationError, getErrorMessage } from '../../shared/errors';
+import type { WebSearchResultItem } from '../../shared/types';
 import type {
   DetectOptions,
   GapReport,
@@ -82,11 +85,18 @@ const DOMAIN_GRAPHS: Record<string, string[]> = {
 };
 
 export default class KnowledgeGapDetector {
-  private zai: Awaited<ReturnType<typeof ZAI.create>> | null = null;
+  private ai: AIProvider | null = null;
 
   async initialize(): Promise<void> {
-    if (!this.zai) {
-      this.zai = await ZAI.create();
+    if (!this.ai) {
+      try {
+        this.ai = await createAIProvider();
+      } catch (error) {
+        throw new ApiInitializationError(
+          `Failed to initialize AI provider: ${getErrorMessage(error)}`,
+          error instanceof Error ? error : undefined
+        );
+      }
     }
   }
 
@@ -235,24 +245,18 @@ export default class KnowledgeGapDetector {
   ]
 }`;
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        { role: 'system', content: '你是一位跨学科研究专家，擅长发现学科交叉创新机会。' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.4
-    });
+    const responseText = await this.ai!.chat([
+      { role: 'system', content: '你是一位跨学科研究专家，擅长发现学科交叉创新机会。' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.4 });
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const result = extractJson<{ crossDisciplinaryGaps?: KnowledgeGap[] }>(responseText);
 
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed.crossDisciplinaryGaps || [];
-      } catch (e) {
-        console.error('Failed to parse cross-disciplinary response');
-      }
+    if (result.success && result.data?.crossDisciplinaryGaps) {
+      return result.data.crossDisciplinaryGaps.map(gap => ({
+        ...gap,
+        resources: []
+      }));
     }
 
     return [];
@@ -310,15 +314,10 @@ export default class KnowledgeGapDetector {
   }> {
     const prompt = `作为知识体系专家，分析以下知识缺口并分类：
 
-领域: ${domain
-    }
-未知概念: ${unknownConcepts.join(', ')
-    }
-已知概念: ${knownConcepts.join(', ')
-    }
-目标水平: ${targetLevel
-
-    }
+领域: ${domain}
+未知概念: ${unknownConcepts.join(', ')}
+已知概念: ${knownConcepts.join(', ')}
+目标水平: ${targetLevel}
 
 请将每个未知概念分类为：
 - critical: 必须掌握的基础或核心概念
@@ -341,36 +340,27 @@ export default class KnowledgeGapDetector {
   ]
 }`;
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        { role: 'system', content: '你是一位知识体系分析专家。' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.2
-    });
+    const responseText = await this.ai!.chat([
+      { role: 'system', content: '你是一位知识体系分析专家。' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.2 });
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const result = extractJson<{ gaps?: Array<KnowledgeGap & { category: string }> }>(responseText);
 
     const critical: KnowledgeGap[] = [];
     const recommended: KnowledgeGap[] = [];
     const optional: KnowledgeGap[] = [];
 
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        for (const gap of (parsed.gaps || [])) {
-          gap.resources = [];
-          if (gap.category === 'critical') {
-            critical.push(gap);
-          } else if (gap.category === 'recommended') {
-            recommended.push(gap);
-          } else {
-            optional.push(gap);
-          }
+    if (result.success && result.data?.gaps) {
+      for (const gap of result.data.gaps) {
+        const gapWithResources = { ...gap, resources: [] };
+        if (gap.category === 'critical') {
+          critical.push(gapWithResources);
+        } else if (gap.category === 'recommended') {
+          recommended.push(gapWithResources);
+        } else {
+          optional.push(gapWithResources);
         }
-      } catch (e) {
-        console.error('Failed to classify gaps');
       }
     }
 
@@ -385,12 +375,18 @@ export default class KnowledgeGapDetector {
     knownConcepts: string[]
   ): Promise<KnowledgeGap[]> {
     try {
-      const results = await this.zai!.functions.invoke('web_search', {
-        query: `${domain} emerging trends 2024 new techniques`,
-        num: 5
-      });
+      // 检查 AI 提供商是否支持 web search
+      if (!this.ai!.webSearch) {
+        console.warn('Current AI provider does not support web search');
+        return [];
+      }
 
-      return results.map((item: any) => ({
+      const results: WebSearchResultItem[] = await this.ai!.webSearch(
+        `${domain} emerging trends 2024 new techniques`,
+        5
+      );
+
+      return results.map((item) => ({
         concept: item.name,
         category: 'emerging' as const,
         reason: '该主题是近期新兴的研究方向',
@@ -401,14 +397,14 @@ export default class KnowledgeGapDetector {
           type: 'paper' as const,
           title: item.name,
           url: item.url,
-          description: item.snippet,
+          description: item.snippet || '',
           difficulty: 'advanced' as const
         }],
         estimatedTime: '2-4周',
         impactIfLearned: '掌握前沿技术，保持竞争力'
       }));
     } catch (error) {
-      console.error('Failed to discover emerging topics:', error);
+      console.error('Failed to discover emerging topics:', getErrorMessage(error));
       return [];
     }
   }
@@ -515,29 +511,21 @@ export default class KnowledgeGapDetector {
    * 获取角色所需技能
    */
   private async getRoleRequiredSkills(role: string): Promise<string[]> {
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: '你是一位职业发展专家，了解各类技术岗位的技能要求。'
-        },
-        {
-          role: 'user',
-          content: `列出${role}需要掌握的核心技能，返回JSON数组格式：["skill1", "skill2", ...]`
-        }
-      ],
-      temperature: 0.2
-    });
-
-    const responseText = completion.choices[0]?.message?.content || '[]';
-    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-
-    if (jsonMatch) {
-      try {
-        return JSON.parse(jsonMatch[0]);
-      } catch (e) {
-        return [];
+    const responseText = await this.ai!.chat([
+      {
+        role: 'system',
+        content: '你是一位职业发展专家，了解各类技术岗位的技能要求。'
+      },
+      {
+        role: 'user',
+        content: `列出${role}需要掌握的核心技能，返回JSON数组格式：["skill1", "skill2", ...]`
       }
+    ], { temperature: 0.2 });
+
+    const result = extractJson<string[]>(responseText);
+
+    if (result.success && Array.isArray(result.data)) {
+      return result.data;
     }
 
     return [];
@@ -620,7 +608,7 @@ if (import.meta.main) {
   const outputIndex = args.indexOf('--output');
 
   const domain = domainIndex > -1 ? args[domainIndex + 1] : 'Machine Learning';
-  const known = knownIndex > -1 ? args[knownIndex + 1].split(',') : [];
+  const known = knownIndex > -1 ? args[knownIndex + 1].split(',').map(s => s.trim()) : [];
   const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
 
   const detector = new KnowledgeGapDetector();
@@ -633,5 +621,8 @@ if (import.meta.main) {
     } else {
       console.log(JSON.stringify(report, null, 2));
     }
-  }).catch(console.error);
+  }).catch(err => {
+    console.error('Error:', getErrorMessage(err));
+    process.exit(1);
+  });
 }

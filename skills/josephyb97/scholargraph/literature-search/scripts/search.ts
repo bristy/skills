@@ -1,15 +1,18 @@
 /**
  * Literature Search - Core Module
  * 文献检索核心模块
- * 
+ *
  * 提供多源文献检索能力：
  * - arXiv API
  * - Semantic Scholar API
- * - Web Search (通过z-ai-web-dev-sdk)
+ * - Web Search (通过统一 AI 提供商)
  */
 
-import ZAI from 'z-ai-web-dev-sdk';
-import type { SearchOptions, SearchResult, SearchResponse, ArxivPaper, SemanticScholarPaper } from './types';
+import { createAIProvider, type AIProvider } from '../../shared/ai-provider';
+import { parseArxivXml, fetchWithRetry, withTimeout, normalizeTitle } from '../../shared/utils';
+import { ApiInitializationError, getErrorMessage } from '../../shared/errors';
+import type { WebSearchResultItem } from '../../shared/types';
+import type { SearchOptions, SearchResult, SearchResponse, SemanticScholarPaper } from './types';
 
 // arXiv API 基础URL
 const ARXIV_API_URL = 'http://export.arxiv.org/api/query';
@@ -17,15 +20,25 @@ const ARXIV_API_URL = 'http://export.arxiv.org/api/query';
 // Semantic Scholar API 基础URL
 const S2_API_URL = 'https://api.semanticscholar.org/graph/v1';
 
+// 默认超时时间
+const DEFAULT_TIMEOUT_MS = 30000;
+
 export default class LiteratureSearch {
-  private zai: Awaited<ReturnType<typeof ZAI.create>> | null = null;
+  private ai: AIProvider | null = null;
 
   /**
    * 初始化搜索器
    */
   async initialize(): Promise<void> {
-    if (!this.zai) {
-      this.zai = await ZAI.create();
+    if (!this.ai) {
+      try {
+        this.ai = await createAIProvider();
+      } catch (error) {
+        throw new ApiInitializationError(
+          `Failed to initialize AI provider: ${getErrorMessage(error)}`,
+          error instanceof Error ? error : undefined
+        );
+      }
     }
   }
 
@@ -45,21 +58,39 @@ export default class LiteratureSearch {
     const allResults: SearchResult[] = [];
     const usedSources: string[] = [];
 
-    // 并行搜索多个数据源
+    // 并行搜索多个数据源（带超时）
     const searchPromises: Promise<SearchResult[]>[] = [];
 
     if (sources.includes('arxiv')) {
-      searchPromises.push(this.searchArxiv(query, limit));
+      searchPromises.push(
+        withTimeout(this.searchArxiv(query, limit), DEFAULT_TIMEOUT_MS, 'arXiv search')
+          .catch(err => {
+            console.error('arXiv search failed:', getErrorMessage(err));
+            return [];
+          })
+      );
       usedSources.push('arxiv');
     }
 
     if (sources.includes('semantic_scholar')) {
-      searchPromises.push(this.searchSemanticScholar(query, limit));
+      searchPromises.push(
+        withTimeout(this.searchSemanticScholar(query, limit), DEFAULT_TIMEOUT_MS, 'Semantic Scholar search')
+          .catch(err => {
+            console.error('Semantic Scholar search failed:', getErrorMessage(err));
+            return [];
+          })
+      );
       usedSources.push('semantic_scholar');
     }
 
     if (sources.includes('web')) {
-      searchPromises.push(this.searchWeb(query, limit));
+      searchPromises.push(
+        withTimeout(this.searchWeb(query, limit), DEFAULT_TIMEOUT_MS, 'Web search')
+          .catch(err => {
+            console.error('Web search failed:', getErrorMessage(err));
+            return [];
+          })
+      );
       usedSources.push('web');
     }
 
@@ -94,89 +125,51 @@ export default class LiteratureSearch {
   }
 
   /**
-   * arXiv 搜索
+   * arXiv 搜索（带重试）
    */
   private async searchArxiv(query: string, limit: number): Promise<SearchResult[]> {
     try {
       const searchQuery = encodeURIComponent(`all:${query}`);
       const url = `${ARXIV_API_URL}?search_query=${searchQuery}&max_results=${limit}&sortBy=relevance`;
 
-      const response = await fetch(url);
+      const response = await fetchWithRetry(url, undefined, { maxRetries: 3 });
       const text = await response.text();
 
       return this.parseArxivResponse(text);
     } catch (error) {
-      console.error('arXiv search error:', error);
+      console.error('arXiv search error:', getErrorMessage(error));
       return [];
     }
   }
 
   /**
-   * 解析 arXiv API 响应
+   * 解析 arXiv API 响应（使用改进的 XML 解析器）
    */
   private parseArxivResponse(xml: string): SearchResult[] {
-    const results: SearchResult[] = [];
+    const entries = parseArxivXml(xml);
 
-    // 简单的XML解析（生产环境建议使用专业XML解析器）
-    const entries = xml.split('<entry>').slice(1);
-
-    for (const entry of entries) {
-      try {
-        const title = this.extractXmlContent(entry, 'title');
-        const abstract = this.extractXmlContent(entry, 'summary');
-        const published = this.extractXmlContent(entry, 'published');
-        const id = this.extractXmlContent(entry, 'id');
-
-        // 提取作者
-        const authorMatches = entry.match(/<author>[\s\S]*?<name>([^<]+)<\/name>[\s\S]*?<\/author>/g) || [];
-        const authors = authorMatches.map(a => {
-          const match = a.match(/<name>([^<]+)<\/name>/);
-          return match ? match[1].trim() : '';
-        }).filter(Boolean);
-
-        // 提取分类
-        const categoryMatches = entry.match(/category term="([^"]+)"/g) || [];
-        const categories = categoryMatches.map(c => {
-          const match = c.match(/term="([^"]+)"/);
-          return match ? match[1] : '';
-        }).filter(Boolean);
-
-        results.push({
-          id: id.split('/abs/')[1] || id,
-          title: title.trim(),
-          authors,
-          abstract: abstract.trim(),
-          publishDate: published.split('T')[0],
-          source: 'arxiv',
-          url: id,
-          pdfUrl: id.replace('/abs/', '/pdf/') + '.pdf',
-          keywords: categories
-        });
-      } catch (e) {
-        continue;
-      }
-    }
-
-    return results;
+    return entries.map(entry => ({
+      id: entry.id,
+      title: entry.title,
+      authors: entry.authors,
+      abstract: entry.abstract,
+      publishDate: entry.published,
+      source: 'arxiv',
+      url: `https://arxiv.org/abs/${entry.id}`,
+      pdfUrl: entry.pdfUrl,
+      keywords: entry.categories
+    }));
   }
 
   /**
-   * 提取XML内容
-   */
-  private extractXmlContent(xml: string, tag: string): string {
-    const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
-    return match ? match[1].trim() : '';
-  }
-
-  /**
-   * Semantic Scholar 搜索
+   * Semantic Scholar 搜索（带重试）
    */
   private async searchSemanticScholar(query: string, limit: number): Promise<SearchResult[]> {
     try {
       const fields = 'paperId,title,abstract,authors,year,citationCount,venue,url,openAccessPdf';
       const url = `${S2_API_URL}/paper/search?query=${encodeURIComponent(query)}&limit=${limit}&fields=${fields}`;
 
-      const response = await fetch(url);
+      const response = await fetchWithRetry(url, undefined, { maxRetries: 3 });
       const data = await response.json() as { data?: SemanticScholarPaper[] };
 
       if (!data.data) return [];
@@ -194,29 +187,32 @@ export default class LiteratureSearch {
         venue: paper.venue
       }));
     } catch (error) {
-      console.error('Semantic Scholar search error:', error);
+      console.error('Semantic Scholar search error:', getErrorMessage(error));
       return [];
     }
   }
 
   /**
-   * Web 搜索（通过 z-ai-web-dev-sdk）
+   * Web 搜索（通过统一 AI 提供商）
    */
   private async searchWeb(query: string, limit: number): Promise<SearchResult[]> {
-    if (!this.zai) {
+    if (!this.ai) {
       await this.initialize();
     }
 
     try {
+      // 检查 AI 提供商是否支持 web search
+      if (!this.ai!.webSearch) {
+        console.warn('Current AI provider does not support web search');
+        return [];
+      }
+
       // 构建学术搜索查询
       const academicQuery = `${query} research paper arxiv OR scholar OR "paper" OR "publication"`;
 
-      const results = await this.zai!.functions.invoke('web_search', {
-        query: academicQuery,
-        num: limit
-      });
+      const results: WebSearchResultItem[] = await this.ai!.webSearch(academicQuery, limit);
 
-      return results.map((item: any, index: number) => ({
+      return results.map((item, index) => ({
         id: `web_${index}`,
         title: item.name,
         authors: [],
@@ -227,7 +223,7 @@ export default class LiteratureSearch {
         snippet: item.snippet
       }));
     } catch (error) {
-      console.error('Web search error:', error);
+      console.error('Web search error:', getErrorMessage(error));
       return [];
     }
   }
@@ -253,7 +249,7 @@ export default class LiteratureSearch {
       const [start, end] = filters.yearRange;
       filtered = filtered.filter(r => {
         const year = parseInt(r.publishDate.split('-')[0]);
-        return year >= start && year <= end;
+        return !isNaN(year) && year >= start && year <= end;
       });
     }
 
@@ -300,10 +296,7 @@ export default class LiteratureSearch {
     const deduped: SearchResult[] = [];
 
     for (const result of results) {
-      // 简单的标题标准化用于去重
-      const normalizedTitle = result.title.toLowerCase()
-        .replace(/[^a-z0-9]/g, '')
-        .substring(0, 50);
+      const normalizedTitle = normalizeTitle(result.title);
 
       if (!seen.has(normalizedTitle)) {
         seen.add(normalizedTitle);
@@ -325,9 +318,11 @@ if (import.meta.main) {
     process.exit(1);
   }
 
-  const limit = parseInt(args[args.indexOf('--limit') + 1]) || 10;
+  const limitIndex = args.indexOf('--limit');
+  const limit = limitIndex > -1 ? parseInt(args[limitIndex + 1]) || 10 : 10;
+
   const sourceIndex = args.indexOf('--source');
-  const source = sourceIndex > -1 ? args[sourceIndex + 1] as any : undefined;
+  const source = sourceIndex > -1 ? args[sourceIndex + 1] as 'arxiv' | 'semantic_scholar' | 'web' : undefined;
 
   const searcher = new LiteratureSearch();
 
@@ -336,5 +331,8 @@ if (import.meta.main) {
     sources: source ? [source] : undefined
   }).then(response => {
     console.log(JSON.stringify(response, null, 2));
-  }).catch(console.error);
+  }).catch(err => {
+    console.error('Search failed:', getErrorMessage(err));
+    process.exit(1);
+  });
 }

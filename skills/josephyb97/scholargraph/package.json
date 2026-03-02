@@ -1,9 +1,9 @@
 {
-  "name": "literature-skills",
+  "name": "scholargraph",
   "version": "1.0.0",
-  "description": "文献检索总结工具集 - 高效、系统性的学术文献学习与知识管理工具",
+  "description": "学术文献智能工具包 - 高效、系统性的学术文献分析与知识管理工具",
   "type": "module",
-  "main": "./cli.ts",
+  "main": "./index.js",
   "bin": {
     "lit": "./cli.ts"
   },
@@ -16,9 +16,14 @@
     "graph": "bun run cli.ts graph",
     "config": "bun run cli.ts config",
     "test": "bun test",
+    "test:utils": "bun test tests/utils.test.ts",
+    "test:validators": "bun test tests/validators.test.ts",
+    "test:errors": "bun test tests/errors.test.ts",
+    "typecheck": "bun run tsc --noEmit",
     "lint": "bun lint"
   },
   "keywords": [
+    "scholargraph",
     "literature",
     "research",
     "academic",
@@ -27,12 +32,17 @@
     "learning",
     "nlp",
     "machine-learning",
-    "ai"
+    "ai",
+    "knowledge-graph"
   ],
-  "author": "",
+  "author": "ScholarGraph Team",
   "license": "MIT",
   "dependencies": {
     "z-ai-web-dev-sdk": "latest"
+  },
+  "optionalDependencies": {
+    "openai": "^4.0.0",
+    "@anthropic-ai/sdk": "^0.30.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -43,10 +53,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/literature-skills.git"
+    "url": "https://github.com/Josephyb97/ScholarGraph.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/literature-skills/issues"
+    "url": "https://github.com/Josephyb97/ScholarGraph/issues"
   },
-  "homepage": "https://github.com/your-username/literature-skills#readme"
+  "homepage": "https://github.com/Josephyb97/ScholarGraph#readme"
 }

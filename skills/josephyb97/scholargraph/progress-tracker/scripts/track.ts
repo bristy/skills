@@ -1,7 +1,7 @@
 /**
  * Progress Tracker - Core Module
  * 进展追踪核心模块
- * 
+ *
  * 实时监控领域新动态：
  * - 关键词监控
  * - 学者追踪
@@ -9,7 +9,10 @@
  * - 生成定期报告
  */
 
-import ZAI from 'z-ai-web-dev-sdk';
+import { createAIProvider, type AIProvider } from '../../shared/ai-provider';
+import { extractJson } from '../../shared/utils';
+import { ApiInitializationError, getErrorMessage } from '../../shared/errors';
+import type { WebSearchResultItem, MemoryConfig } from '../../shared/types';
 import type {
   WatchConfig,
   TrackerSettings,
@@ -23,7 +26,7 @@ import type {
 } from './types';
 
 const DEFAULT_SETTINGS: TrackerSettings = {
-  maxResultsPerWatch: 20,
+  maxResultsPerWatch: 10,
   enableNotifications: false,
   reportSchedule: {
     daily: '09:00',
@@ -32,16 +35,134 @@ const DEFAULT_SETTINGS: TrackerSettings = {
   }
 };
 
+const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
+  maxHistoryEntries: 100,      // 每个 watch 最大 100 条
+  maxTotalEntries: 1000,       // 总计最大 1000 条
+  maxAgeMs: 7 * 24 * 60 * 60 * 1000, // 最大保留 7 天
+  cleanupIntervalMs: 60 * 60 * 1000  // 每小时清理
+};
+
+// Semantic Scholar API 速率限制配置
+const S2_RATE_LIMIT = {
+  requestsPerSecond: 1,        // 每秒最多 1 个请求
+  minDelayMs: 1000,            // 最小请求间隔 1 秒
+  maxRetries: 3,               // 最大重试次数
+  retryDelayMs: 3000           // 重试延迟 3 秒
+};
+
 export default class ProgressTracker {
-  private zai: Awaited<ReturnType<typeof ZAI.create>> | null = null;
+  private ai: AIProvider | null = null;
   private watches: WatchConfig[] = [];
   private settings: TrackerSettings = DEFAULT_SETTINGS;
   private history: Map<string, PaperUpdate[]> = new Map();
+  private memoryConfig: MemoryConfig = DEFAULT_MEMORY_CONFIG;
+  private cleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private lastS2RequestTime: number = 0; // 上次 S2 API 请求时间
 
   async initialize(): Promise<void> {
-    if (!this.zai) {
-      this.zai = await ZAI.create();
+    if (!this.ai) {
+      try {
+        this.ai = await createAIProvider();
+        this.startAutoCleanup();
+      } catch (error) {
+        throw new ApiInitializationError(
+          `Failed to initialize AI provider: ${getErrorMessage(error)}`,
+          error instanceof Error ? error : undefined
+        );
+      }
     }
+  }
+
+  /**
+   * 启动自动清理
+   */
+  private startAutoCleanup(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+    this.cleanupTimer = setInterval(() => this.cleanup(), this.memoryConfig.cleanupIntervalMs);
+  }
+
+  /**
+   * 清理过期和超量记录
+   */
+  private cleanup(): void {
+    const now = Date.now();
+
+    for (const [watchId, updates] of this.history) {
+      // 删除过期记录
+      let filtered = updates.filter(u => {
+        const publishTime = new Date(u.publishDate).getTime();
+        return !isNaN(publishTime) && now - publishTime < this.memoryConfig.maxAgeMs;
+      });
+
+      // 限制每个 watch 的数量
+      if (filtered.length > this.memoryConfig.maxHistoryEntries) {
+        filtered = filtered.slice(0, this.memoryConfig.maxHistoryEntries);
+      }
+
+      if (filtered.length === 0) {
+        this.history.delete(watchId);
+      } else {
+        this.history.set(watchId, filtered);
+      }
+    }
+
+    // 检查总条目数
+    let totalEntries = 0;
+    for (const updates of this.history.values()) {
+      totalEntries += updates.length;
+    }
+
+    // 如果超过总限制，按时间删除最旧的
+    if (totalEntries > this.memoryConfig.maxTotalEntries) {
+      const allEntries: Array<{ watchId: string; update: PaperUpdate; index: number }> = [];
+
+      for (const [watchId, updates] of this.history) {
+        updates.forEach((update, index) => {
+          allEntries.push({ watchId, update, index });
+        });
+      }
+
+      // 按日期排序，保留最新的
+      allEntries.sort((a, b) =>
+        new Date(b.update.publishDate).getTime() - new Date(a.update.publishDate).getTime()
+      );
+
+      // 重建 history，只保留最新的 maxTotalEntries 条
+      const newHistory = new Map<string, PaperUpdate[]>();
+      const kept = allEntries.slice(0, this.memoryConfig.maxTotalEntries);
+
+      for (const { watchId, update } of kept) {
+        if (!newHistory.has(watchId)) {
+          newHistory.set(watchId, []);
+        }
+        newHistory.get(watchId)!.push(update);
+      }
+
+      this.history = newHistory;
+    }
+  }
+
+  /**
+   * 销毁时清理资源
+   */
+  destroy(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+    this.history.clear();
+    this.watches = [];
+  }
+
+  /**
+   * 设置内存配置
+   */
+  setMemoryConfig(config: Partial<MemoryConfig>): void {
+    this.memoryConfig = { ...this.memoryConfig, ...config };
+    // 重启清理定时器
+    this.startAutoCleanup();
   }
 
   /**
@@ -78,6 +199,7 @@ export default class ProgressTracker {
     const index = this.watches.findIndex(w => w.id === watchId);
     if (index > -1) {
       this.watches.splice(index, 1);
+      this.history.delete(watchId);
       return true;
     }
     return false;
@@ -104,15 +226,14 @@ export default class ProgressTracker {
       ? this.watches.filter(w => watchIds.includes(w.id))
       : this.watches.filter(w => w.active);
 
-    // 并行检查每个监控项
-    const results = await Promise.all(
-      watchesToCheck.map(watch => this.checkWatch(watch, since))
-    );
-
-    // 合并结果
-    results.forEach(updates => {
+    // 串行检查每个监控项（避免并发请求导致速率限制）
+    console.log(`Checking ${watchesToCheck.length} watch(es)...`);
+    for (let i = 0; i < watchesToCheck.length; i++) {
+      const watch = watchesToCheck[i];
+      console.log(`[${i + 1}/${watchesToCheck.length}] Checking watch: ${watch.value}`);
+      const updates = await this.checkWatch(watch, since);
       allUpdates.push(...updates);
-    });
+    }
 
     // 去重
     const deduped = this.deduplicateUpdates(allUpdates);
@@ -138,38 +259,49 @@ export default class ProgressTracker {
 
       switch (watch.type) {
         case 'keyword':
-          searchQuery = `${watch.value} research paper`;
+          searchQuery = watch.value;
           break;
         case 'author':
-          searchQuery = `author:${watch.value} paper`;
+          searchQuery = `author:${watch.value}`;
           break;
         case 'conference':
-          searchQuery = `${watch.value} 2024 paper`;
+          searchQuery = `${watch.value}`;
           break;
         default:
           searchQuery = watch.value;
       }
 
-      const results = await this.zai!.functions.invoke('web_search', {
-        query: searchQuery,
-        num: this.settings.maxResultsPerWatch,
-        recency_days: this.getRecencyDays(watch.frequency)
-      });
+      // 优先使用 Semantic Scholar API（不需要 web search）
+      const updates = await this.searchSemanticScholar(searchQuery, watch);
 
-      const updates: PaperUpdate[] = results.map((item: any, index: number) => ({
-        id: `${watch.id}_${index}`,
-        title: item.name,
-        authors: [],
-        publishDate: item.date || new Date().toISOString().split('T')[0],
-        source: item.host_name,
-        url: item.url,
-        abstract: item.snippet,
-        keywords: [],
-        matchedWatches: [watch.value],
-        relevanceScore: this.calculateRelevance(item.snippet || '', watch.value),
-        importance: this.assessImportance(item),
-        summary: ''
-      }));
+      // 如果 S2 没有结果，尝试 web search（如果可用）
+      if (updates.length === 0 && this.ai!.webSearch) {
+        const webResults: WebSearchResultItem[] = await this.ai!.webSearch(
+          `${searchQuery} research paper`,
+          this.settings.maxResultsPerWatch
+        );
+
+        const webUpdates: PaperUpdate[] = webResults.map((item, index) => ({
+          id: `${watch.id}_web_${index}`,
+          title: item.name,
+          authors: [],
+          publishDate: item.date || new Date().toISOString().split('T')[0],
+          source: item.host_name || 'web',
+          url: item.url,
+          abstract: item.snippet,
+          keywords: [],
+          matchedWatches: [watch.value],
+          relevanceScore: this.calculateRelevance(item.snippet || '', watch.value),
+          importance: this.assessImportance(item),
+          summary: ''
+        }));
+
+        updates.push(...webUpdates);
+      }
+
+      // 存储到历史记录
+      const existingHistory = this.history.get(watch.id) || [];
+      this.history.set(watch.id, [...updates, ...existingHistory].slice(0, this.memoryConfig.maxHistoryEntries));
 
       // 过滤日期
       if (since) {
@@ -179,9 +311,113 @@ export default class ProgressTracker {
 
       return updates;
     } catch (error) {
-      console.error(`Error checking watch ${watch.id}:`, error);
+      console.error(`Error checking watch ${watch.id}:`, getErrorMessage(error));
       return [];
     }
+  }
+
+  /**
+   * 从 Semantic Scholar 搜索论文（带速率限制）
+   */
+  private async searchSemanticScholar(query: string, watch: WatchConfig): Promise<PaperUpdate[]> {
+    try {
+      // 速率限制：确保请求间隔至少 1 秒
+      const now = Date.now();
+      const timeSinceLastRequest = now - this.lastS2RequestTime;
+      if (timeSinceLastRequest < S2_RATE_LIMIT.minDelayMs) {
+        const waitTime = S2_RATE_LIMIT.minDelayMs - timeSinceLastRequest;
+        console.log(`Rate limiting: waiting ${waitTime}ms before next S2 API request...`);
+        await new Promise(r => setTimeout(r, waitTime));
+      }
+
+      const fields = 'paperId,title,abstract,authors,year,citationCount,venue,url';
+      const limit = Math.min(this.settings.maxResultsPerWatch, 10); // 限制每次最多 10 条
+      const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=${limit}&fields=${fields}`;
+
+      // 添加重试逻辑
+      let response: Response | null = null;
+      let lastError: Error | null = null;
+
+      for (let attempt = 0; attempt < S2_RATE_LIMIT.maxRetries; attempt++) {
+        try {
+          this.lastS2RequestTime = Date.now(); // 更新请求时间
+          response = await fetch(url);
+
+          if (response.ok) {
+            break; // 成功，跳出重试循环
+          }
+
+          if (response.status === 429) {
+            // 速率限制，等待后重试
+            const retryAfter = response.headers.get('Retry-After');
+            const waitTime = retryAfter
+              ? parseInt(retryAfter) * 1000
+              : S2_RATE_LIMIT.retryDelayMs * (attempt + 1);
+
+            console.warn(`S2 API rate limited (429), retrying after ${waitTime}ms (attempt ${attempt + 1}/${S2_RATE_LIMIT.maxRetries})...`);
+            await new Promise(r => setTimeout(r, waitTime));
+            continue;
+          }
+
+          // 其他错误，不重试
+          break;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          if (attempt < S2_RATE_LIMIT.maxRetries - 1) {
+            console.warn(`S2 API request failed, retrying... (attempt ${attempt + 1}/${S2_RATE_LIMIT.maxRetries})`);
+            await new Promise(r => setTimeout(r, S2_RATE_LIMIT.retryDelayMs));
+          }
+        }
+      }
+
+      if (!response || !response.ok) {
+        console.warn(`Semantic Scholar API error: ${response?.status || lastError?.message || 'no response'}`);
+        return [];
+      }
+
+      const data = await response.json() as {
+        data?: Array<{
+          paperId: string;
+          title: string;
+          abstract?: string;
+          authors?: Array<{ name: string }>;
+          year?: number;
+          citationCount?: number;
+          venue?: string;
+          url?: string;
+        }>;
+      };
+
+      if (!data.data) return [];
+
+      return data.data.map((paper, index) => ({
+        id: `${watch.id}_s2_${index}`,
+        title: paper.title,
+        authors: paper.authors?.map(a => a.name) || [],
+        publishDate: paper.year?.toString() || '',
+        source: 'semantic_scholar',
+        url: paper.url || `https://www.semanticscholar.org/paper/${paper.paperId}`,
+        abstract: paper.abstract,
+        keywords: [],
+        matchedWatches: [watch.value],
+        relevanceScore: 0.8,
+        importance: this.assessImportanceFromCitations(paper.citationCount),
+        summary: ''
+      }));
+    } catch (error) {
+      console.error('Semantic Scholar search error:', getErrorMessage(error));
+      return [];
+    }
+  }
+
+  /**
+   * 根据引用数评估重要性
+   */
+  private assessImportanceFromCitations(citations?: number): 'high' | 'medium' | 'low' {
+    if (!citations) return 'low';
+    if (citations > 100) return 'high';
+    if (citations > 20) return 'medium';
+    return 'low';
   }
 
   /**
@@ -217,13 +453,13 @@ export default class ProgressTracker {
   /**
    * 评估重要性
    */
-  private assessImportance(item: any): 'high' | 'medium' | 'low' {
+  private assessImportance(item: WebSearchResultItem): 'high' | 'medium' | 'low' {
     const snippet = item.snippet || '';
     const title = item.name || '';
 
     // 高重要性关键词
     const highKeywords = ['breakthrough', 'new state-of-the-art', 'novel', 'first'];
-    if (highKeywords.some(k => 
+    if (highKeywords.some(k =>
       title.toLowerCase().includes(k) || snippet.toLowerCase().includes(k)
     )) {
       return 'high';
@@ -231,7 +467,7 @@ export default class ProgressTracker {
 
     // 中等重要性
     const mediumKeywords = ['improve', 'enhance', 'propose', 'introduce'];
-    if (mediumKeywords.some(k => 
+    if (mediumKeywords.some(k =>
       title.toLowerCase().includes(k) || snippet.toLowerCase().includes(k)
     )) {
       return 'medium';
@@ -241,9 +477,9 @@ export default class ProgressTracker {
   }
 
   /**
-   * 去重更新
+   * 去重更新（修复方法名拼写错误）
    */
-  private dededuplicateUpdates(updates: PaperUpdate[]): PaperUpdate[] {
+  private deduplicateUpdates(updates: PaperUpdate[]): PaperUpdate[] {
     const seen = new Map<string, PaperUpdate>();
 
     for (const update of updates) {
@@ -280,7 +516,7 @@ export default class ProgressTracker {
 
     // 如果指定了主题，过滤
     const filteredPapers = topic
-      ? papers.filter(p => 
+      ? papers.filter(p =>
           p.title.toLowerCase().includes(topic.toLowerCase()) ||
           p.matchedWatches.some(w => w.toLowerCase().includes(topic.toLowerCase()))
         )
@@ -417,21 +653,18 @@ export default class ProgressTracker {
   private async addSummaries(papers: PaperUpdate[]): Promise<void> {
     const titles = papers.map(p => p.title).join('\n- ');
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: '你是一位研究文献专家，能够为学术论文生成简洁的摘要。'
-        },
-        {
-          role: 'user',
-          content: `为以下论文生成一句话摘要（每行一个）:\n- ${titles}`
-        }
-      ],
-      temperature: 0.3
-    });
+    const response = await this.ai!.chat([
+      {
+        role: 'system',
+        content: '你是一位研究文献专家，能够为学术论文生成简洁的摘要。'
+      },
+      {
+        role: 'user',
+        content: `为以下论文生成一句话摘要（每行一个）:\n- ${titles}`
+      }
+    ], { temperature: 0.3 });
 
-    const summaries = (completion.choices[0]?.message?.content || '').split('\n').filter(Boolean);
+    const summaries = response.split('\n').filter(Boolean);
 
     papers.forEach((paper, index) => {
       if (summaries[index]) {
@@ -487,19 +720,32 @@ export default class ProgressTracker {
 
     const { topic, timeframe } = options;
 
-    // 搜索相关论文
-    const results = await this.zai!.functions.invoke('web_search', {
-      query: `${topic} research paper`,
-      num: 20,
-      recency_days: timeframe === 'week' ? 7 : timeframe === 'month' ? 30 : 90
-    });
+    // 检查 AI 提供商是否支持 web search
+    if (!this.ai!.webSearch) {
+      return {
+        topic,
+        timeframe,
+        paperCount: 0,
+        previousCount: 0,
+        changePercent: 0,
+        topPapers: [],
+        emergingKeywords: [],
+        decliningKeywords: []
+      };
+    }
 
-    const papers: PaperUpdate[] = results.map((item: any, index: number) => ({
+    // 搜索相关论文
+    const results: WebSearchResultItem[] = await this.ai!.webSearch(
+      `${topic} research paper`,
+      20
+    );
+
+    const papers: PaperUpdate[] = results.map((item, index) => ({
       id: `trend_${index}`,
       title: item.name,
       authors: [],
       publishDate: item.date || '',
-      source: item.host_name,
+      source: item.host_name || 'web',
       url: item.url,
       abstract: item.snippet,
       keywords: [],
@@ -579,20 +825,24 @@ if (import.meta.main) {
     const type = args[1] as 'keyword' | 'author' | 'conference';
     const value = args[2];
     const frequencyIndex = args.indexOf('--frequency');
-    const frequency = frequencyIndex > -1 ? args[frequencyIndex + 1] as any : 'daily';
+    const frequency = frequencyIndex > -1 ? args[frequencyIndex + 1] as 'daily' | 'weekly' | 'monthly' : 'daily';
 
-    tracker.initialize().then(() => 
+    tracker.initialize().then(() =>
       tracker.addWatch({ type, value, frequency })
     ).then(watch => {
       console.log('Watch added:', watch);
+      tracker.destroy();
+    }).catch(err => {
+      console.error('Error:', getErrorMessage(err));
+      tracker.destroy();
     });
   } else if (command === 'report') {
     const typeIndex = args.indexOf('--type');
-    const type = typeIndex > -1 ? args[typeIndex + 1] as any : 'daily';
+    const type = typeIndex > -1 ? args[typeIndex + 1] as 'daily' | 'weekly' | 'monthly' : 'daily';
     const outputIndex = args.indexOf('--output');
     const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
 
-    tracker.initialize().then(() => 
+    tracker.initialize().then(() =>
       tracker.generateReport({ type })
     ).then(report => {
       if (outputFile) {
@@ -602,6 +852,10 @@ if (import.meta.main) {
       } else {
         console.log(JSON.stringify(report, null, 2));
       }
+      tracker.destroy();
+    }).catch(err => {
+      console.error('Error:', getErrorMessage(err));
+      tracker.destroy();
     });
   } else {
     console.error('Usage: track.ts add <type> <value> [--frequency daily|weekly|monthly]');

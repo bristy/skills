@@ -1,14 +1,16 @@
 /**
  * Knowledge Graph Builder - Core Module
  * 知识图谱构建核心模块
- * 
+ *
  * 功能：
  * - 从概念列表构建知识图谱
  * - 识别概念间关系
  * - 生成可视化输出
  */
 
-import ZAI from 'z-ai-web-dev-sdk';
+import { createAIProvider, type AIProvider } from '../../shared/ai-provider';
+import { extractJson } from '../../shared/utils';
+import { ApiInitializationError, getErrorMessage } from '../../shared/errors';
 
 export interface KnowledgeNode {
   id: string;
@@ -32,11 +34,18 @@ export interface KnowledgeGraphData {
 }
 
 export default class KnowledgeGraphBuilder {
-  private zai: Awaited<ReturnType<typeof ZAI.create>> | null = null;
+  private ai: AIProvider | null = null;
 
   async initialize(): Promise<void> {
-    if (!this.zai) {
-      this.zai = await ZAI.create();
+    if (!this.ai) {
+      try {
+        this.ai = await createAIProvider();
+      } catch (error) {
+        throw new ApiInitializationError(
+          `Failed to initialize AI provider: ${getErrorMessage(error)}`,
+          error instanceof Error ? error : undefined
+        );
+      }
     }
   }
 
@@ -98,26 +107,18 @@ export default class KnowledgeGraphBuilder {
 - derived: 衍生关系，target是从source发展而来
 - component: 组成关系，target是source的组成部分`;
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        { role: 'system', content: '你是一位知识体系分析专家。' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.2
-    });
+    const responseText = await this.ai!.chat([
+      { role: 'system', content: '你是一位知识体系分析专家。' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.2 });
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const result = extractJson<{ relations?: Array<{ source: string; target: string; relation: string }> }>(responseText);
 
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed.relations || [];
-      } catch (e) {
-        return [];
-      }
+    if (result.success && result.data?.relations) {
+      return result.data.relations;
     }
 
+    console.error('Error parsing relations response:', result.error);
     return [];
   }
 
@@ -399,5 +400,8 @@ if (import.meta.main) {
     } else {
       console.log(output);
     }
-  }).catch(console.error);
+  }).catch(err => {
+    console.error('Error:', getErrorMessage(err));
+    process.exit(1);
+  });
 }

@@ -1,7 +1,7 @@
 /**
  * Paper Analyzer - Core Module
  * 论文分析核心模块
- * 
+ *
  * 提供论文深度分析能力：
  * - 智能阅读与结构提取
  * - 方法学分析
@@ -9,16 +9,16 @@
  * - 引用关系梳理
  */
 
-import ZAI from 'z-ai-web-dev-sdk';
+import { createAIProvider, type AIProvider } from '../../shared/ai-provider';
+import { extractJson } from '../../shared/utils';
+import { ApiInitializationError, getErrorMessage } from '../../shared/errors';
+import type { WebSearchResultItem } from '../../shared/types';
 import type {
   AnalyzeOptions,
   PaperAnalysis,
   PaperMetadata,
-  KeyPoint,
   MethodologyAnalysis,
   ExperimentAnalysis,
-  Contribution,
-  Limitation,
   CitationAnalysis,
   RelatedWork,
   ReproducibilityAnalysis,
@@ -28,11 +28,18 @@ import type {
 } from './types';
 
 export default class PaperAnalyzer {
-  private zai: Awaited<ReturnType<typeof ZAI.create>> | null = null;
+  private ai: AIProvider | null = null;
 
   async initialize(): Promise<void> {
-    if (!this.zai) {
-      this.zai = await ZAI.create();
+    if (!this.ai) {
+      try {
+        this.ai = await createAIProvider();
+      } catch (error) {
+        throw new ApiInitializationError(
+          `Failed to initialize AI provider: ${getErrorMessage(error)}`,
+          error instanceof Error ? error : undefined
+        );
+      }
     }
   }
 
@@ -86,35 +93,159 @@ export default class PaperAnalyzer {
     content: string;
     metadata: Partial<PaperMetadata>;
   }> {
+    const metadata: Partial<PaperMetadata> = { url };
+
+    // 如果是 arXiv 链接，直接从 arXiv API 获取
+    const arxivMatch = url.match(/arxiv\.org\/abs\/(\d+\.\d+)/);
+    if (arxivMatch) {
+      const arxivId = arxivMatch[1];
+      metadata.arxivId = arxivId;
+
+      try {
+        const arxivContent = await this.fetchFromArxiv(arxivId);
+        if (arxivContent.content) {
+          return {
+            content: arxivContent.content,
+            metadata: { ...metadata, ...arxivContent.metadata }
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching from arXiv:', getErrorMessage(error));
+      }
+    }
+
+    // 如果是 Semantic Scholar 链接，尝试从 S2 API 获取
+    const s2Match = url.match(/semanticscholar\.org\/paper\/([a-f0-9]+)/i);
+    if (s2Match) {
+      try {
+        const s2Content = await this.fetchFromSemanticScholar(s2Match[1]);
+        if (s2Content.content) {
+          return {
+            content: s2Content.content,
+            metadata: { ...metadata, ...s2Content.metadata }
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching from Semantic Scholar:', getErrorMessage(error));
+      }
+    }
+
+    // 回退到 web search（如果可用）
     try {
-      // 尝试从web搜索获取相关信息
-      const searchResults = await this.zai!.functions.invoke('web_search', {
-        query: `${url} abstract summary`,
-        num: 5
-      });
+      if (this.ai!.webSearch) {
+        const searchResults: WebSearchResultItem[] = await this.ai!.webSearch(
+          `${url} abstract summary`,
+          5
+        );
 
-      // 提取信息
-      let content = '';
-      const metadata: Partial<PaperMetadata> = { url };
+        let content = '';
+        for (const result of searchResults) {
+          content += (result.snippet || '') + '\n\n';
+          if (!metadata.title && result.name) {
+            metadata.title = result.name;
+          }
+        }
 
-      for (const result of searchResults) {
-        content += result.snippet + '\n\n';
-        if (!metadata.title && result.name) {
-          metadata.title = result.name;
+        if (content) {
+          return { content, metadata };
         }
       }
-
-      // 如果是arXiv链接，提取ID
-      const arxivMatch = url.match(/arxiv\.org\/abs\/(\d+\.\d+)/);
-      if (arxivMatch) {
-        metadata.arxivId = arxivMatch[1];
-      }
-
-      return { content, metadata };
     } catch (error) {
-      console.error('Error fetching paper content:', error);
-      return { content: '', metadata: { url } };
+      console.error('Error with web search:', getErrorMessage(error));
     }
+
+    return { content: '', metadata };
+  }
+
+  /**
+   * 从 arXiv API 获取论文内容
+   */
+  private async fetchFromArxiv(arxivId: string): Promise<{
+    content: string;
+    metadata: Partial<PaperMetadata>;
+  }> {
+    const apiUrl = `http://export.arxiv.org/api/query?id_list=${arxivId}`;
+    const response = await fetch(apiUrl);
+    const xml = await response.text();
+
+    // 解析 XML
+    const titleMatch = xml.match(/<title>([\s\S]*?)<\/title>/g);
+    const title = titleMatch && titleMatch[1]
+      ? titleMatch[1].replace(/<\/?title>/g, '').trim()
+      : '';
+
+    const abstractMatch = xml.match(/<summary>([\s\S]*?)<\/summary>/);
+    const abstract = abstractMatch
+      ? abstractMatch[1].trim()
+      : '';
+
+    const authorsMatch = xml.matchAll(/<author>[\s\S]*?<name>([\s\S]*?)<\/name>[\s\S]*?<\/author>/g);
+    const authors: string[] = [];
+    for (const match of authorsMatch) {
+      authors.push(match[1].trim());
+    }
+
+    const publishedMatch = xml.match(/<published>([\s\S]*?)<\/published>/);
+    const published = publishedMatch ? publishedMatch[1].trim() : '';
+    const year = published ? published.split('-')[0] : '';
+
+    const categoryMatch = xml.matchAll(/<category[^>]*term="([^"]+)"/g);
+    const categories: string[] = [];
+    for (const match of categoryMatch) {
+      categories.push(match[1]);
+    }
+
+    const content = `Title: ${title}\n\nAuthors: ${authors.join(', ')}\n\nAbstract: ${abstract}\n\nCategories: ${categories.join(', ')}`;
+
+    return {
+      content,
+      metadata: {
+        title,
+        authors,
+        year,
+        arxivId,
+        keywords: categories
+      }
+    };
+  }
+
+  /**
+   * 从 Semantic Scholar API 获取论文内容
+   */
+  private async fetchFromSemanticScholar(paperId: string): Promise<{
+    content: string;
+    metadata: Partial<PaperMetadata>;
+  }> {
+    const fields = 'paperId,title,abstract,authors,year,citationCount,venue,url,fieldsOfStudy';
+    const apiUrl = `https://api.semanticscholar.org/graph/v1/paper/${paperId}?fields=${fields}`;
+
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`Semantic Scholar API error: ${response.status}`);
+    }
+
+    const data = await response.json() as {
+      title?: string;
+      abstract?: string;
+      authors?: Array<{ name: string }>;
+      year?: number;
+      venue?: string;
+      fieldsOfStudy?: string[];
+    };
+
+    const authors = data.authors?.map(a => a.name) || [];
+    const content = `Title: ${data.title || ''}\n\nAuthors: ${authors.join(', ')}\n\nAbstract: ${data.abstract || ''}\n\nVenue: ${data.venue || ''}\n\nFields: ${data.fieldsOfStudy?.join(', ') || ''}`;
+
+    return {
+      content,
+      metadata: {
+        title: data.title,
+        authors,
+        year: data.year?.toString(),
+        venue: data.venue,
+        keywords: data.fieldsOfStudy
+      }
+    };
   }
 
   /**
@@ -138,18 +269,13 @@ export default class PaperAnalyzer {
     // 构建分析prompt
     const analysisPrompt = this.buildAnalysisPrompt(content, mode, langPrompt, focusAreas);
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: '你是一位资深的学术研究分析专家，擅长深入分析学术论文的结构、方法、实验和贡献。'
-        },
-        { role: 'user', content: analysisPrompt }
-      ],
-      temperature: 0.2
-    });
-
-    const responseText = completion.choices[0]?.message?.content || '{}';
+    const responseText = await this.ai!.chat([
+      {
+        role: 'system',
+        content: '你是一位资深的学术研究分析专家，擅长深入分析学术论文的结构、方法、实验和贡献。'
+      },
+      { role: 'user', content: analysisPrompt }
+    ], { temperature: 0.2 });
 
     // 解析响应
     const parsed = this.parseAnalysisResponse(responseText);
@@ -287,15 +413,14 @@ ${focusPrompt}
   /**
    * 解析分析响应
    */
-  private parseAnalysisResponse(responseText: string): any {
-    try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-    } catch (error) {
-      console.error('Error parsing analysis response:', error);
+  private parseAnalysisResponse(responseText: string): Record<string, unknown> {
+    const result = extractJson<Record<string, unknown>>(responseText);
+
+    if (result.success && result.data) {
+      return result.data;
     }
+
+    console.error('Error parsing analysis response:', result.error);
     return {};
   }
 
@@ -314,22 +439,18 @@ ${content.substring(0, 2000)}
 }`;
 
     try {
-      const completion = await this.zai!.chat.completions.create({
-        messages: [
-          { role: 'system', content: '你是一位学术引用分析专家。' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.2
-      });
+      const responseText = await this.ai!.chat([
+        { role: 'system', content: '你是一位学术引用分析专家。' },
+        { role: 'user', content: prompt }
+      ], { temperature: 0.2 });
 
-      const responseText = completion.choices[0]?.message?.content || '{}';
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const result = extractJson<CitationAnalysis>(responseText);
 
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+      if (result.success && result.data) {
+        return result.data;
       }
     } catch (error) {
-      console.error('Error analyzing citations:', error);
+      console.error('Error analyzing citations:', getErrorMessage(error));
     }
 
     return { keyReferences: [] };
@@ -355,23 +476,18 @@ ${content.substring(0, 2000)}
 }`;
 
     try {
-      const completion = await this.zai!.chat.completions.create({
-        messages: [
-          { role: 'system', content: '你是一位学术领域分析专家。' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.2
-      });
+      const responseText = await this.ai!.chat([
+        { role: 'system', content: '你是一位学术领域分析专家。' },
+        { role: 'user', content: prompt }
+      ], { temperature: 0.2 });
 
-      const responseText = completion.choices[0]?.message?.content || '{}';
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const result = extractJson<{ relatedWork?: RelatedWork[] }>(responseText);
 
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed.relatedWork || [];
+      if (result.success && result.data?.relatedWork) {
+        return result.data.relatedWork;
       }
     } catch (error) {
-      console.error('Error analyzing related work:', error);
+      console.error('Error analyzing related work:', getErrorMessage(error));
     }
 
     return [];
@@ -407,32 +523,28 @@ ${analyses.map((a, i) => `
   "synthesis": "综合分析"
 }`;
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        { role: 'system', content: '你是一位学术论文比较分析专家。' },
-        { role: 'user', content: comparisonPrompt }
-      ],
-      temperature: 0.2
-    });
+    const responseText = await this.ai!.chat([
+      { role: 'system', content: '你是一位学术论文比较分析专家。' },
+      { role: 'user', content: comparisonPrompt }
+    ], { temperature: 0.2 });
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const result = extractJson<{
+      commonThemes?: string[];
+      differences?: string[];
+      methodologicalComparison?: string;
+      performanceComparison?: string;
+      synthesis?: string;
+    }>(responseText);
 
-    let comparisonData = {
-      commonThemes: [],
-      differences: [],
-      methodologicalComparison: '',
-      performanceComparison: '',
-      synthesis: ''
-    };
-
-    if (jsonMatch) {
-      comparisonData = JSON.parse(jsonMatch[0]);
-    }
+    const comparisonData = result.success && result.data ? result.data : {};
 
     return {
       papers: analyses.map(a => a.metadata),
-      ...comparisonData
+      commonThemes: comparisonData.commonThemes || [],
+      differences: comparisonData.differences || [],
+      methodologicalComparison: comparisonData.methodologicalComparison || '',
+      performanceComparison: comparisonData.performanceComparison || '',
+      synthesis: comparisonData.synthesis || ''
     };
   }
 
@@ -461,19 +573,15 @@ ${options.focusAreas ? `重点关注: ${options.focusAreas.join(', ')}` : ''}
   "overallAssessment": "总体评价"
 }`;
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        { role: 'system', content: '你是一位批判性思维专家，能够客观评价学术研究。' },
-        { role: 'user', content: critiquePrompt }
-      ],
-      temperature: 0.3
-    });
+    const responseText = await this.ai!.chat([
+      { role: 'system', content: '你是一位批判性思维专家，能够客观评价学术研究。' },
+      { role: 'user', content: critiquePrompt }
+    ], { temperature: 0.3 });
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const result = extractJson<CritiqueResult>(responseText);
 
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+    if (result.success && result.data) {
+      return result.data;
     }
 
     return {
@@ -636,7 +744,7 @@ if (import.meta.main) {
   const url = urlIndex > -1 ? args[urlIndex + 1] : undefined;
   const file = fileIndex > -1 ? args[fileIndex + 1] : undefined;
   const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
-  const mode = modeIndex > -1 ? args[modeIndex + 1] as any : 'standard';
+  const mode = modeIndex > -1 ? args[modeIndex + 1] as 'quick' | 'standard' | 'deep' : 'standard';
 
   if (!url && !file) {
     console.error('Usage: analyze.ts --url <url> [--mode quick|standard|deep] [--output <file>]');
@@ -654,5 +762,8 @@ if (import.meta.main) {
     } else {
       console.log(JSON.stringify(analysis, null, 2));
     }
-  }).catch(console.error);
+  }).catch(err => {
+    console.error('Error:', getErrorMessage(err));
+    process.exit(1);
+  });
 }

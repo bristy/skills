@@ -2,10 +2,10 @@
 /**
  * Literature Skills - Unified CLI
  * 文献检索总结工具统一命令行入口
- * 
+ *
  * 用法:
  *   lit <command> [options]
- * 
+ *
  * 命令:
  *   search <query>          检索文献
  *   learn <concept>         学习概念
@@ -23,6 +23,21 @@ import ProgressTracker from './progress-tracker/scripts/track';
 import PaperAnalyzer from './paper-analyzer/scripts/analyze';
 import KnowledgeGraphBuilder from './knowledge-graph/scripts/graph';
 import { ConfigManager, defaultConfig } from './config';
+import { getErrorMessage } from './shared/errors';
+import {
+  validateSearchParams,
+  validateLearnParams,
+  validateDetectParams,
+  validateAnalyzeParams,
+  validateGraphParams,
+  formatValidationErrors,
+  isValidSearchSource,
+  isValidSortBy,
+  isValidLearningDepth,
+  isValidAnalysisMode,
+  isValidReportType
+} from './shared/validators';
+import type { SearchSource, SortBy, LearningDepth, AnalysisMode, ReportType } from './shared/types';
 
 const COMMANDS = {
   search: '检索文献',
@@ -31,7 +46,10 @@ const COMMANDS = {
   track: '进展追踪',
   analyze: '分析论文',
   graph: '构建知识图谱',
-  config: '配置管理'
+  config: '配置管理',
+  compare: '对比分析',
+  critique: '批判性分析',
+  path: '学习路径'
 };
 
 function showHelp() {
@@ -44,7 +62,7 @@ function showHelp() {
 
 命令:
   search <query>              检索相关文献
-    --limit <n>               结果数量 (默认: 10)
+    --limit <n>               结果数量 (默认: 10, 范围: 1-100)
     --source <s>              数据源 (arxiv|semantic_scholar|web)
     --sort <by>               排序方式 (relevance|date|citations)
 
@@ -72,11 +90,53 @@ function showHelp() {
     --format <f>              输出格式 (mermaid|json)
     --output <file>           输出文件
 
+  compare <type> <items...>   对比分析
+    concepts <c1> <c2>        对比两个概念
+    papers <url1> <url2>...   对比多篇论文
+    --output <file>           输出文件
+
+  critique <url>              批判性分析论文
+    --focus <areas>           重点关注领域 (逗号分隔)
+    --output <file>           输出文件
+
+  path <from> <to>            查找学习路径
+    --concepts <list>         概念列表 (逗号分隔)
+    --output <file>           输出文件
+
   config <action>             配置管理
     init                      初始化配置文件
     show                      显示当前配置
     set <key> <value>         设置配置项
     reset                     重置为默认配置
+
+环境变量:
+  AI_PROVIDER                 AI 提供商 (见下方支持列表)
+
+  # 国际厂商
+  OPENAI_API_KEY              OpenAI API 密钥
+  ANTHROPIC_API_KEY           Anthropic API 密钥
+  AZURE_OPENAI_ENDPOINT       Azure OpenAI 端点
+  AZURE_OPENAI_API_KEY        Azure OpenAI 密钥
+  GROQ_API_KEY                Groq API 密钥
+  TOGETHER_API_KEY            Together AI API 密钥
+  OLLAMA_BASE_URL             Ollama 服务地址 (默认: http://localhost:11434)
+
+  # 国内厂商
+  QWEN_API_KEY                通义千问 API 密钥 (或 DASHSCOPE_API_KEY)
+  DEEPSEEK_API_KEY            DeepSeek API 密钥
+  ZHIPU_API_KEY               智谱 AI (GLM) API 密钥
+  MINIMAX_API_KEY             MiniMax API 密钥
+  MOONSHOT_API_KEY            Moonshot (Kimi) API 密钥
+  BAICHUAN_API_KEY            百川 AI API 密钥
+  YI_API_KEY                  零一万物 API 密钥
+  DOUBAO_API_KEY              豆包 API 密钥
+
+  # 搜索
+  SERPER_API_KEY              Serper 搜索 API 密钥 (用于 web 搜索功能)
+
+支持的 AI 提供商:
+  zai, openai, anthropic, azure, ollama, qwen, deepseek, zhipu,
+  minimax, moonshot, baichuan, yi, doubao, groq, together
 
 示例:
   lit search "transformer attention" --limit 20
@@ -85,6 +145,27 @@ function showHelp() {
   lit track report --type weekly --output weekly-report.md
   lit analyze "https://arxiv.org/abs/2301.07001" --output analysis.md
   lit graph transformer attention BERT GPT --format mermaid
+
+  # 对比两个概念
+  lit compare concepts CNN RNN --output cnn-vs-rnn.md
+
+  # 对比多篇论文
+  lit compare papers "url1" "url2" --output comparison.md
+
+  # 批判性分析论文
+  lit critique "https://arxiv.org/abs/xxx" --focus "scalability,efficiency"
+
+  # 查找学习路径
+  lit path "Machine Learning" "Deep Learning" --concepts "ML,NN,DL,CNN"
+
+  # 使用 OpenAI 提供商
+  AI_PROVIDER=openai lit search "transformer"
+
+  # 使用 DeepSeek 提供商
+  AI_PROVIDER=deepseek lit learn "BERT"
+
+  # 使用智谱 AI
+  AI_PROVIDER=zhipu lit detect --domain "NLP"
 `);
 }
 
@@ -129,32 +210,49 @@ async function main() {
         handleConfig(cmdArgs);
         break;
 
+      case 'compare':
+        await handleCompare(cmdArgs);
+        break;
+
+      case 'critique':
+        await handleCritique(cmdArgs);
+        break;
+
+      case 'path':
+        await handlePath(cmdArgs);
+        break;
+
       default:
         console.error(`Unknown command: ${command}`);
         console.log('Run "lit --help" for usage information.');
         process.exit(1);
     }
-  } catch (error: any) {
-    console.error('Error:', error.message);
+  } catch (error: unknown) {
+    console.error('Error:', getErrorMessage(error));
     process.exit(1);
   }
 }
 
 async function handleSearch(args: string[]) {
   const query = args[0];
-  if (!query) {
-    console.error('Error: Please provide a search query');
-    process.exit(1);
-  }
 
   const limitIndex = args.indexOf('--limit');
   const limit = limitIndex > -1 ? parseInt(args[limitIndex + 1]) : 10;
 
   const sourceIndex = args.indexOf('--source');
-  const source = sourceIndex > -1 ? args[sourceIndex + 1] as any : undefined;
+  const sourceArg = sourceIndex > -1 ? args[sourceIndex + 1] : undefined;
+  const source: SearchSource | undefined = isValidSearchSource(sourceArg) ? sourceArg : undefined;
 
   const sortIndex = args.indexOf('--sort');
-  const sortBy = sortIndex > -1 ? args[sortIndex + 1] as any : 'relevance';
+  const sortArg = sortIndex > -1 ? args[sortIndex + 1] : 'relevance';
+  const sortBy: SortBy = isValidSortBy(sortArg) ? sortArg : 'relevance';
+
+  // 验证参数
+  const validation = validateSearchParams({ query, limit, source, sortBy });
+  if (!validation.valid) {
+    console.error('Validation errors:\n' + formatValidationErrors(validation.errors));
+    process.exit(1);
+  }
 
   const searcher = new LiteratureSearch();
   await searcher.initialize();
@@ -180,19 +278,23 @@ async function handleSearch(args: string[]) {
 
 async function handleLearn(args: string[]) {
   const concept = args[0];
-  if (!concept) {
-    console.error('Error: Please provide a concept to learn');
-    process.exit(1);
-  }
 
   const depthIndex = args.indexOf('--depth');
-  const depth = depthIndex > -1 ? args[depthIndex + 1] as any : 'intermediate';
+  const depthArg = depthIndex > -1 ? args[depthIndex + 1] : 'intermediate';
+  const depth: LearningDepth = isValidLearningDepth(depthArg) ? depthArg : 'intermediate';
 
   const includePapers = args.includes('--papers');
   const includeCode = args.includes('--code');
 
   const outputIndex = args.indexOf('--output');
   const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
+
+  // 验证参数
+  const validation = validateLearnParams({ concept, depth });
+  if (!validation.valid) {
+    console.error('Validation errors:\n' + formatValidationErrors(validation.errors));
+    process.exit(1);
+  }
 
   const learner = new ConceptLearner();
   await learner.initialize();
@@ -206,7 +308,7 @@ async function handleLearn(args: string[]) {
   });
 
   if (outputFile) {
-    const fs = require('fs');
+    const fs = await import('fs');
     fs.writeFileSync(outputFile, learner.toMarkdown(card));
     console.log(`\n✅ Concept card saved to ${outputFile}`);
   } else {
@@ -224,10 +326,17 @@ async function handleDetect(args: string[]) {
   const domain = domainIndex > -1 ? args[domainIndex + 1] : 'Machine Learning';
 
   const knownIndex = args.indexOf('--known');
-  const known = knownIndex > -1 ? args[knownIndex + 1].split(',') : [];
+  const known = knownIndex > -1 ? args[knownIndex + 1].split(',').map(s => s.trim()) : [];
 
   const outputIndex = args.indexOf('--output');
   const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
+
+  // 验证参数
+  const validation = validateDetectParams({ domain });
+  if (!validation.valid) {
+    console.error('Validation errors:\n' + formatValidationErrors(validation.errors));
+    process.exit(1);
+  }
 
   const detector = new KnowledgeGapDetector();
   await detector.initialize();
@@ -240,7 +349,7 @@ async function handleDetect(args: string[]) {
   });
 
   if (outputFile) {
-    const fs = require('fs');
+    const fs = await import('fs');
     fs.writeFileSync(outputFile, detector.toMarkdown(report));
     console.log(`\n✅ Gap report saved to ${outputFile}`);
   } else {
@@ -269,17 +378,34 @@ async function handleTrack(args: string[]) {
 
   if (action === 'report') {
     const typeIndex = args.indexOf('--type');
-    const type = typeIndex > -1 ? args[typeIndex + 1] as any : 'daily';
+    const typeArg = typeIndex > -1 ? args[typeIndex + 1] : 'daily';
+    const type: ReportType = isValidReportType(typeArg) ? typeArg : 'daily';
 
     const outputIndex = args.indexOf('--output');
     const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
 
+    // 支持 --topic 参数来指定追踪主题
+    const topicIndex = args.indexOf('--topic');
+    const topic = topicIndex > -1 ? args[topicIndex + 1] : null;
+
+    // 如果指定了主题，添加临时监控项
+    if (topic) {
+      await tracker.addWatch({ type: 'keyword', value: topic, frequency: type as 'daily' | 'weekly' | 'monthly' });
+    } else {
+      // 添加一些默认的热门主题用于演示
+      await tracker.addWatches([
+        { type: 'keyword', value: 'large language model', frequency: 'weekly' },
+        { type: 'keyword', value: 'transformer', frequency: 'weekly' },
+        { type: 'keyword', value: 'RAG retrieval augmented', frequency: 'weekly' }
+      ]);
+    }
+
     console.log(`📊 Generating ${type} report...`);
 
-    const report = await tracker.generateReport({ type });
+    const report = await tracker.generateReport({ type, topic: topic || undefined });
 
     if (outputFile) {
-      const fs = require('fs');
+      const fs = await import('fs');
       fs.writeFileSync(outputFile, tracker.toMarkdown(report));
       console.log(`\n✅ Report saved to ${outputFile}`);
     } else {
@@ -297,16 +423,20 @@ async function handleTrack(args: string[]) {
 
 async function handleAnalyze(args: string[]) {
   const url = args[0];
-  if (!url) {
-    console.error('Error: Please provide a paper URL');
-    process.exit(1);
-  }
 
   const modeIndex = args.indexOf('--mode');
-  const mode = modeIndex > -1 ? args[modeIndex + 1] as any : 'standard';
+  const modeArg = modeIndex > -1 ? args[modeIndex + 1] : 'standard';
+  const mode: AnalysisMode = isValidAnalysisMode(modeArg) ? modeArg : 'standard';
 
   const outputIndex = args.indexOf('--output');
   const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
+
+  // 验证参数
+  const validation = validateAnalyzeParams({ url, mode });
+  if (!validation.valid) {
+    console.error('Validation errors:\n' + formatValidationErrors(validation.errors));
+    process.exit(1);
+  }
 
   const analyzer = new PaperAnalyzer();
   await analyzer.initialize();
@@ -316,7 +446,7 @@ async function handleAnalyze(args: string[]) {
   const analysis = await analyzer.analyze({ url, mode });
 
   if (outputFile) {
-    const fs = require('fs');
+    const fs = await import('fs');
     fs.writeFileSync(outputFile, analyzer.toMarkdown(analysis));
     console.log(`\n✅ Analysis saved to ${outputFile}`);
   } else {
@@ -332,18 +462,31 @@ async function handleAnalyze(args: string[]) {
 }
 
 async function handleGraph(args: string[]) {
-  const concepts = args.filter(a => !a.startsWith('--'));
-
-  if (concepts.length < 2) {
-    console.error('Error: Please provide at least 2 concepts');
-    process.exit(1);
-  }
-
   const formatIndex = args.indexOf('--format');
   const format = formatIndex > -1 ? args[formatIndex + 1] : 'mermaid';
 
   const outputIndex = args.indexOf('--output');
   const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
+
+  // 过滤掉选项参数及其值
+  const optionIndices = new Set<number>();
+  if (formatIndex > -1) {
+    optionIndices.add(formatIndex);
+    optionIndices.add(formatIndex + 1);
+  }
+  if (outputIndex > -1) {
+    optionIndices.add(outputIndex);
+    optionIndices.add(outputIndex + 1);
+  }
+
+  const concepts = args.filter((_, index) => !optionIndices.has(index));
+
+  // 验证参数
+  const validation = validateGraphParams({ concepts });
+  if (!validation.valid) {
+    console.error('Validation errors:\n' + formatValidationErrors(validation.errors));
+    process.exit(1);
+  }
 
   const builder = new KnowledgeGraphBuilder();
   await builder.initialize();
@@ -360,7 +503,7 @@ async function handleGraph(args: string[]) {
   }
 
   if (outputFile) {
-    const fs = require('fs');
+    const fs = await import('fs');
     fs.writeFileSync(outputFile, output);
     console.log(`\n✅ Graph saved to ${outputFile}`);
   } else {
@@ -376,7 +519,7 @@ function handleConfig(args: string[]) {
   switch (action) {
     case 'init':
       manager.save();
-      console.log('✅ Configuration initialized at ./literature-config.json');
+      console.log('✅ Configuration initialized at ./scholargraph-config.json');
       break;
 
     case 'show':
@@ -389,13 +532,38 @@ function handleConfig(args: string[]) {
       const value = args[2];
       if (key && value) {
         try {
-          const parsed = JSON.parse(value);
-          manager.update({ [key]: parsed });
-        } catch {
-          (manager as any).config[key] = value;
-          manager.save();
+          const currentConfig = manager.load();
+
+          // 解析嵌套路径 (e.g., "user.level" -> ["user", "level"])
+          const keys = key.split('.');
+          let target: any = currentConfig;
+
+          // 导航到目标对象
+          for (let i = 0; i < keys.length - 1; i++) {
+            if (!target[keys[i]]) {
+              target[keys[i]] = {};
+            }
+            target = target[keys[i]];
+          }
+
+          // 设置值
+          const lastKey = keys[keys.length - 1];
+          try {
+            target[lastKey] = JSON.parse(value);
+          } catch {
+            // 如果不是有效 JSON，作为字符串处理
+            target[lastKey] = value;
+          }
+
+          manager.update(currentConfig);
+          console.log(`✅ Set ${key} = ${value}`);
+        } catch (error) {
+          console.error(`Error setting ${key}:`, error);
+          process.exit(1);
         }
-        console.log(`✅ Set ${key}`);
+      } else {
+        console.error('Error: config set requires <key> and <value>');
+        process.exit(1);
       }
       break;
 
@@ -410,4 +578,276 @@ function handleConfig(args: string[]) {
   }
 }
 
-main().catch(console.error);
+async function handleCompare(args: string[]) {
+  const type = args[0];
+
+  if (type === 'concepts') {
+    const concept1 = args[1];
+    const concept2 = args[2];
+
+    if (!concept1 || !concept2) {
+      console.error('Error: compare concepts requires two concept names');
+      process.exit(1);
+    }
+
+    const outputIndex = args.indexOf('--output');
+    const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
+
+    const learner = new ConceptLearner();
+    await learner.initialize();
+
+    console.log(`🔄 Comparing "${concept1}" vs "${concept2}"...`);
+
+    const comparison = await learner.compare(concept1, concept2);
+
+    const markdown = `# ${comparison.concept1} vs ${comparison.concept2} - 概念对比
+
+## 📊 相似点
+
+${comparison.similarities.map(s => `- ${s}`).join('\n')}
+
+## 🔀 差异点
+
+${comparison.differences.map(d => `- ${d}`).join('\n')}
+
+## 🎯 使用场景
+
+### 优先使用 ${comparison.concept1}
+
+${comparison.useCases.preferConcept1}
+
+### 优先使用 ${comparison.concept2}
+
+${comparison.useCases.preferConcept2}
+
+---
+*生成时间: ${new Date().toISOString()}*
+`;
+
+    if (outputFile) {
+      const fs = await import('fs');
+      fs.writeFileSync(outputFile, markdown);
+      console.log(`\n✅ Comparison saved to ${outputFile}`);
+    } else {
+      console.log('\n📊 Concept Comparison:\n');
+      console.log(`${comparison.concept1} vs ${comparison.concept2}\n`);
+      console.log('相似点:');
+      comparison.similarities.forEach(s => console.log(`  - ${s}`));
+      console.log('\n差异点:');
+      comparison.differences.forEach(d => console.log(`  - ${d}`));
+      console.log('\n使用场景:');
+      console.log(`  ${comparison.concept1}: ${comparison.useCases.preferConcept1}`);
+      console.log(`  ${comparison.concept2}: ${comparison.useCases.preferConcept2}`);
+    }
+  } else if (type === 'papers') {
+    const outputIndex = args.indexOf('--output');
+    const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
+
+    // Filter out the type and option arguments
+    const optionIndices = new Set<number>();
+    optionIndices.add(0); // 'papers'
+    if (outputIndex > -1) {
+      optionIndices.add(outputIndex);
+      optionIndices.add(outputIndex + 1);
+    }
+
+    const urls = args.filter((_, index) => !optionIndices.has(index));
+
+    if (urls.length < 2) {
+      console.error('Error: compare papers requires at least 2 paper URLs');
+      process.exit(1);
+    }
+
+    const analyzer = new PaperAnalyzer();
+    await analyzer.initialize();
+
+    console.log(`📄 Comparing ${urls.length} papers...`);
+
+    const comparison = await analyzer.compare(urls);
+
+    const markdown = `# 论文对比分析
+
+## 📚 对比论文
+
+${comparison.papers.map((p, i) => `${i + 1}. ${p.title} (${p.year})`).join('\n')}
+
+## 🔗 共同主题
+
+${comparison.commonThemes.map(t => `- ${t}`).join('\n')}
+
+## 🔀 主要差异
+
+${comparison.differences.map(d => `- ${d}`).join('\n')}
+
+## 💡 综合分析
+
+${comparison.synthesis}
+
+---
+*生成时间: ${new Date().toISOString()}*
+`;
+
+    if (outputFile) {
+      const fs = await import('fs');
+      fs.writeFileSync(outputFile, markdown);
+      console.log(`\n✅ Comparison saved to ${outputFile}`);
+    } else {
+      console.log('\n📊 Paper Comparison:\n');
+      console.log('共同主题:');
+      comparison.commonThemes.forEach(t => console.log(`  - ${t}`));
+      console.log('\n主要差异:');
+      comparison.differences.forEach(d => console.log(`  - ${d}`));
+      console.log('\n综合分析:');
+      console.log(comparison.synthesis);
+    }
+  } else {
+    console.error('Error: Unknown compare type. Use "concepts" or "papers".');
+    process.exit(1);
+  }
+}
+
+async function handleCritique(args: string[]) {
+  const url = args[0];
+
+  if (!url) {
+    console.error('Error: critique requires a paper URL');
+    process.exit(1);
+  }
+
+  const focusIndex = args.indexOf('--focus');
+  const focusAreas = focusIndex > -1 ? args[focusIndex + 1].split(',').map(s => s.trim()) : undefined;
+
+  const outputIndex = args.indexOf('--output');
+  const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
+
+  const analyzer = new PaperAnalyzer();
+  await analyzer.initialize();
+
+  console.log(`🔍 Performing critical analysis...`);
+
+  // First get paper metadata
+  const analysis = await analyzer.analyze({ url, mode: 'quick' });
+
+  // Then perform critique
+  const critique = await analyzer.critique({ url, focusAreas });
+
+  const markdown = `# 论文批判性分析
+
+## 📄 论文信息
+
+- **标题**: ${analysis.metadata.title}
+- **作者**: ${analysis.metadata.authors.join(', ')}
+- **年份**: ${analysis.metadata.year}
+
+${focusAreas ? `## 🎯 关注领域\n\n${focusAreas.map(a => `- ${a}`).join('\n')}\n` : ''}
+## ✅ 优点
+
+${critique.strengths.map(s => `- ${s}`).join('\n')}
+
+## ⚠️ 缺点
+
+${critique.weaknesses.map(w => `- ${w}`).join('\n')}
+
+## 🔍 研究空白
+
+${critique.gaps.map(g => `- ${g}`).join('\n')}
+
+## 💡 改进建议
+
+${critique.suggestions.map(s => `- ${s}`).join('\n')}
+
+## 📊 总体评价
+
+${critique.overallAssessment}
+
+---
+*生成时间: ${new Date().toISOString()}*
+`;
+
+  if (outputFile) {
+    const fs = await import('fs');
+    fs.writeFileSync(outputFile, markdown);
+    console.log(`\n✅ Critique saved to ${outputFile}`);
+  } else {
+    console.log('\n🔍 Critical Analysis:\n');
+    console.log(`Paper: ${analysis.metadata.title}\n`);
+    console.log('优点:');
+    critique.strengths.forEach(s => console.log(`  - ${s}`));
+    console.log('\n缺点:');
+    critique.weaknesses.forEach(w => console.log(`  - ${w}`));
+    console.log('\n研究空白:');
+    critique.gaps.forEach(g => console.log(`  - ${g}`));
+    console.log('\n改进建议:');
+    critique.suggestions.forEach(s => console.log(`  - ${s}`));
+    console.log('\n总体评价:');
+    console.log(critique.overallAssessment);
+  }
+}
+
+async function handlePath(args: string[]) {
+  const from = args[0];
+  const to = args[1];
+
+  if (!from || !to) {
+    console.error('Error: path requires <from> and <to> concepts');
+    process.exit(1);
+  }
+
+  const conceptsIndex = args.indexOf('--concepts');
+  const conceptsList = conceptsIndex > -1 ? args[conceptsIndex + 1].split(',').map(s => s.trim()) : [];
+
+  const outputIndex = args.indexOf('--output');
+  const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
+
+  // Build the full concept list including from and to
+  const allConcepts = [from, ...conceptsList, to];
+
+  const builder = new KnowledgeGraphBuilder();
+  await builder.initialize();
+
+  console.log(`🗺️ Finding learning path from "${from}" to "${to}"...`);
+
+  const graph = await builder.build(allConcepts);
+  const path = builder.findPath(graph, from, to);
+
+  if (path.length === 0) {
+    console.log(`\n⚠️ No path found from "${from}" to "${to}"`);
+    return;
+  }
+
+  const markdown = `# 学习路径: ${from} → ${to}
+
+## 🗺️ 推荐路径
+
+${path.map((concept, i) => `${i + 1}. ${concept}`).join('\n')}
+
+## 📊 路径可视化
+
+\`\`\`mermaid
+graph LR
+${path.map((concept, i) => i < path.length - 1 ? `  ${concept.replace(/\s+/g, '_')}[${concept}] --> ${path[i + 1].replace(/\s+/g, '_')}[${path[i + 1]}]` : '').filter(Boolean).join('\n')}
+\`\`\`
+
+## 📚 学习建议
+
+按照上述路径顺序学习，每个概念都是下一个概念的基础。
+
+---
+*生成时间: ${new Date().toISOString()}*
+`;
+
+  if (outputFile) {
+    const fs = await import('fs');
+    fs.writeFileSync(outputFile, markdown);
+    console.log(`\n✅ Learning path saved to ${outputFile}`);
+  } else {
+    console.log('\n🗺️ Learning Path:\n');
+    console.log(path.map((concept, i) => `  ${i + 1}. ${concept}`).join('\n'));
+    console.log('\n路径: ' + path.join(' → '));
+  }
+}
+
+main().catch(err => {
+  console.error('Fatal error:', getErrorMessage(err));
+  process.exit(1);
+});

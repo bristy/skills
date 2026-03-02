@@ -1,7 +1,7 @@
 /**
  * Concept Learner - Core Module
  * 概念学习核心模块
- * 
+ *
  * 帮助用户快速构建知识框架：
  * - 概念定义与解释
  * - 核心组成要素
@@ -11,15 +11,25 @@
  * - 学习路径
  */
 
-import ZAI from 'z-ai-web-dev-sdk';
+import { createAIProvider, type AIProvider } from '../../shared/ai-provider';
+import { extractJson } from '../../shared/utils';
+import { ApiInitializationError, getErrorMessage } from '../../shared/errors';
+import type { WebSearchResultItem } from '../../shared/types';
 import type { LearnOptions, ConceptCard, ComparisonResult, LearningPathPlan, Paper, CodeExample } from './types';
 
 export default class ConceptLearner {
-  private zai: Awaited<ReturnType<typeof ZAI.create>> | null = null;
+  private ai: AIProvider | null = null;
 
   async initialize(): Promise<void> {
-    if (!this.zai) {
-      this.zai = await ZAI.create();
+    if (!this.ai) {
+      try {
+        this.ai = await createAIProvider();
+      } catch (error) {
+        throw new ApiInitializationError(
+          `Failed to initialize AI provider: ${getErrorMessage(error)}`,
+          error instanceof Error ? error : undefined
+        );
+      }
     }
   }
 
@@ -72,8 +82,8 @@ export default class ConceptLearner {
    * 获取概念基础信息
    */
   private async fetchConceptBasics(concept: string, language: string): Promise<Partial<ConceptCard>> {
-    const langPrompt = language === 'zh-CN' 
-      ? '请用中文回答' 
+    const langPrompt = language === 'zh-CN'
+      ? '请用中文回答'
       : 'Please answer in English';
 
     const prompt = `${langPrompt}
@@ -111,26 +121,19 @@ export default class ConceptLearner {
   ]
 }`;
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        { role: 'system', content: '你是一位知识结构化专家，擅长将复杂概念转化为清晰的学习框架。' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.3
-    });
+    const responseText = await this.ai!.chat([
+      { role: 'system', content: '你是一位知识结构化专家，擅长将复杂概念转化为清晰的学习框架。' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.3 });
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
+    // 使用改进的 JSON 提取
+    const result = extractJson<Partial<ConceptCard>>(responseText);
 
-    try {
-      // 提取JSON部分
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-    } catch (e) {
-      console.error('Failed to parse concept response:', e);
+    if (result.success && result.data) {
+      return result.data;
     }
 
+    console.error('Failed to parse concept response:', result.error);
     return {
       definition: responseText,
       shortExplanation: '',
@@ -147,20 +150,74 @@ export default class ConceptLearner {
    */
   private async fetchKeyPapers(concept: string): Promise<Paper[]> {
     try {
-      const results = await this.zai!.functions.invoke('web_search', {
-        query: `${concept} paper arxiv research`,
-        num: 5
-      });
+      // 优先使用 Semantic Scholar API
+      const papers = await this.searchSemanticScholar(concept);
+      if (papers.length > 0) {
+        return papers;
+      }
 
-      return results.slice(0, 5).map((item: any, index: number) => ({
-        title: item.name,
-        authors: [],
-        year: item.date?.split('-')[0] || '',
-        url: item.url,
-        summary: item.snippet || ''
+      // 回退到 web search（如果可用）
+      if (this.ai!.webSearch) {
+        const results: WebSearchResultItem[] = await this.ai!.webSearch(
+          `${concept} paper arxiv research`,
+          5
+        );
+
+        return results.slice(0, 5).map((item) => ({
+          title: item.name,
+          authors: [],
+          year: item.date?.split('-')[0] || '',
+          url: item.url,
+          summary: item.snippet || ''
+        }));
+      }
+
+      console.warn('No paper search method available');
+      return [];
+    } catch (error) {
+      console.error('Failed to fetch papers:', getErrorMessage(error));
+      return [];
+    }
+  }
+
+  /**
+   * 从 Semantic Scholar 搜索论文
+   */
+  private async searchSemanticScholar(concept: string): Promise<Paper[]> {
+    try {
+      const fields = 'paperId,title,abstract,authors,year,citationCount,venue,url';
+      const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(concept)}&limit=5&fields=${fields}`;
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.warn(`Semantic Scholar API error: ${response.status}`);
+        return [];
+      }
+
+      const data = await response.json() as {
+        data?: Array<{
+          paperId: string;
+          title: string;
+          abstract?: string;
+          authors?: Array<{ name: string }>;
+          year?: number;
+          citationCount?: number;
+          venue?: string;
+          url?: string;
+        }>;
+      };
+
+      if (!data.data) return [];
+
+      return data.data.map(paper => ({
+        title: paper.title,
+        authors: paper.authors?.map(a => a.name) || [],
+        year: paper.year?.toString() || '',
+        url: paper.url || `https://www.semanticscholar.org/paper/${paper.paperId}`,
+        summary: paper.abstract?.substring(0, 200) + '...' || ''
       }));
     } catch (error) {
-      console.error('Failed to fetch papers:', error);
+      console.error('Semantic Scholar search error:', getErrorMessage(error));
       return [];
     }
   }
@@ -184,23 +241,18 @@ export default class ConceptLearner {
 }`;
 
     try {
-      const completion = await this.zai!.chat.completions.create({
-        messages: [
-          { role: 'system', content: '你是一位代码教学专家，擅长用简洁的代码说明复杂概念。' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.2
-      });
+      const responseText = await this.ai!.chat([
+        { role: 'system', content: '你是一位代码教学专家，擅长用简洁的代码说明复杂概念。' },
+        { role: 'user', content: prompt }
+      ], { temperature: 0.2 });
 
-      const responseText = completion.choices[0]?.message?.content || '{}';
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const result = extractJson<{ examples?: CodeExample[] }>(responseText);
 
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed.examples || [];
+      if (result.success && result.data?.examples) {
+        return result.data.examples;
       }
     } catch (error) {
-      console.error('Failed to generate code examples:', error);
+      console.error('Failed to generate code examples:', getErrorMessage(error));
     }
 
     return [];
@@ -233,23 +285,18 @@ export default class ConceptLearner {
 }`;
 
     try {
-      const completion = await this.zai!.chat.completions.create({
-        messages: [
-          { role: 'system', content: '你是一位学习路径规划专家。' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.3
-      });
+      const responseText = await this.ai!.chat([
+        { role: 'system', content: '你是一位学习路径规划专家。' },
+        { role: 'user', content: prompt }
+      ], { temperature: 0.3 });
 
-      const responseText = completion.choices[0]?.message?.content || '{}';
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      const result = extractJson<{ stages?: ConceptCard['learningPath'] }>(responseText);
 
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed.stages || [];
+      if (result.success && result.data?.stages) {
+        return result.data.stages;
       }
     } catch (error) {
-      console.error('Failed to generate learning path:', error);
+      console.error('Failed to generate learning path:', getErrorMessage(error));
     }
 
     return [];
@@ -277,22 +324,27 @@ export default class ConceptLearner {
   }
 }`;
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        { role: 'system', content: '你是一位技术对比分析专家。' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.2
-    });
+    const responseText = await this.ai!.chat([
+      { role: 'system', content: '你是一位技术对比分析专家。' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.2 });
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const result = extractJson<{
+      similarities?: string[];
+      differences?: string[];
+      useCases?: { preferConcept1?: string[]; preferConcept2?: string[] };
+    }>(responseText);
 
-    if (jsonMatch) {
+    if (result.success && result.data) {
       return {
         concept1,
         concept2,
-        ...JSON.parse(jsonMatch[0])
+        similarities: result.data.similarities || [],
+        differences: result.data.differences || [],
+        useCases: {
+          preferConcept1: result.data.useCases?.preferConcept1 || [],
+          preferConcept2: result.data.useCases?.preferConcept2 || []
+        }
       };
     }
 
@@ -344,19 +396,15 @@ export default class ConceptLearner {
   "recommendedOrder": ["建议学习顺序"]
 }`;
 
-    const completion = await this.zai!.chat.completions.create({
-      messages: [
-        { role: 'system', content: '你是一位学习路径规划专家。' },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.3
-    });
+    const responseText = await this.ai!.chat([
+      { role: 'system', content: '你是一位学习路径规划专家。' },
+      { role: 'user', content: prompt }
+    ], { temperature: 0.3 });
 
-    const responseText = completion.choices[0]?.message?.content || '{}';
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const result = extractJson<LearningPathPlan>(responseText);
 
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+    if (result.success && result.data) {
+      return result.data;
     }
 
     return {
@@ -430,6 +478,20 @@ ${card.keyPapers?.map(p => `
 - [${p.title}](${p.url || '#'}) (${p.year}) - ${p.summary}
 `).join('\n') || '暂无'}
 
+${card.codeExamples && card.codeExamples.length > 0 ? `
+## 💻 代码示例
+
+${card.codeExamples.map((example, i) => `
+### 示例 ${i + 1}: ${example.title}
+
+${example.description}
+
+\`\`\`${example.language}
+${example.code}
+\`\`\`
+`).join('\n')}
+` : ''}
+
 ---
 *生成时间: ${card.generatedAt}*
 `;
@@ -449,7 +511,7 @@ if (import.meta.main) {
   }
 
   const depthIndex = args.indexOf('--depth');
-  const depth = depthIndex > -1 ? args[depthIndex + 1] as any : 'intermediate';
+  const depth = depthIndex > -1 ? args[depthIndex + 1] as 'beginner' | 'intermediate' | 'advanced' : 'intermediate';
 
   const outputIndex = args.indexOf('--output');
   const outputFile = outputIndex > -1 ? args[outputIndex + 1] : null;
@@ -464,5 +526,8 @@ if (import.meta.main) {
     } else {
       console.log(JSON.stringify(card, null, 2));
     }
-  }).catch(console.error);
+  }).catch(err => {
+    console.error('Error:', getErrorMessage(err));
+    process.exit(1);
+  });
 }

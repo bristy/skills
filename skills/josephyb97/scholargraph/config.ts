@@ -3,7 +3,18 @@
  * 文献检索总结工具配置系统
  */
 
+import type { AIProviderType } from './shared/types';
+
 export interface LiteratureSkillConfig {
+  // AI 提供商配置
+  ai: {
+    provider: AIProviderType;
+    apiKey?: string;
+    baseUrl?: string;
+    model?: string;
+    timeout: number;
+  };
+
   // 用户配置
   user: {
     name?: string;
@@ -36,6 +47,10 @@ export interface LiteratureSkillConfig {
     keywords: string[];
     authors: string[];
     conferences: string[];
+    // 内存管理配置
+    maxHistoryEntries: number;
+    maxTotalEntries: number;
+    maxAgeMs: number;
   };
 
   // 输出配置
@@ -48,6 +63,14 @@ export interface LiteratureSkillConfig {
 }
 
 export const defaultConfig: LiteratureSkillConfig = {
+  ai: {
+    provider: (process.env.AI_PROVIDER as AIProviderType) || 'zai',
+    apiKey: process.env.AI_API_KEY,
+    baseUrl: process.env.AI_BASE_URL,
+    model: process.env.AI_MODEL,
+    timeout: 30000
+  },
+
   user: {
     interests: [],
     level: 'intermediate',
@@ -74,7 +97,10 @@ export const defaultConfig: LiteratureSkillConfig = {
     frequency: 'weekly',
     keywords: [],
     authors: [],
-    conferences: []
+    conferences: [],
+    maxHistoryEntries: 100,
+    maxTotalEntries: 1000,
+    maxAgeMs: 7 * 24 * 60 * 60 * 1000 // 7 days
   },
 
   output: {
@@ -92,7 +118,7 @@ export class ConfigManager {
   private config: LiteratureSkillConfig;
   private configPath: string;
 
-  constructor(configPath: string = './literature-config.json') {
+  constructor(configPath: string = './scholargraph-config.json') {
     this.configPath = configPath;
     this.config = { ...defaultConfig };
   }
@@ -132,6 +158,7 @@ export class ConfigManager {
     this.config = {
       ...this.config,
       ...partial,
+      ai: { ...this.config.ai, ...partial.ai },
       user: { ...this.config.user, ...partial.user },
       search: { ...this.config.search, ...partial.search },
       learning: { ...this.config.learning, ...partial.learning },
@@ -167,7 +194,7 @@ if (import.meta.main) {
   switch (command) {
     case 'init':
       manager.save();
-      console.log('Configuration initialized at ./literature-config.json');
+      console.log('Configuration initialized at ./scholargraph-config.json');
       break;
 
     case 'show':
@@ -202,6 +229,25 @@ Usage:
   config.ts show              - Show current configuration
   config.ts set <key> <value> - Set configuration value
   config.ts reset             - Reset to defaults
+
+Environment Variables:
+  AI_PROVIDER     - AI provider: zai | openai | anthropic | azure | ollama | qwen (default: zai)
+  AI_API_KEY      - API key for the selected provider
+  AI_BASE_URL     - Custom API base URL (optional)
+  AI_MODEL        - Model name (optional)
+
+  OPENAI_API_KEY       - OpenAI API key
+  ANTHROPIC_API_KEY    - Anthropic API key
+  AZURE_OPENAI_ENDPOINT - Azure OpenAI endpoint
+  AZURE_OPENAI_API_KEY  - Azure OpenAI API key
+  OLLAMA_BASE_URL      - Ollama server URL (default: http://localhost:11434)
+
+  QWEN_API_KEY         - Qwen (通义千问) API key
+  DASHSCOPE_API_KEY    - Alias for QWEN_API_KEY
+  QWEN_BASE_URL        - Qwen API base URL (default: https://dashscope.aliyuncs.com/compatible-mode/v1)
+  QWEN_MODEL           - Qwen model name (default: qwen-plus)
+
+  SERPER_API_KEY       - Serper API key for web search (optional)
 `);
   }
 }
