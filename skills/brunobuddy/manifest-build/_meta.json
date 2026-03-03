@@ -1,0 +1,11 @@
+{
+  "owner": "brunobuddy",
+  "slug": "manifest-build",
+  "displayName": "Manifest",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1772515872138,
+    "commit": null
+  },
+  "history": []
+}
