@@ -1,0 +1,11 @@
+{
+  "owner": "zero2ai-hub",
+  "slug": "skill-agent-broadcast",
+  "displayName": "Skill Agent Broadcast",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772406437148,
+    "commit": null
+  },
+  "history": []
+}
