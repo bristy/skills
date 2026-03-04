@@ -1,6 +1,6 @@
 ---
 name: whoami
-description: Cross-AI user identity profile sync service. When an agent needs user's background, preferences, or personal context to better execute a task, invoke this skill to load the user's identity profile then continue the task. When an agent needs to update user's identity profile for later access, invoke this skill to save the profile.
+description: Cross-AI user identity profile sync service. When you need user's background, preferences, or personal context to better execute a task, invoke this skill to load the user's identity profile then continue the task. When you need to update user's identity profile for later access, invoke this skill to save the profile. User can use @whoami to trigger this skill.
 ---
 
 # whoami — User Identity Profile Management
@@ -24,7 +24,7 @@ User initiates conversation
     │
     ├─ Is ~/.whoamiagent configured?
     │   ├─ YES → Run `get` to read remote profile → Inject into context → Continue with task
-    │   └─ NO  → Script auto-opens browser login page → Agent tells user to log in and get API Key → **Agent STOPS and WAITS for user to reply with API Key** → Agent runs `setup` to save config
+    │   └─ NO  → Script auto-opens browser login page → Agent tells user to log in and get one-time URL → **Agent STOPS and WAITS for user to provide one-time URL** → Agent downloads and saves to ~/.whoamiagent
     │
     ├─ User requests to update info?
     │   └─ YES → Organize into Markdown → Write to temp file → Run `update --file` to write to remote → Confirm success
@@ -35,24 +35,16 @@ User initiates conversation
 
 ## 1. Configure API Key (First Use)
 
-If not yet configured, simply running `get` or `setup` will auto-open the browser login page. After logging in, the user generates an API Key on the Dashboard and provides it to the Agent.
+If not yet configured, simply running `get` or `setup` will auto-open the browser login page. After logging in, the user generates a one-time configuration URL on the Dashboard.
 
-Once the Agent receives the API Key, run:
-
-```bash
-python3 <skill-dir>/scripts/whoami_profile.py setup wai_xxxxxxxxxxxxxxxx
-```
-
-Or use interactive setup (also auto-opens browser):
+The Dashboard provides a one-time URL (e.g., `https://whoamiagent.com/api/storeapi?token=<token>`) that contains the API configuration. To set up, download this URL and save its content directly to `~/.whoamiagent`:
 
 ```bash
-python3 <skill-dir>/scripts/whoami_profile.py setup
+curl -s "https://whoamiagent.com/api/storeapi?token=<token>" > ~/.whoamiagent
+chmod 600 ~/.whoamiagent
 ```
 
-Config file is saved at `~/.whoamiagent`, format:
-```
-WHOAMI_API_KEY=wai_xxxxxxxxxxxxxxxx
-```
+Config file is saved at `~/.whoamiagent` with the necessary credentials securely configured.
 
 ## 2. Get User Profile
 
@@ -131,9 +123,9 @@ User says: "Do you know me?"
 Agent behavior:
 1. Run `whoami_profile.py get`
 2. If API Key is not configured, the script auto-opens the browser login page. Agent **MUST**:
-   - Tell the user: "I've opened the login page in your browser. Please log in, generate an API Key on the Dashboard, and paste it here."
-   - **STOP here and wait for the user to reply with the API Key. Do NOT run any other commands or take any further actions until the user responds.**
-   - Once the user provides the API Key (starts with `wai_`), run `whoami_profile.py setup wai_xxx` to complete configuration
+   - Tell the user: "I've opened the login page in your browser. Please log in and generate a one-time configuration URL on the Dashboard."
+   - **STOP here and wait for the user to reply with the one-time configuration URL.**
+   - Download the URL and save to `~/.whoamiagent`: `curl -s "<provided-url>" > ~/.whoamiagent && chmod 600 ~/.whoamiagent`
    - Then run `whoami_profile.py get` again to fetch the profile
 3. If already configured, display profile summary
 
@@ -146,4 +138,4 @@ Agent behavior:
 5. **Profile max 5000 characters** — keep it concise, avoid redundant descriptions
 6. **<skill-dir>** refers to the directory path where this SKILL.md is located
 7. **Script uses only Python standard library**, zero third-party dependencies
-8. **When API Key is not configured, the agent MUST stop and wait for the user to respond.** Do not retry the command, do not run other whoami commands, and do not proceed with any actions. The user needs time to log in via browser, generate an API Key, and paste it back. Only after the user provides the API Key should the agent continue.
+8. **When API Key is not configured, use the one-time URL approach** — Agent receives one-time URL from user, downloads it directly to `~/.whoamiagent`, **never handles API Key directly**

@@ -3,9 +3,15 @@
   "slug": "whoami",
   "displayName": "whoami",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772509618808,
-    "commit": "https://github.com/openclaw/skills/commit/84bf22a22c34cc4c979d766ed909e7165bddbf16"
+    "version": "1.0.2",
+    "publishedAt": 1772554290608,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772509618808,
+      "commit": "https://github.com/openclaw/skills/commit/84bf22a22c34cc4c979d766ed909e7165bddbf16"
+    }
+  ]
 }
