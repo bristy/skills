@@ -1,0 +1,11 @@
+{
+  "owner": "offlinecat-dev",
+  "slug": "ssh-agentd-control",
+  "displayName": "ssh-agentd-control",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1772464543801,
+    "commit": null
+  },
+  "history": []
+}
