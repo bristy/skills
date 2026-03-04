@@ -1,11 +1,17 @@
 {
   "owner": "jisuapi",
   "slug": "isbn",
-  "displayName": "极速数据ISBN图书书号查询",
+  "displayName": "ISBN图书书号查询 - ISBN Book Number Query",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772514819488,
-    "commit": "https://github.com/openclaw/skills/commit/36760406f7d791c2b7f89e593cb2e6de63d6ee35"
+    "version": "1.0.2",
+    "publishedAt": 1772532919100,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772514819488,
+      "commit": "https://github.com/openclaw/skills/commit/36760406f7d791c2b7f89e593cb2e6de63d6ee35"
+    }
+  ]
 }
