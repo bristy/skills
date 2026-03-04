@@ -1,0 +1,11 @@
+{
+  "owner": "tinywatermonster",
+  "slug": "feishu-multiagent",
+  "displayName": "Create a new agent in FeiShu",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772617955783,
+    "commit": null
+  },
+  "history": []
+}
