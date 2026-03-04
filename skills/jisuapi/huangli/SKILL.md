@@ -60,7 +60,7 @@ python3 skills/huangli/huangli.py '{"year":2015,"month":10,"day":27}'
 ## 返回结果示例
 
 脚本直接输出接口的 `result` 字段，结构与官网示例一致，例如（节选自
-[官方文档](https://www.jisuapi.com/api/huangli)）：
+[极速数据文档](https://www.jisuapi.com/api/huangli)）：
 
 ```json
 {
@@ -112,7 +112,7 @@ python3 skills/huangli/huangli.py '{"year":2015,"month":10,"day":27}'
 
 ## 常见错误码
 
-来自 [官方黄历文档](https://www.jisuapi.com/api/huangli) 的业务错误码：
+来自 [极速数据黄历文档](https://www.jisuapi.com/api/huangli) 的业务错误码：
 
 | 代号 | 说明       |
 |------|------------|

@@ -1,11 +1,17 @@
 {
   "owner": "jisuapi",
   "slug": "huangli",
-  "displayName": "极速数据黄历查询",
+  "displayName": "黄历查询 - Almanac / Huangli Inquiry",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772514954838,
-    "commit": "https://github.com/openclaw/skills/commit/efed84ab5efedd07c6ab61c5286fed5faec204b7"
+    "version": "1.0.2",
+    "publishedAt": 1772533158788,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772514954838,
+      "commit": "https://github.com/openclaw/skills/commit/efed84ab5efedd07c6ab61c5286fed5faec204b7"
+    }
+  ]
 }
