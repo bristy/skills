@@ -7,6 +7,17 @@ Measures three core metrics using [Ragas](https://docs.ragas.io/):
 - **Answer Relevancy** — Does the answer actually address the question?
 - **Context Precision** — Did retrieval return the right chunks?
 
+## 🛠️ Installation
+
+### 1. Ask OpenClaw (Recommended)
+Tell OpenClaw: *"Install the rag-eval skill."* The agent will handle the installation and configuration automatically.
+
+### 2. Manual Installation (CLI)
+If you prefer the terminal, run:
+```bash
+clawhub install rag-eval
+```
+
 ## ⚠️ Prerequisites
 
 1. **RAG system** — You need a RAG pipeline integrated with OpenClaw (vector DB + retrieval). This skill evaluates *output quality*, not RAG itself.

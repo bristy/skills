@@ -1,6 +1,7 @@
 ---
 name: rag-eval
-description: "Evaluate your RAG pipeline quality using Ragas metrics (faithfulness, answer relevancy, context precision). PREREQUISITE: You must have a RAG system integrated with OpenClaw (e.g. vector DB + retrieval). Use when: (1) testing RAG answer quality after config changes, (2) checking for hallucinations in retrieved-context answers, (3) running batch regression tests on a golden dataset, (4) comparing RAG performance before/after embedding or chunking changes. NOT for: general LLM chat evaluation without retrieval context, code review, or non-RAG agent outputs."
+description: "Evaluate your RAG pipeline quality using Ragas metrics (faithfulness, answer relevancy, context precision)."
+version: "1.2.1"
 metadata:
   {
     "openclaw": {
@@ -24,9 +25,20 @@ metadata:
 
 # RAG Eval — Quality Testing for Your RAG Pipeline
 
-Test and monitor your RAG pipeline's output quality. Measures faithfulness (are answers grounded in retrieved context?), relevancy (does the answer address the question?), and context precision (did retrieval return the right chunks?).
+Test and monitor your RAG pipeline's output quality.
 
-**⚠️ Prerequisites:**
+## 🛠️ Installation
+
+### 1. Ask OpenClaw (Recommended)
+Tell OpenClaw: *"Install the rag-eval skill."* The agent will handle the installation and configuration automatically.
+
+### 2. Manual Installation (CLI)
+If you prefer the terminal, run:
+```bash
+clawhub install rag-eval
+```
+
+## ⚠️ Prerequisites
 1. Your OpenClaw must have a **RAG system** (vector DB + retrieval pipeline). This skill evaluates the *output quality* of that pipeline — it does not provide RAG functionality itself.
 2. **At least one LLM API key** is required — Ragas uses an LLM as judge internally. Set one of:
    - `OPENAI_API_KEY` (default, uses GPT-4o)
