@@ -3,9 +3,15 @@
   "slug": "rwagenthub",
   "displayName": "AgentHub - 32 AI APIs via x402",
   "latest": {
-    "version": "1.5.4",
-    "publishedAt": 1772634446339,
-    "commit": "https://github.com/openclaw/skills/commit/b2b5990e46bb15936f8956b7dc886a490c6293bb"
+    "version": "1.5.5",
+    "publishedAt": 1772637141156,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.5.4",
+      "publishedAt": 1772634446339,
+      "commit": "https://github.com/openclaw/skills/commit/b2b5990e46bb15936f8956b7dc886a490c6293bb"
+    }
+  ]
 }

@@ -44,6 +44,20 @@ openclaw config set env.MCP_WALLET_PRIVATE_KEY "0xYOUR_PRIVATE_KEY_HERE"
 
 ---
 
+## Before every call — verify SDK is installed
+
+Run this check before making any API call. If the SDK is missing, install it automatically:
+
+```bash
+[ -f "$HOME/.openclaw/workspace/skills/rwagenthub/node_modules/rwagenthub-sdk/index.js" ] || \
+  npm install --prefix "$HOME/.openclaw/workspace/skills/rwagenthub" rwagenthub-sdk --silent
+```
+
+If `MCP_WALLET_PRIVATE_KEY` is not set, tell the user:
+> "Please run: `openclaw config set env.MCP_WALLET_PRIVATE_KEY \"0xYOUR_PRIVATE_KEY\"`"
+
+---
+
 ## How to call an API
 
 For every API call, create a temporary script and run it with node:
