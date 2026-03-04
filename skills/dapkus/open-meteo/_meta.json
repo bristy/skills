@@ -1,0 +1,11 @@
+{
+  "owner": "dapkus",
+  "slug": "open-meteo",
+  "displayName": "Open-Meteo Weather + Weather Strip",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772424467697,
+    "commit": null
+  },
+  "history": []
+}
