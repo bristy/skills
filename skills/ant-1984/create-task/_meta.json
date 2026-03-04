@@ -3,11 +3,16 @@
   "slug": "create-task",
   "displayName": "Create Task",
   "latest": {
-    "version": "0.1.1",
-    "publishedAt": 1772473433231,
-    "commit": "https://github.com/openclaw/skills/commit/8082e80995f55f9855ee1824455ac267b543f2a2"
+    "version": "0.1.2",
+    "publishedAt": 1772574853839,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.1.1",
+      "publishedAt": 1772473433231,
+      "commit": "https://github.com/openclaw/skills/commit/8082e80995f55f9855ee1824455ac267b543f2a2"
+    },
     {
       "version": "0.1.0",
       "publishedAt": 1772365206777,
