@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "salesforce-integration",
+  "displayName": "Salesforce",
+  "latest": {
+    "version": "1.0.4",
+    "publishedAt": 1772585030152,
+    "commit": null
+  },
+  "history": []
+}
