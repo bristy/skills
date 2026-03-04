@@ -1,0 +1,11 @@
+{
+  "owner": "jisuapi",
+  "slug": "jisu-car",
+  "displayName": "车型大全查询 - Car Models Inquiry",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1772533332705,
+    "commit": null
+  },
+  "history": []
+}
