@@ -1,0 +1,11 @@
+{
+  "owner": "pjain",
+  "slug": "mflux",
+  "displayName": "MFlux Skill for OpenClaw",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1772684246402,
+    "commit": null
+  },
+  "history": []
+}
