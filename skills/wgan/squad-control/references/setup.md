@@ -30,6 +30,10 @@ Edit `~/.openclaw/openclaw.json` and add:
 
 Then restart: `openclaw gateway restart`
 
+Optional hardening env vars:
+- `SC_REVIEWER_AGENT_ID` — deterministic reviewer routing
+- `SC_DEFAULT_BRANCH` — default PR/merge base branch (if not `main`)
+
 **About SC_API_KEY scopes:**
 - **Workspace-scoped key** — bound to a single workspace. `/api/tasks/pending` returns only that workspace's tasks. Good for single-workspace setups.
 - **Account-scoped key** — spans all workspaces in your account. `/api/tasks/pending` returns tasks from all workspaces, each with an embedded `workspace` object containing repo URL, GitHub token, and concurrency settings. **Recommended for multi-workspace setups** — no local workspace config needed.

@@ -1,6 +1,6 @@
 ---
 name: squad-control
-version: 1.1.6
+version: 1.2.1
 homepage: https://squadcontrol.ai
 env:
   SC_API_URL:
@@ -17,6 +17,12 @@ env:
       GitHub Personal Access Token for PR creation and repo cloning.
       When not set manually, the skill uses the token returned by the Squad Control API
       (workspace.githubToken) — configured in Squad Control Settings → Project Repository.
+    required: false
+  SC_REVIEWER_AGENT_ID:
+    description: Optional explicit reviewer agent id. If set, review routing uses this id first.
+    required: false
+  SC_DEFAULT_BRANCH:
+    description: Optional default git base branch override (fallback: workspace default branch, then main).
     required: false
 description: >
   Integrate with Squad Control kanban for AI agent task orchestration.
@@ -52,6 +58,8 @@ Orchestrate AI agent tasks from Squad Control's kanban board.
 - **Full API:** `references/api.md`
 - **PR template:** `references/pr-template.md`
 - **Review checklist:** `references/review-checklist.md`
+- **Poll result schema:** `references/poll-result.schema.json`
+- **Migration notes:** `references/migration-notes.md`
 
 Required env vars: `SC_API_URL`, `SC_API_KEY`
 
@@ -62,10 +70,14 @@ Required env vars: `SC_API_URL`, `SC_API_KEY`
 When a cron fires to check for tasks:
 
 1. Run `~/.openclaw/skills/squad-control/scripts/poll-tasks.sh` (requires `SC_API_URL` and `SC_API_KEY` env vars)
+   - Script is multi-workspace safe: it does **not** export top-level `REPO_URL` / `GITHUB_TOKEN`; resolve repo/token per task from `task.workspace` (or fallback top-level workspace for legacy payloads).
+   - Script includes overlap protection via a lock/lease guard (stale lock auto-expires).
+   - Script uses retry/backoff/timeouts for API calls.
 2. If output is `HEARTBEAT_OK` → no work, stop
-3. If output contains `PENDING_TASKS:` → parse the JSON after it, follow **Pickup & Dispatch** below for each task
-4. If output contains `REVIEW_TASKS:` → parse the JSON after it, follow **Review Dispatch** below for each task
-5. If output contains `STUCK_TASKS:` → parse the JSON after it, follow **Stuck Task Recovery** below for each task
+3. If output contains `POLL_RESULT:` → parse the JSON envelope after it:
+   - `pending` → follow **Pickup & Dispatch** below for each task
+   - `review.tasks` → follow **Review Dispatch** below for each task
+   - `stuck.tasks` → follow **Stuck Task Recovery** below for each task
 
 Alternatively, call the APIs directly:
 - Pending: `curl -sL "${SC_API_URL}/api/tasks/pending" -H "x-api-key: ${SC_API_KEY}"`
@@ -157,13 +169,19 @@ Run two checks every cron cycle:
 ```bash
 curl -sL "${SC_API_URL}/api/tasks/list?status=working" -H "x-api-key: ${SC_API_KEY}"
 ```
-For each working task where `deliverables` contains a PR entry and `startedAt` is more than 30 minutes ago → auto-rescue by moving to review:
+For each working task where `deliverables` contains a PR entry, `startedAt` exists, and `startedAt` is more than 30 minutes ago (and no recent activity signal) → auto-rescue by moving to review.
+
+Before rescue, apply idempotency guards:
+1. Skip if task already has an `autoRescuedAt` marker in metadata (if available)
+2. Skip if thread already contains an auto-rescue message for this task
+3. After successful rescue, write marker `autoRescuedAt=<now>` (or equivalent) to prevent duplicate rescues in later cron cycles
+
 ```bash
 curl -sL -X POST "${SC_API_URL}/api/tasks/set-review" \
   -H "x-api-key: ${SC_API_KEY}" -H "Content-Type: application/json" \
   -d "{\"taskId\": \"${TASK_ID}\", \"agentId\": \"${ASSIGNED_AGENT_ID}\", \"result\": \"Auto-rescued: sub-agent completed work but did not transition status.\", \"deliverables\": ${EXISTING_DELIVERABLES}}"
 ```
-Post to thread: *"Auto-moved to review — sub-agent completed PR but didn't call set-review."*
+Only post thread message if `set-review` actually changed the task state to `review`: *"Auto-moved to review — sub-agent completed PR but didn't call set-review."*
 
 **Check 2 — Tasks marked "done" with an unmerged/open PR:**
 ```bash
@@ -177,21 +195,30 @@ For each recently-done task with a PR deliverable, verify the PR is actually mer
 curl -sL -H "Authorization: token ${GITHUB_TOKEN}" \
   "https://api.github.com/repos/${owner}/${repo}/pulls/${PR_NUMBER}" | grep -o '"merged":[^,]*'
 ```
-If `"merged":false` (PR still open) → the agent skipped review. Re-open for Hawk:
+If `"merged":false` (PR still open) → the agent skipped review. Re-open for Hawk.
+
+Idempotency guard before creating a review task:
+1. Search existing tasks for one already referencing this PR URL/number in `review|assigned|working`
+2. Only create a new review task if none exists
+
 ```bash
 # Create a review task for Hawk
 curl -sL -X POST "${SC_API_URL}/api/tasks/create" \
   -H "x-api-key: ${SC_API_KEY}" -H "Content-Type: application/json" \
   -d "{\"title\": \"Review PR #${PR_NUMBER}: ${TASK_TITLE}\", \"description\": \"Agent marked task done but PR is still open and unmerged. Please review and merge if approved.\\n\\nPR: ${PR_URL}\", \"assignedAgentId\": \"${REVIEWER_AGENT_ID}\", \"workspaceId\": \"${WORKSPACE_ID}\", \"priority\": \"high\"}"
 ```
-Post a warning to the original task thread: *"⚠️ Task was marked done but PR #N is unmerged. Created review task for Hawk."*
+Post a warning to the original task thread only when a new review task is created: *"⚠️ Task was marked done but PR #N is unmerged. Created review task for Hawk."*
 
 ### Review Dispatch
 
-When review tasks are found, find the reviewer agent first:
+When review tasks are found, resolve the reviewer deterministically:
+
+1. If `SC_REVIEWER_AGENT_ID` is set, use it directly
+2. Else query agents and pick exact role match `Code Reviewer`
+3. Else fallback to name `Hawk` or role containing `Reviewer`
+
 ```bash
 curl -sL "${SC_API_URL}/api/agents" -H "x-api-key: ${SC_API_KEY}"
-# Find agent with role containing "Reviewer" or name "Hawk"
 ```
 
 For each review task (has PR deliverable, `pickedUpAt` not set):
@@ -224,9 +251,10 @@ else
 fi
 cd /tmp/merge-repo
 git fetch origin
-git checkout main && git pull origin main
+DEFAULT_BRANCH="${SC_DEFAULT_BRANCH:-${WORKSPACE_DEFAULT_BRANCH:-main}}"
+git checkout "$DEFAULT_BRANCH" && git pull origin "$DEFAULT_BRANCH"
 git merge --no-ff origin/task/${TASK_ID} -m "Merge PR #${PR_NUMBER}: ${TASK_TITLE}"
-git push origin main
+git push origin "$DEFAULT_BRANCH"
 
 # 4. Post to thread
 curl -sL -X POST "${SC_API_URL}/api/threads/send" \
@@ -340,7 +368,7 @@ curl -sL -X POST \
   -H "Authorization: token ${GITHUB_TOKEN}" \
   -H "Content-Type: application/json" \
   "https://api.github.com/repos/${owner}/${repo}/pulls" \
-  -d '{"title": "${task.title}", "head": "task/${task._id}", "base": "main", "body": "${summary}"}'
+  -d '{"title": "${task.title}", "head": "task/${task._id}", "base": "${SC_DEFAULT_BRANCH:-${WORKSPACE_DEFAULT_BRANCH:-main}}", "body": "${summary}"}'
 # Save the PR number and URL from the response
 
 ## 3. Post summary to thread
@@ -460,7 +488,22 @@ curl -sL -X POST "${SC_API_URL}/api/tasks/review" \
 curl -sL "${SC_API_URL}/api/agents" -H "x-api-key: ${SC_API_KEY}"
 ```
 
-Look for `role: "Code Reviewer"` to identify the reviewer agent.
+Reviewer selection order:
+1. `SC_REVIEWER_AGENT_ID` (explicit override)
+2. Exact `role: "Code Reviewer"`
+3. Fallback role contains `Reviewer` or name `Hawk`
+
+## Poll Script Tests
+
+Run parser tests locally:
+
+```bash
+~/.openclaw/workspace/skills/squad-control/scripts/run-tests.sh
+```
+
+`POLL_RESULT` envelope contract is documented in:
+- `references/poll-result.schema.json`
+
 
 ## Creating Tasks Programmatically
 
@@ -475,7 +518,7 @@ curl -sL -X POST "${SC_API_URL}/api/tasks/create" \
 ## Common Mistakes
 
 1. **Marking done without doing work** — Always post results to the thread and create a PR (if code task) before marking complete. Empty result + no thread messages = task wasn't really done.
-2. **Sub-agent calling /complete instead of /complete after opening a PR** — This is the most common workflow violation. If a PR was opened, the ONLY valid next call is `set-review`. Calling `complete` directly skips code review entirely and leaves an unmerged PR dangling. The stuck task recovery check now catches "done" tasks with open PRs and auto-creates a Hawk review task.
+2. **Sub-agent calling /complete instead of /set-review after opening a PR** — This is the most common workflow violation. If a PR was opened, the ONLY valid next call is `set-review`. Calling `complete` directly skips code review entirely and leaves an unmerged PR dangling. The stuck task recovery check now catches "done" tasks with open PRs and auto-creates a Hawk review task.
 3. **Squad Lead skipping the merge** — When a task is assigned to the Squad Lead and has a PR deliverable, merge the PR to main BEFORE marking complete.
 4. **Not passing SC_API_URL/SC_API_KEY into spawn prompt** — Sub-agents can't call back to Squad Control without these. Always include them in the spawn template.
 5. **Not using workspace.repoUrl** — The pending and pickup responses include `workspace.repoUrl` and `workspace.githubToken`. Use them — don't assume a default repo path.

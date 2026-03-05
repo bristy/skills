@@ -38,6 +38,6 @@ curl -s -X POST "https://api.github.com/repos/${OWNER}/${REPO}/pulls" \
     "title": "feat: Add toast notifications for user feedback",
     "body": "## What\nAdds sonner toast notifications across the app.\n\n## Why\nUsers had no feedback when saving settings or creating resources.\n\n## Changes\n- Added sonner dependency\n- Global Toaster in root layout\n- Success/error toasts on all CRUD operations\n\n## Testing\n- Tested create/update/delete flows for agents, tasks, triggers\n- Verified toasts auto-dismiss after 3s",
     "head": "task/abc123",
-    "base": "main"
+    "base": "${SC_DEFAULT_BRANCH:-main}"
   }'
 ```

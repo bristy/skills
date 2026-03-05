@@ -1,5 +1,5 @@
 #!/bin/bash
-# Poll Squad Control for pending tasks
+# Poll Squad Control for pending/review/stuck tasks
 # Called by the agent's cron job
 # Requires: SC_API_URL and SC_API_KEY environment variables
 
@@ -8,91 +8,88 @@ set -euo pipefail
 SC_API_URL="${SC_API_URL:?SC_API_URL not set}"
 SC_API_KEY="${SC_API_KEY:?SC_API_KEY not set}"
 
-# Poll for pending tasks
-response=$(curl -sfL "${SC_API_URL}/api/tasks/pending" \
-  -H "x-api-key: ${SC_API_KEY}" 2>/dev/null) || {
+# Concurrency guard: prevent overlapping poll runs.
+LOCK_DIR="${TMPDIR:-/tmp}/squad-control-poll.lock"
+LOCK_TTL_SEC="${SC_POLL_LOCK_TTL_SEC:-840}" # 14 min default, below 15m cron interval
+
+cleanup_lock() {
+  rm -rf "$LOCK_DIR" 2>/dev/null || true
+}
+
+acquire_lock() {
+  local now epoch lock_ts age
+  epoch=$(date +%s)
+
+  if mkdir "$LOCK_DIR" 2>/dev/null; then
+    echo "$epoch" > "$LOCK_DIR/ts"
+    trap cleanup_lock EXIT
+    return 0
+  fi
+
+  lock_ts=$(cat "$LOCK_DIR/ts" 2>/dev/null || echo 0)
+  age=$(( epoch - lock_ts ))
+
+  # Clear stale lock, then retry once.
+  if [ "$age" -gt "$LOCK_TTL_SEC" ]; then
+    rm -rf "$LOCK_DIR" 2>/dev/null || true
+    if mkdir "$LOCK_DIR" 2>/dev/null; then
+      echo "$epoch" > "$LOCK_DIR/ts"
+      trap cleanup_lock EXIT
+      return 0
+    fi
+  fi
+
+  # Another run is active. Quietly ack.
+  echo "HEARTBEAT_OK"
+  exit 0
+}
+
+acquire_lock
+
+CURL_CONNECT_TIMEOUT="${SC_POLL_CONNECT_TIMEOUT_SEC:-5}"
+CURL_MAX_TIME="${SC_POLL_MAX_TIME_SEC:-20}"
+CURL_RETRIES="${SC_POLL_RETRIES:-3}"
+CURL_RETRY_DELAY="${SC_POLL_RETRY_DELAY_SEC:-1}"
+
+fetch_json() {
+  local endpoint="$1"
+  curl -sSL \
+    --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+    --max-time "$CURL_MAX_TIME" \
+    --retry "$CURL_RETRIES" \
+    --retry-delay "$CURL_RETRY_DELAY" \
+    --retry-all-errors \
+    --retry-connrefused \
+    --fail \
+    "${SC_API_URL}${endpoint}" \
+    -H "x-api-key: ${SC_API_KEY}" 2>/dev/null
+}
+
+poll_started_ms=$(date +%s%3N)
+
+pending_response=$(fetch_json "/api/tasks/pending") || {
   echo "ERROR: Failed to reach Squad Control API at ${SC_API_URL}"
   exit 1
 }
 
-# Extract workspace context (repo URL + GitHub token for private repos)
-repo_url=$(echo "$response" | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-print(d.get('workspace', {}).get('repoUrl', ''))
-" 2>/dev/null || echo "")
+review_response=$(fetch_json "/api/tasks/list?status=review") || {
+  echo "WARN: review fetch failed, continuing with empty review set" >&2
+  review_response='{"tasks":[]}'
+}
+working_response=$(fetch_json "/api/tasks/list?status=working") || {
+  echo "WARN: working fetch failed, continuing with empty working set" >&2
+  working_response='{"tasks":[]}'
+}
 
-github_token=$(echo "$response" | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-print(d.get('workspace', {}).get('githubToken', ''))
-" 2>/dev/null || echo "")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+parser_out=$(python3 "$SCRIPT_DIR/poll-parser.py" <<JSON
+{"pending": ${pending_response}, "review": ${review_response}, "working": ${working_response}}
+JSON
+)
 
-task_count=$(echo "$response" | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-print(len(d.get('tasks', [])))
-" 2>/dev/null || echo "0")
+# Optional metrics line for operators/debuggers.
+poll_finished_ms=$(date +%s%3N)
+elapsed_ms=$((poll_finished_ms - poll_started_ms))
+echo "POLL_METRICS: {\"elapsedMs\": ${elapsed_ms}, \"connectTimeoutSec\": ${CURL_CONNECT_TIMEOUT}, \"maxTimeSec\": ${CURL_MAX_TIME}, \"retries\": ${CURL_RETRIES}}" >&2
 
-# Export context for the agent to use
-export REPO_URL="$repo_url"
-export GITHUB_TOKEN="$github_token"
-
-# Also check for review tasks (tasks with status=review that need Hawk)
-review_response=$(curl -sfL "${SC_API_URL}/api/tasks/list?status=review" \
-  -H "x-api-key: ${SC_API_KEY}" 2>/dev/null) || review_response=""
-
-review_count=$(echo "$review_response" | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-# Only tasks with a PR deliverable and not already picked up
-def has_pr(deliverables):
-    return any(d.get('type') == 'pr' or '/pull/' in (d.get('url') or '') for d in deliverables)
-tasks = [t for t in d.get('tasks', [])
-         if has_pr(t.get('deliverables', []))
-         and not t.get('pickedUpAt')]
-print(len(tasks))
-" 2>/dev/null || echo "0")
-
-# Check for stuck "working" tasks — has PR deliverable but hasn't transitioned
-# (sub-agent completed work but never called set-review)
-working_response=$(curl -sfL "${SC_API_URL}/api/tasks/list?status=working" \
-  -H "x-api-key: ${SC_API_KEY}" 2>/dev/null) || working_response=""
-
-stuck_json=$(echo "$working_response" | python3 -c "
-import json, sys, time
-d = json.load(sys.stdin)
-now_ms = time.time() * 1000
-threshold_ms = 30 * 60 * 1000  # 30 minutes
-def has_pr(deliverables):
-    return any(d.get('type') == 'pr' or '/pull/' in (d.get('url') or '') for d in deliverables)
-stuck = [t for t in d.get('tasks', [])
-         if has_pr(t.get('deliverables', []))
-         and (not t.get('pickedUpAt') or (t.get('startedAt') and now_ms - t['startedAt'] > threshold_ms))]
-print(json.dumps({'tasks': stuck}))
-" 2>/dev/null || echo '{"tasks":[]}')
-
-stuck_count=$(echo "$stuck_json" | python3 -c "import json,sys; print(len(json.load(sys.stdin).get('tasks', [])))" 2>/dev/null || echo "0")
-
-if [ "$task_count" -eq 0 ] && [ "$review_count" -eq 0 ] && [ "$stuck_count" -eq 0 ]; then
-  echo "HEARTBEAT_OK"
-  exit 0
-fi
-
-# Output pending tasks (if any)
-if [ "$task_count" -gt 0 ]; then
-  echo "PENDING_TASKS:"
-  echo "$response"
-fi
-
-# Output review tasks (if any)
-if [ "$review_count" -gt 0 ]; then
-  echo "REVIEW_TASKS:"
-  echo "$review_response"
-fi
-
-# Output stuck tasks for auto-rescue (if any) — only filtered tasks, not all working
-if [ "$stuck_count" -gt 0 ]; then
-  echo "STUCK_TASKS:"
-  echo "$stuck_json"
-fi
+echo "$parser_out"
