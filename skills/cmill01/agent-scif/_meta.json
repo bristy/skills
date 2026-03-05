@@ -1,0 +1,11 @@
+{
+  "owner": "cmill01",
+  "slug": "agent-scif",
+  "displayName": "Agent SCIF",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1772680528099,
+    "commit": null
+  },
+  "history": []
+}
