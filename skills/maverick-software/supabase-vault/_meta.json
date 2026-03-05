@@ -1,0 +1,11 @@
+{
+  "owner": "maverick-software",
+  "slug": "supabase-vault",
+  "displayName": "Supabase Vault",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772644175991,
+    "commit": null
+  },
+  "history": []
+}
