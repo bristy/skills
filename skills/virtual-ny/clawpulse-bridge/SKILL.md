@@ -15,9 +15,10 @@ Set up a secure status bridge from OpenClaw to ClawPulse and keep it working wit
 ## Quick Workflow
 1. Run `scripts/setup_clawpulse_bridge.sh` (dry-run by default) to generate/confirm token and print endpoint settings.
 2. Start/restart the bridge only when ready: `scripts/setup_clawpulse_bridge.sh --apply`.
-3. Keep default local-only bind (`127.0.0.1`) unless remote access is needed.
-4. Provide user with endpoint + token for ClawPulse app.
-5. If sync fails, use the troubleshooting checklist.
+3. Default bind is remote-ready (`0.0.0.0`) for mobile devices on Tailscale/LAN.
+4. Setup script now prints QR by default (and opens PNG on macOS when available).
+5. Provide user with endpoint + token for ClawPulse app.
+6. If sync fails, use the troubleshooting checklist.
 
 ## Step 1 — Bootstrap the bridge
 Run:
@@ -26,11 +27,11 @@ Run:
 # Dry-run: generate token/server file and print settings (no background process)
 bash scripts/setup_clawpulse_bridge.sh
 
-# Start service in safer local-only mode
+# Start service (remote-ready default + QR)
 bash scripts/setup_clawpulse_bridge.sh --apply
 
-# Remote access mode (only when needed)
-BIND_HOST=0.0.0.0 bash scripts/setup_clawpulse_bridge.sh --apply
+# Optional local-only mode (hardened)
+BIND_HOST=127.0.0.1 bash scripts/setup_clawpulse_bridge.sh --apply
 ```
 
 Expected outputs:

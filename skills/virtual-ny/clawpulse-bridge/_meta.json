@@ -1,11 +1,17 @@
 {
   "owner": "virtual-ny",
   "slug": "clawpulse-bridge",
-  "displayName": "ClawPulse Bridge",
+  "displayName": "Clawpulse Bridge",
   "latest": {
-    "version": "1.0.4",
-    "publishedAt": 1772686016364,
-    "commit": "https://github.com/openclaw/skills/commit/baa0dd34432ad22ae60ffe1aafce9dfe652f0c32"
+    "version": "2.0.0",
+    "publishedAt": 1772721478888,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.4",
+      "publishedAt": 1772686016364,
+      "commit": "https://github.com/openclaw/skills/commit/baa0dd34432ad22ae60ffe1aafce9dfe652f0c32"
+    }
+  ]
 }

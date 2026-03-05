@@ -3,7 +3,7 @@ set -euo pipefail
 
 # ClawPulse bridge bootstrap (safer defaults)
 # - Default: dry-run (generates/prints config only, no background process)
-# - Apply mode: start/restart local bridge explicitly with --apply or APPLY=1
+# - Apply mode: start/restart bridge explicitly with --apply or APPLY=1
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_DEFAULT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
@@ -12,11 +12,11 @@ BRIDGE_PY="$WORKSPACE/openclaw-status-server.py"
 ENV_FILE="$WORKSPACE/.clawpulse.env"
 LOG_FILE="$WORKSPACE/openclaw-status-server.log"
 
-BIND_HOST="${BIND_HOST:-127.0.0.1}"
+BIND_HOST="${BIND_HOST:-0.0.0.0}"
 PORT="${PORT:-8787}"
 ROTATE_TOKEN="${ROTATE_TOKEN:-0}"
 APPLY="${APPLY:-0}"
-PRINT_QR="${PRINT_QR:-0}"
+PRINT_QR="${PRINT_QR:-1}"
 
 for arg in "$@"; do
   case "$arg" in
@@ -54,7 +54,7 @@ if [[ -z "${TOKEN:-}" ]]; then
 fi
 
 cat > "$BRIDGE_PY" <<'PY'
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import ipaddress
 import json, os, re, subprocess, time
 from pathlib import Path
@@ -65,8 +65,12 @@ PORT = int(os.environ.get("PORT", "8787"))
 IDENTITY_PATH = Path(os.environ.get("WORKSPACE", str(Path.cwd()))) / "IDENTITY.md"
 ALLOWED_TAILSCALE = [ipaddress.ip_network("100.64.0.0/10"), ipaddress.ip_network("fd7a:115c:a1e0::/48")]
 LOCAL_NETS = [ipaddress.ip_network("127.0.0.0/8"), ipaddress.ip_network("::1/128")]
-BUSY_THRESHOLD_MS = 120000
-ACTIVE_WINDOW_MS = 15000
+BUSY_THRESHOLD_MS = 30000
+ACTIVE_WINDOW_MS = 30000
+CACHE_TTL_SEC = 10
+STATUS_TIMEOUT_SEC = 12.0
+_cached_payload = None
+_cached_at = 0.0
 
 
 def _ip_allowed(addr: str) -> bool:
@@ -91,7 +95,15 @@ def _assistant_name() -> str:
 
 
 def _status_doc():
-    r = subprocess.run(["openclaw", "status", "--json", "--usage"], capture_output=True, text=True)
+    try:
+        r = subprocess.run(
+            ["openclaw", "status", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=STATUS_TIMEOUT_SEC,
+        )
+    except subprocess.TimeoutExpired:
+        return None
     if r.returncode != 0:
         return None
     try:
@@ -133,10 +145,20 @@ def _has_active_task(doc, recent):
 
 
 def _payload():
+    global _cached_payload, _cached_at
+    now = time.time()
+    if _cached_payload is not None and (now - _cached_at) < CACHE_TTL_SEC:
+        return _cached_payload
+
     doc = _status_doc()
     name = _assistant_name()
+    if doc is None and _cached_payload is not None:
+        stale = dict(_cached_payload)
+        stale["cacheStale"] = True
+        stale["checkedAt"] = int(time.time() * 1000)
+        return stale
     if not doc:
-        return {
+        payload = {
             "online": False,
             "status": "offline",
             "assistantName": name,
@@ -144,6 +166,9 @@ def _payload():
             "tokenUsage": {"prompt": 0, "completion": 0, "total": 0},
             "thought": "我现在有点鼠了，正在重连状态。",
         }
+        _cached_payload = payload
+        _cached_at = now
+        return payload
 
     gateway_ok = bool((doc.get("gateway") or {}).get("reachable", False))
     recent = (doc.get("sessions") or {}).get("recent") or []
@@ -155,7 +180,7 @@ def _payload():
     total = int(session.get("totalTokens", 0) or 0)
 
     if not gateway_ok:
-        return {
+        payload = {
             "online": False,
             "status": "offline",
             "assistantName": name,
@@ -163,16 +188,15 @@ def _payload():
             "tokenUsage": {"prompt": prompt, "completion": completion, "total": total},
             "thought": "我现在有点鼠了，网关恢复后就回来。",
         }
+        _cached_payload = payload
+        _cached_at = now
+        return payload
 
     age = int(session.get("age", 999999999) or 999999999)
-    has_recent_signal = isinstance(recent, list) and len(recent) > 0
-    if has_recent_signal:
-        work_status = "工作中" if has_active_task else "闲置"
-    else:
-        work_status = "工作中" if age <= BUSY_THRESHOLD_MS else "闲置"
+    work_status = "工作中" if (has_active_task or age <= BUSY_THRESHOLD_MS) else "闲置"
     thought = "我在专注处理中。" if work_status == "工作中" else "我在待命休息，随时可唤醒。"
 
-    return {
+    payload = {
         "online": True,
         "status": "online",
         "assistantName": name,
@@ -183,6 +207,9 @@ def _payload():
         "sessionAgeMs": age,
         "checkedAt": int(time.time() * 1000),
     }
+    _cached_payload = payload
+    _cached_at = now
+    return payload
 
 
 class H(BaseHTTPRequestHandler):
@@ -215,7 +242,7 @@ class H(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     if not TOKEN:
         raise SystemExit("STATUS_TOKEN is empty")
-    HTTPServer((BIND_HOST, PORT), H).serve_forever()
+    ThreadingHTTPServer((BIND_HOST, PORT), H).serve_forever()
 PY
 chmod 700 "$BRIDGE_PY"
 
@@ -247,6 +274,9 @@ print_qr_if_needed() {
     qrencode -t ansiutf8 "$SETUP_LINK" || true
     qrencode -o "$WORKSPACE/clawpulse-setup.png" "$SETUP_LINK" || true
     echo "QR image: $WORKSPACE/clawpulse-setup.png"
+    if command -v open >/dev/null 2>&1; then
+      open "$WORKSPACE/clawpulse-setup.png" >/dev/null 2>&1 || true
+    fi
   else
     printf "\nQR requested but 'qrencode' is not installed.\n"
     echo "Install on macOS: brew install qrencode"
@@ -256,6 +286,7 @@ print_qr_if_needed() {
 
 if [[ "$APPLY" != "1" ]]; then
   echo "ClawPulse bridge plan (dry-run, no process started)"
+echo "Default mode: remote access enabled (BIND_HOST=0.0.0.0)"
   echo "Workspace: $WORKSPACE"
   echo "Bind: $BIND_HOST:$PORT"
   echo "Endpoint: $ENDPOINT"
