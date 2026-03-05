@@ -1,0 +1,11 @@
+{
+  "owner": "chenhab03",
+  "slug": "claude-oauth-renewal",
+  "displayName": "Claude OAuth Auto-Renewal",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772727755341,
+    "commit": null
+  },
+  "history": []
+}
