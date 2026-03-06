@@ -2,7 +2,7 @@
     "name": "wodeapp-ai",
     "version": "1.0.0",
     "displayName": "WodeApp AI 全能引擎",
-    "description": "AI 文本生成、图片生成、JSON 结构化输出、语音合成、视频生成、页面构建 — 一个 skill 包搞定所有 AI 能力",
+    "description": "AI 文本生成、图片生成、JSON 结构化输出、语音合成、视频生成、页面构建、无头工作流执行 — 一个 skill 包搞定所有 AI 能力",
     "author": "WodeApp Team",
     "license": "MIT",
     "homepage": "https://wodeapp.ai",
@@ -40,6 +40,11 @@
             "runtimeServer": "https://wodeapp.ai/api",
             "localMainServer": "http://localhost:3100/mainserver/api",
             "localRuntimeServer": "http://localhost:4100/api"
+        },
+        "workflow": {
+            "productionBase": "https://{project}.wodeapp.ai/runtime-server/api/workflow",
+            "localBase": "http://localhost:4100/runtime-server/api/workflow",
+            "note": "Requires x-subdomain-project header with project name or ID"
         }
     },
     "tools": [
@@ -173,18 +178,23 @@
             }
         },
         {
-            "name": "upload_image",
-            "description": "上传图片 — 支持 base64 或 URL 方式",
-            "endpoint": "POST /upload/image",
+            "name": "upload_file",
+            "description": "通用文件上传（图片/音频/视频/文档） — 支持 base64 或 URL 方式",
+            "endpoint": "POST /upload/file",
             "server": "runtime",
+            "note": "旧路径 POST /upload/image 仍可用（兼容）",
             "inputSchema": {
                 "data": {
                     "type": "string",
-                    "description": "base64 图片 (data:image/...;base64,...)"
+                    "description": "base64 文件 (data:image/...;base64,... 或 data:audio/...;base64,...)"
                 },
                 "url": {
                     "type": "string",
-                    "description": "图片 URL (二选一)"
+                    "description": "文件 URL (二选一)"
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "文件名（可选，默认自动生成）"
                 }
             },
             "outputSchema": {
@@ -285,6 +295,59 @@
                     "url": "string",
                     "version": "number"
                 }
+            }
+        },
+        {
+            "name": "workflow_discover",
+            "description": "发现项目工作流 — 获取工作流定义、输入 Schema、步骤列表",
+            "endpoint": "GET /workflow/schema",
+            "server": "workflow",
+            "inputSchema": {},
+            "outputSchema": {
+                "success": "boolean",
+                "data.workflows": "WorkflowSchema[]"
+            }
+        },
+        {
+            "name": "workflow_run",
+            "description": "执行项目工作流 — 提交输入数据异步执行，返回 runId 用于轮询",
+            "endpoint": "POST /workflow/run",
+            "server": "workflow",
+            "inputSchema": {
+                "workflowId": {
+                    "type": "string",
+                    "description": "工作流 ID (可选，默认第一个)"
+                },
+                "inputs": {
+                    "type": "object",
+                    "required": true,
+                    "description": "工作流输入参数（由 workflow_discover 的 inputs 定义）"
+                }
+            },
+            "outputSchema": {
+                "success": "boolean",
+                "data.runId": "string",
+                "data.status": "string",
+                "data.pollUrl": "string"
+            }
+        },
+        {
+            "name": "workflow_poll",
+            "description": "轮询工作流执行状态 — 获取各步骤进度和最终输出结果",
+            "endpoint": "GET /workflow/run/:runId",
+            "server": "workflow",
+            "inputSchema": {
+                "runId": {
+                    "type": "string",
+                    "required": true,
+                    "description": "执行 ID (由 workflow_run 返回)"
+                }
+            },
+            "outputSchema": {
+                "success": "boolean",
+                "data.status": "string (running|completed|error)",
+                "data.steps": "StepResult[]",
+                "data.outputs": "object"
             }
         }
     ],

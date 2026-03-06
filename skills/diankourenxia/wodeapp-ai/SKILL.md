@@ -1,54 +1,79 @@
 ---
 name: wodeapp-ai
-description: "WodeApp AI Engine — token-efficient, unified credit pool, zero-deploy. Text, image, video (Doubao Seedance + Kling AI), structured JSON, TTS, visual workflows, no-code page building. 343+ models, MCP-native."
+description: "WodeApp AI Engine — token-efficient, unified credit pool, zero-deploy. Text, image, video (Doubao Seedance + Kling AI), structured JSON, TTS, visual workflows, headless workflow API, no-code page building. 343+ models, MCP-native."
+homepage: https://wodeapp.ai
+author: WodeApp Team
+requiredEnv:
+  - WODEAPP_API_KEY
 ---
 
 # WodeApp AI Skill Pack
 
-> 🇺🇸 One skill pack to unlock all WodeApp AI capabilities — Text / Image / JSON / TTS / Video / Visual Workflow / Page Building / Zero-Deploy.
+> **EN** One skill pack to unlock all WodeApp AI capabilities.
 >
-> 🇨🇳 只需接入一个 Skill 包，即可解锁 WodeApp 全部 AI 能力 — 文本 / 图片 / JSON / TTS / 视频 / 可视化工作流 / 页面构建 / 免部署发布。
+> **中文** 只需接入一个 Skill 包，即可解锁 WodeApp 全部 AI 能力。
 
-## ✨ Core Capabilities | 核心能力
+---
 
-| Capability | Description 🇺🇸 | 说明 🇨🇳 | Models |
-|------------|-----------------|---------|--------|
-| 🤖 **Text** | Copywriting, summaries, translation, code | 文案、摘要、翻译、代码 | GPT-4o / Claude 3.5 / Gemini / DeepSeek / Qwen |
-| 🎨 **Image** | Text-to-image, image-to-image, style transfer | 文生图、图生图、风格迁移 | Seedream 3.0 / Imagen 4 / Flux |
-| 📊 **JSON** | Structured JSON output following your schema | 指定 Schema 输出精确 JSON | All models |
-| 🎙️ **TTS** | Multi-language, multi-voice natural speech | 多语言多音色语音合成 | Doubao TTS / Edge TTS |
-| 🎬 **Video** | Text/image to dynamic video | 文字/图片一键生成视频 | **Doubao Seedance** / **Kling AI** |
-| ⚡ **Workflow** | Drag-and-drop multi-step AI pipelines | 拖拽编排 19 种步骤类型 | No code needed |
-| 🌐 **Page Build** | One sentence → full interactive page | 一句话生成完整交互页面 | 60+ UI components |
-| 🚀 **Zero-Deploy** | One-click publish, auto domain + SSL | 一键发布，自动域名 + SSL | `*.wodeapp.com` |
+## Core Capabilities
 
-## 💰 Why WodeApp? | 为什么选 WodeApp？
+### 🤖 Text Generation
+Copywriting · Summaries · Translation · Code  
+**Models**: GPT-4o, Claude 3.5, Gemini, DeepSeek, Qwen
 
-| 🇺🇸 English | 🇨🇳 中文 |
-|-------------|---------|
-| **Token-Efficient** — Smart routing, same quality, 80% less cost | **极致省 Token** — 智能路由，同样效果成本直降 80% |
-| **Unified Credit Pool** — One balance for 343+ models, no multi-platform hassle | **统一积分池** — 一份积分调 343+ 模型，告别多平台账单 |
-| **Zero-Deploy, Zero-Ops** — Auto domain + SSL, no server needed | **免部署免运维** — 自动域名 + SSL，无需服务器 |
-| **MCP Plug & Play** — Auto-discover all tools, zero config | **开箱即用** — MCP 直连，Agent 自动发现所有工具 |
-| **Visual Workflows** — Form → AI → Review → Publish, drag-and-drop | **可视化编排** — 表单→AI→审核→发布，拖拽即成 |
+### 🎨 Image Generation
+Text-to-image · Image-to-image · Style transfer  
+**Models**: Seedream 3.0, Imagen 4, Flux
 
-## ⚙️ Setup | 准备工作
+### 📊 Structured JSON
+Schema-compliant JSON output from any model  
+**Models**: All supported models
 
-🇺🇸 Get your API Key: sign up at [wodeapp.ai](https://wodeapp.ai) → **API Skills** → **Generate API Key**
+### 🎙️ Text-to-Speech
+Multi-language · Multi-voice · Custom voice cloning  
+**Models**: Doubao TTS, Edge TTS, Kling TTS
 
-🇨🇳 获取 API Key：访问 [wodeapp.ai](https://wodeapp.ai) → 「开放能力」→ 「生成 API Key」
+### 🎬 Video Generation
+Text/image → dynamic video  
+**Models**: Doubao Seedance, Kling AI
+
+### ⚡ Visual Workflow
+Drag-and-drop multi-step AI pipelines — 19 step types, no code needed
+
+### 🔗 Headless Workflow API
+Discover, run, and poll workflows via REST — programmatic execution without browser
+
+### 🌐 Page Builder
+One sentence → full interactive page with 60+ UI components
+
+### 🚀 Zero-Deploy
+One-click publish with auto domain (`*.wodeapp.ai`) + SSL
+
+---
+
+## Why WodeApp?
+
+- **Token-Efficient** — Smart routing, same quality, 80% less cost
+- **Unified Credit Pool** — One balance for 343+ models, no multi-platform hassle
+- **Zero-Deploy** — Auto domain + SSL, no server needed
+- **MCP Plug & Play** — Auto-discover all tools, zero config
+- **Visual Workflows** — Form → AI → Review → Publish, drag-and-drop
+
+---
+
+## Quick Setup
+
+### 1. Get API Key
+
+Sign up at [wodeapp.ai](https://wodeapp.ai) → **API Skills** → **Generate API Key**
 
 ```bash
 export WODEAPP_API_KEY="sk_live_xxxxxxxxxx"
 ```
 
-## 🚀 Quick Start | 快速开始
+### 2. MCP Server (Recommended)
 
-### MCP Server (Recommended | 推荐)
-
-🇺🇸 Add to your MCP client config (Claude Desktop `claude_desktop_config.json` or Cursor MCP settings):
-
-🇨🇳 将以下配置添加到 MCP 客户端（Claude Desktop 的 `claude_desktop_config.json` 或 Cursor 的 MCP 设置）：
+Add to your MCP client config (`claude_desktop_config.json` or Cursor settings):
 
 ```json
 {
@@ -62,93 +87,131 @@ export WODEAPP_API_KEY="sk_live_xxxxxxxxxx"
 }
 ```
 
-> ⚠️ **Security | 安全提示**: Use environment variable `$WODEAPP_API_KEY` instead of pasting the key directly. Never hardcode API keys in config files.
->
-> ⚠️ 请使用环境变量 `$WODEAPP_API_KEY`，不要将密钥直接写在配置文件中。
+> [!WARNING]
+> Use environment variable `$WODEAPP_API_KEY` — never hardcode API keys in config files.
 
-**9 MCP Tools auto-discovered | 自动发现 9 个工具：**
+---
 
-| Tool | 🇺🇸 Description | 🇨🇳 说明 |
-|------|-----------------|---------|
-| `ai_generate_text` | AI text generation (343+ models) | AI 文本生成 |
-| `ai_generate_image` | Text-to-image / image-to-image | 文生图/图生图 |
-| `list_projects` | List user projects | 列出项目 |
-| `create_project` | Create from template | 从模板创建 |
-| `get_project` | Get project details | 获取项目详情 |
-| `get_page` | Get page JSON config | 获取页面配置 |
-| `list_actions` | List executable actions | 列出可执行 Action |
-| `execute_action` | Execute action / workflow | 执行 Action/工作流 |
-| `publish_project` | Publish to production | 发布上线 |
+## MCP Tools (9 auto-discovered)
 
-### REST API
+| Tool | Description |
+|------|-------------|
+| `ai_generate_text` | AI text generation (343+ models) |
+| `ai_generate_image` | Text-to-image / image-to-image |
+| `list_projects` | List user projects |
+| `create_project` | Create from template |
+| `get_project` | Get project details |
+| `get_page` | Get page JSON config |
+| `list_actions` | List executable actions |
+| `execute_action` | Execute action / workflow |
+| `publish_project` | Publish to production |
 
-🇺🇸 Standard HTTP. **Always include `X-API-Key` header.**
+---
 
-🇨🇳 标准 HTTP 请求，**必须携带 `X-API-Key`**。
+## REST API Examples
 
+All requests require `X-API-Key` header.
+
+**Text generation**
 ```bash
-# Text generation | 文本生成
 curl -X POST https://wodeapp.ai/api/ai/chat \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $WODEAPP_API_KEY" \
   -d '{"message":"Write a brand tagline","model":"gemini-2.0-flash"}'
+```
 
-# Image generation | 图片生成
+**Image generation**
+```bash
 curl -X POST https://wodeapp.ai/api/ai/image/generate \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $WODEAPP_API_KEY" \
   -d '{"prompt":"Coffee beans close-up","size":"16:9","model":"seedream-3.0"}'
+```
 
-# Video generation | 视频生成 (Doubao Seedance)
+**Video generation** (Doubao Seedance)
+```bash
 curl -X POST https://wodeapp.ai/api/ai/video \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $WODEAPP_API_KEY" \
   -d '{"prompt":"Barista latte art close-up","model":"seedance"}'
+```
 
-# Structured JSON | 结构化 JSON
+**Structured JSON**
+```bash
 curl -X POST https://wodeapp.ai/api/ai/json \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $WODEAPP_API_KEY" \
   -d '{"message":"Generate 3 prompts","systemPrompt":"Return {prompts:[{title,content}]}"}'
 ```
 
-> Local dev | 本地开发: replace domain with `http://localhost:4100`
+> Local dev: replace domain with `http://localhost:4100`
 
-## 🔐 Security | 安全最佳实践
+---
 
-| Item | Recommendation 🇺🇸 | 建议 🇨🇳 |
-|------|------------------|---------|
-| **Key storage** | Always use env vars (`$WODEAPP_API_KEY`), never hardcode | 始终使用环境变量，不要硬编码 |
-| **Scoped keys** | Create project-scoped keys with billing limits | 创建项目级密钥并设置额度上限 |
-| **Revocation** | Revoke compromised keys instantly at wodeapp.ai | 密钥泄露时立即在 wodeapp.ai 撤销 |
-| **Data policy** | Prompts are sent to AI providers for processing only, not stored for training | 提示词仅用于 AI 处理，不会用于模型训练 |
-| **Rate limits** | Built-in per-user and per-project throttling protects against abuse | 内置用户/项目级限流防止滥用 |
+## Headless Workflow API
 
-## 📡 Endpoints | 端点
+Programmatic workflow execution — no browser needed.
+
+```bash
+# Step 1: Discover workflow schema
+curl https://my-project.wodeapp.ai/runtime-server/api/workflow/schema \
+  -H "x-subdomain-project: my-project"
+
+# Step 2: Execute workflow
+curl -X POST https://my-project.wodeapp.ai/runtime-server/api/workflow/run \
+  -H "Content-Type: application/json" \
+  -H "x-subdomain-project: my-project" \
+  -d '{"inputs": {"text": "Product description here"}}'
+# → { "runId": "uuid", "status": "running", "pollUrl": "..." }
+
+# Step 3: Poll for results
+curl https://my-project.wodeapp.ai/runtime-server/api/workflow/run/{runId} \
+  -H "x-subdomain-project: my-project"
+# → { "status": "completed", "outputs": { ... } }
+```
+
+---
+
+## Endpoints
 
 | Service | Production | Local Dev |
 |---------|-----------|-----------|
-| Main (Projects) | `https://wodeapp.ai/mainserver/api` | `http://localhost:3100/mainserver/api` |
-| Runtime (AI) | `https://wodeapp.ai/api` | `http://localhost:4100/api` |
-| MCP (SSE) | `https://wodeapp.ai/mainserver/mcp` | `http://localhost:3100/mainserver/mcp` |
+| Main | `https://wodeapp.ai/mainserver/api` | `localhost:3100/mainserver/api` |
+| Runtime | `https://wodeapp.ai/api` | `localhost:4100/api` |
+| Workflow | `https://{project}.wodeapp.ai/runtime-server/api/workflow` | `localhost:4100/runtime-server/api/workflow` |
+| MCP | `https://wodeapp.ai/mainserver/mcp` | `localhost:3100/mainserver/mcp` |
 
-## 🛡️ Rate Limits | 限流
+---
 
-| Layer | Mechanism | Value |
-|-------|-----------|-------|
-| Concurrency | Per-user / global | 5/user, 30 global |
-| Guest daily | Per-guest cap | 500 credits/day |
-| Project daily | Per-project cap | 2,000 credits/day |
-| Billing | Token-based | Insufficient → `HTTP 402` |
+## Rate Limits & Security
 
-## 🔧 Environment Variables | 环境变量
+**Rate Limits**
+
+| Layer | Value |
+|-------|-------|
+| Per-user concurrency | 5 |
+| Global concurrency | 30 |
+| Guest daily | 500 credits |
+| Project daily | 2,000 credits |
+| Insufficient balance | HTTP 402 |
+
+**Security Best Practices**
+
+- **Key storage** — Always use env vars, never hardcode
+- **Scoped keys** — Create project-scoped keys with billing limits
+- **Revocation** — Revoke compromised keys instantly at wodeapp.ai
+- **Data policy** — Prompts sent to AI providers for processing only, never stored for training
+
+---
+
+## Environment Variables
 
 ```bash
-WODEAPP_API_KEY=sk_live_xxx          # Required | 必填
-WODEAPP_MAIN_SERVER=http://...       # Optional | 选填
-WODEAPP_RUNTIME_SERVER=http://...    # Optional | 选填
+WODEAPP_API_KEY=sk_live_xxx          # Required
+WODEAPP_MAIN_SERVER=http://...       # Optional override
+WODEAPP_RUNTIME_SERVER=http://...    # Optional override
 ```
 
-## 🏷️ Keywords
+---
 
-`ai` `text-generation` `image-generation` `video-generation` `tts` `mcp` `no-code` `no-deploy` `zero-deploy` `page-builder` `workflow` `visual-workflow` `agent-tools` `multi-model` `gpt-4o` `claude` `gemini` `deepseek` `doubao` `seedance` `kling` `seedream` `imagen` `flux` `qwen` `token-efficient`
+`ai` `text-generation` `image-generation` `video-generation` `tts` `mcp` `no-code` `zero-deploy` `page-builder` `workflow` `visual-workflow` `headless-workflow` `workflow-api` `agent-tools` `multi-model` `gpt-4o` `claude` `gemini` `deepseek` `doubao` `seedance` `kling` `seedream` `imagen` `flux` `qwen` `token-efficient`
