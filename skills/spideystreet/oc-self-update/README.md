@@ -21,5 +21,5 @@ No setup required. The skill uses the globally installed `openclaw` package.
 ## Install
 
 ```bash
-clawhub install spideystreet/openclaw-update
+clawhub install oc-self-update
 ```

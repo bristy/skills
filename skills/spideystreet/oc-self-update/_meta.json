@@ -3,9 +3,15 @@
   "slug": "oc-self-update",
   "displayName": "Oc Self Update",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772634030384,
-    "commit": "https://github.com/openclaw/skills/commit/4f771c2d90b04b442bc4efa89556a214230ab1d0"
+    "version": "1.0.2",
+    "publishedAt": 1772721996156,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772634030384,
+      "commit": "https://github.com/openclaw/skills/commit/4f771c2d90b04b442bc4efa89556a214230ab1d0"
+    }
+  ]
 }
