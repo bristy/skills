@@ -9,6 +9,7 @@ description: Publish editorial and dynamic section content with blog-publish, en
 - Keep dynamic section publishing compliant with no public `producer` leakage.
 - Reuse one skill across `editorial`, `hot`, `news`, and `ai_news`.
 - Enforce deterministic quality rules so auto-published News/Hot briefs are readable and source-grounded.
+- Use the image upload path in `blog-publish` to generate CDN-hosted markdown URLs for embedded assets.
 
 # When to Use
 - Publishing normal editorial posts.
@@ -26,8 +27,11 @@ description: Publish editorial and dynamic section content with blog-publish, en
   - `section` (`hot`, `news`, or `ai_news`)
 - Optional:
   - `pairId` (if omitted, server falls back to `slug`)
+  - `repoUrl`
   - `sourceUrl`
   - `publicSourceLabel`
+  - `tags`
+  - `decisionMeta`
   - `producer` (internal only, never for public display)
 
 # Quality Gates (Required for `hot/news/ai_news`)
@@ -99,6 +103,7 @@ description: Publish editorial and dynamic section content with blog-publish, en
 # Preflight Checks
 - Before publish, run dry-run and fail fast on quality violations:
   - `blog-publish publish --dry-run --input <file>.json`
+  - `blog-publish publish --dry-run --input <file>.md`
 - Quick markdown guardrails (example):
   - Reject naked links: `rg -n "(^|[^\\]\\()https?://"` against generated markdown files.
   - Reject leaked render placeholders: `rg -n "INLINE_CODE|RUBYPH|@@[A-Z0-9_]+@@"` against generated markdown files.
@@ -110,6 +115,9 @@ description: Publish editorial and dynamic section content with blog-publish, en
 
 # Publishing Rules
 - Default `section` is `editorial` when absent.
+- `blog-publish publish` and `blog-publish update` both accept JSON payload files and markdown files with frontmatter.
+- Use `blog-publish post-list` to discover existing `locale` + `slug` pairs before editing existing posts.
+- Use `blog-publish download` to export stored content into editable markdown frontmatter, then feed that file back into `blog-publish update`.
 - Single-language submit is supported for all sections; server handles auto-localization.
 - Auto-generated section content is free by default and does not enter premium gating.
 - Keep `producer` as internal metadata only; public surfaces must use `publicSourceLabel` or section label.
@@ -119,13 +127,28 @@ description: Publish editorial and dynamic section content with blog-publish, en
   - `pnpm add -g @leeguoo/blog-publish`
   - `blog-publish login --api-base https://blog.misonote.com --sso-client-id misonote-blog-web --sso-redirect-uri https://blog.misonote.com/auth/callback`
   - `blog-publish whoami`
+  - `blog-publish post-list --api-base https://blog.misonote.com --locale zh`
+  - `blog-publish download --api-base https://blog.misonote.com --locale zh --slug <slug> --output ./drafts/<slug>.zh.md`
+  - `blog-publish upload --api-base https://blog.misonote.com --file ./assets/cover.png --markdown-only`
+  - `blog-publish upload --api-base https://blog.misonote.com --file ./assets/cover.png --filename cover-final.png`
 - Automation Auth (OpenClaw/CI):
   - Use service token only: `PUBLISH_API_TOKEN=<secret>`
   - Preflight: `blog-publish whoami --api-base https://blog.misonote.com`
   - Never prompt end users to complete browser authorization links.
 - Publish:
-  - `blog-publish publish --dry-run`
-  - `blog-publish publish`
+  - `blog-publish publish --dry-run --input <file>.json`
+  - `blog-publish publish --dry-run --input <file>.md`
+  - `blog-publish publish --input <file>.json`
+  - `blog-publish publish --input <file>.md`
+  - `blog-publish update --dry-run --input <file>.md`
+  - `blog-publish update --input <file>.md`
+
+### Media Notes
+- Publish API now uses `MEDIA_CDN_BASE_URL` and emits image markdown URLs like:
+  - `https://img.leeguoo.com/media/<asset-id>/<filename>`
+- Repeated uploads of the same file are deduplicated by SHA-256 and return:
+  - `deduped: true` and the existing `asset.id` instead of creating a duplicate.
+- Keep `img.leeguoo.com` as the canonical image host in generated markdown to leverage Cloudflare CDN + cache.
 - Skill sync:
   - `pnpm clawhub:sync:dry-run`
   - `pnpm clawhub:sync:all`
