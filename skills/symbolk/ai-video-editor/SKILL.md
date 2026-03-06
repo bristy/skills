@@ -145,7 +145,7 @@ RESULT_URL=$(bash scripts/edit_video.sh vlog.mov "2" "cinematic slow motion, emo
 **Expected output (stdout):**
 
 ```
-https://cdn.sparki.io/results/xxx.mp4?X-Amz-...  # 24-hour download URL
+https://sparkii-oregon-test.s3-accelerate.amazonaws.com/results/xxx.mp4?X-Amz-...  # 24-hour download URL
 ```
 
 **Progress log (stderr):**
@@ -324,7 +324,7 @@ RESULT_URL=$(bash scripts/edit_video.sh clip.mov "3" "" "1:1" 30)
 **Expected output (stdout):**
 
 ```
-https://cdn.sparki.io/results/xxx.mp4?X-Amz-...  # 24-hour download URL
+https://sparkii-oregon-test.s3-accelerate.amazonaws.com/results/xxx.mp4?X-Amz-...  # 24-hour download URL
 ```
 
 **Progress log (stderr):**
@@ -343,7 +343,7 @@ https://cdn.sparki.io/results/xxx.mp4?X-Amz-...  # 24-hour download URL
 [4/4] Project status: EXECUTOR
 [4/4] Project status: COMPLETED
 [4/4] Processing complete!
-https://cdn.sparki.io/results/xxx.mp4?X-Amz-...  # 24-hour download URL
+https://sparkii-oregon-test.s3-accelerate.amazonaws.com/results/xxx.mp4?X-Amz-...  # 24-hour download URL
 ```
 
 ---
@@ -435,7 +435,7 @@ bash scripts/get_project_status.sh <project_id>
 
 | Status | Stdout | Exit code |
 |--------|--------|-----------|
-| COMPLETED | `COMPLETED https://cdn.sparki.io/...` | `0` |
+| COMPLETED | `COMPLETED https://sparkii-oregon-test.s3-accelerate.amazonaws.com/...` | `0` |
 | FAILED | `FAILED <error_message>` | `0` |
 | In progress | `QUEUED` / `INIT` / `PLAN` / `EXECUTOR` | `2` |
 
