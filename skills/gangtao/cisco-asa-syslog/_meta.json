@@ -1,0 +1,11 @@
+{
+  "owner": "gangtao",
+  "slug": "cisco-asa-syslog",
+  "displayName": "cisco-asa-syslog",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772640540715,
+    "commit": null
+  },
+  "history": []
+}
