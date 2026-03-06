@@ -1,0 +1,11 @@
+{
+  "owner": "ingress007",
+  "slug": "aria2-download",
+  "displayName": "Aria2 Download",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772694247377,
+    "commit": null
+  },
+  "history": []
+}
