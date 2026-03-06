@@ -9,19 +9,33 @@ description: Auto context management with seamless session switching. Monitors u
 
 ## 🎯 核心特性
 
-### ⭐ 无感自动切换（新功能）
+### ⭐ 启动优化（v2.1新功能）⭐⭐⭐⭐⭐
+- ✅ **分层读取**：核心层<5KB + 摘要层<10KB + 详情QMD检索
+- ✅ **启动占用**：从40%+降低到<10%（节省75%空间）
+- ✅ **MEMORY-LITE**：精简版记忆（2.5KB），启动专用
+- ✅ **启动检测**：session_status自动检查，>30%预警
+
+### ⭐ 无感自动切换（v2.0功能）
 - ✅ **自动触发**：上下文达到85%自动切换
 - ✅ **零操作**：用户无需任何干预
 - ✅ **无缝体验**：新会话自动加载记忆
 - ✅ **自然接续**：对话连续，就像没切换
 
-### 📊 智能监控
-- ✅ 每10分钟自动检查上下文
-- ✅ 85%阈值提前预警
-- ✅ 自动保存关键信息
+### 📊 智能监控（v2.2新功能）⭐⭐⭐⭐⭐
+- ✅ **真实API监控**：调用OpenClaw API获取会话信息
+- ✅ **准确计算**：totalTokens / contextTokens = 真实使用率
+- ✅ **stop_reason监控**：检测"model_context_window_exceeded"错误
+- ✅ **双重预警机制**：
+  - 使用率监控：85%阈值（对话中）/ 30%阈值（启动后）
+  - 错误监控：检测到"model_context_window_exceeded"立即告警
+- ✅ 每10分钟自动检查（可配置为5分钟）
+- ✅ 1小时冷却期（避免重复通知）
+- ✅ 飞书通知提醒用户
+- ✅ 详细日志记录
 
 ### 💾 记忆传递
-- ✅ 自动更新MEMORY.md
+- ✅ 自动更新MEMORY.md（完整版）
+- ✅ 自动更新MEMORY-LITE.md（精简版）
 - ✅ 自动更新daily log
 - ✅ 保存当前任务状态
 
@@ -40,6 +54,75 @@ description: Auto context management with seamless session switching. Monitors u
 
 ## 📋 工作原理
 
+### 双重监控机制（v2.2.1新增）⭐⭐⭐⭐⭐
+
+**监控1：上下文使用率**
+```
+每10分钟检查
+  ↓
+调用OpenClaw API
+  ↓
+计算使用率 = totalTokens / contextTokens
+  ↓
+使用率 >= 85%？ → 预警通知
+```
+
+**监控2：stop_reason错误** ⭐
+```
+AI每次回复后检测
+  ↓
+检查stop_reason字段
+  ↓
+发现"model_context_window_exceeded"？
+  ↓
+立即告警 + 自动切换
+```
+
+**为什么需要双重监控？**
+- 使用率监控：提前预防（85%阈值）
+- stop_reason监控：兜底保障（实际超限）
+- 场景：工具调用可能占用大量隐藏上下文
+- 例子：上下文显示15%，但实际已超限
+
+**stop_reason错误监控策略**：
+```json
+{
+  "monitoring": {
+    "target": "stop_reason",
+    "error": "model_context_window_exceeded",
+    "action": "immediate_alert",
+    "auto_switch": true,
+    "notification": {
+      "channel": "feishu",
+      "priority": "high",
+      "message": "🚨 紧急：模型上下文超限！\n\n错误：model_context_window_exceeded\n原因：隐藏上下文（工具调用）导致实际超限\n\n💡 立即自动切换会话..."
+    }
+  }
+}
+```
+
+### 启动流程（v2.1新增）
+```
+新会话启动
+  ↓
+读取核心层（<5KB）
+├── SOUL.md（身份）
+└── USER.md（用户）
+  ↓
+读取摘要层（<10KB）
+└── MEMORY-LITE.md（精简记忆）
+  ↓
+启动检测（session_status）
+  ↓
+Context <10%？✅ 优秀
+Context 10-20%？✅ 良好
+Context 20-30%？⚠️ 注意
+Context >30%？🚨 需要优化
+  ↓
+需要详情时 → QMD精准检索
+```
+
+### 会话管理流程
 ```
 开始对话
   ↓
@@ -51,13 +134,15 @@ description: Auto context management with seamless session switching. Monitors u
   ↓
 保存到MEMORY.md
   ↓
+更新MEMORY-LITE.md
+  ↓
 更新daily log
   ↓
 触发agentTurn
   ↓
 创建新会话
   ↓
-新会话加载记忆
+新会话加载记忆（分层读取）
   ↓
 自然继续工作
 ```
@@ -92,7 +177,7 @@ clawhub install miliger-context-manager
 
 # 或从本地安装
 cd ~/.openclaw/skills
-tar -xzf context-manager-v2.0.0.tar.gz
+tar -xzf context-manager-v2.1.0.tar.gz
 cd context-manager
 bash install.sh
 ```
@@ -105,8 +190,20 @@ bash install.sh
 
 ### 自定义阈值
 ```bash
-# 编辑脚本，修改THRESHOLD值
-THRESHOLD=85  # 可改为80或90
+# 编辑脚本，修改阈值
+DIALOG_THRESHOLD=85    # 对话中阈值（85%触发切换）
+STARTUP_THRESHOLD=30   # 启动后阈值（30%警告）
+```
+
+### 创建MEMORY-LITE.md
+```bash
+# 手动创建精简版记忆（<10KB）
+# 从MEMORY.md提取核心内容：
+# - 用户画像（<1KB）
+# - 当前状态（<1KB）
+# - 关键决策（<3KB）
+# - 待办事项（<1KB）
+# - 核心洞察（<2KB）
 ```
 
 ## 📊 性能指标
@@ -141,6 +238,14 @@ THRESHOLD=85  # 可改为80或90
 
 ## 💡 核心优势
 
+### 启动优化效果（v2.1）
+| 指标 | 优化前 | 优化后 | 提升 |
+|------|--------|--------|------|
+| 启动占用 | 40%+ | <10% | 75%+ |
+| 剩余空间 | 60% | 90% | 50% |
+| Token浪费 | 高 | 低 | 节省90% |
+| 数据完整性 | 完整 | 完整 | 不丢失 |
+
 ### vs 手动切换
 | 特性 | 手动 | 自动 |
 |------|------|------|
@@ -153,6 +258,7 @@ THRESHOLD=85  # 可改为80或90
 - ✅ 比"提醒用户"更进一步：直接自动切换
 - ✅ 比"外部监控"更智能：内置AI检测
 - ✅ 比"手动操作"更便捷：完全自动化
+- ✅ 比"全量读取"更高效：分层读取策略 ⭐
 
 ## 🔧 技术实现
 
@@ -182,6 +288,37 @@ THRESHOLD=85  # 可改为80或90
 - 新会话自动启动
 
 ## 📝 版本历史
+
+### v2.2.2 (2026-03-06 21:15) ⭐⭐⭐⭐⭐
+- ✅ **修复监控盲区**：ai-responses.log不存在问题
+- ✅ **新日志源**：直接读取OpenClaw实时日志（/tmp/openclaw/*.log）
+- ✅ **双重通知**：飞书（紧急）+ QQ（用户友好）
+- ✅ **冷却机制优化**：1小时冷却期，避免重复通知
+- ✅ **监控脚本v2**：scripts/stop-reason-monitor-v2.sh
+- ✅ **测试通过**：成功检测到错误并通知
+
+### v2.2.1 (2026-03-06 10:39) ⭐⭐⭐⭐⭐
+- ✅ **stop_reason错误监控**：检测"model_context_window_exceeded"
+- ✅ **双重监控机制**：使用率监控 + 错误监控
+- ✅ **紧急告警**：发现错误立即通知（不等使用率阈值）
+- ✅ **隐藏上下文识别**：工具调用可能占用大量隐藏上下文
+- ✅ **监控脚本**：scripts/stop-reason-monitor.sh
+- ✅ **文档更新**：MEMORY.md补充错误监控策略
+
+### v2.2.0 (2026-03-05 13:33) ⭐⭐⭐⭐⭐
+- ✅ **真实API监控**：调用OpenClaw API获取会话信息
+- ✅ **准确计算**：totalTokens / contextTokens = 真实使用率
+- ✅ **修复假监控**：从"数文件"改为"调API"（解决超限问题）
+- ✅ **冷却机制**：1小时冷却期（避免重复通知）
+- ✅ **详细日志**：记录会话、模型、tokens信息
+- ✅ **监控脚本**：scripts/context-monitor.sh
+
+### v2.1.0 (2026-03-05 09:11) ⭐⭐⭐⭐⭐
+- ✅ **启动优化**：分层读取策略
+- ✅ **MEMORY-LITE**：精简版记忆（2.5KB）
+- ✅ **启动占用**：40%+ → <10%（节省75%）
+- ✅ **启动检测**：session_status自动检查
+- ✅ **双阈值**：启动30% + 对话85%
 
 ### v2.0.0 (2026-03-04) ⭐
 - ✅ **无感自动切换**：agentTurn创建新会话
@@ -226,7 +363,13 @@ THRESHOLD=85  # 可改为80或90
 
 ---
 
-*Context Manager v2.0 - 无感会话切换版*
-*让上下文管理完全自动化，用户只需专注对话*
-*版本：2.0.0*
-*发布时间：2026-03-04*
+*Context Manager v2.2.2 - 修复监控盲区 + OpenClaw实时日志 + 双重通知版*
+*让上下文管理完全自动化，从启动到切换全程优化*
+*版本：2.2.2*
+*发布时间：2026-03-06 21:15*
+
+**核心突破**：
+- v2.0：无感自动切换（零用户干预）
+- v2.1：启动优化（分层读取，节省75%空间）
+- v2.2：真实API监控（解决超限问题）⭐⭐⭐⭐⭐
+- v2.2.2：修复监控盲区（OpenClaw实时日志）⭐⭐⭐⭐⭐

@@ -1,7 +1,7 @@
 {
   "name": "miliger-context-manager",
-  "version": "2.0.0",
-  "description": "Auto context management with seamless session switching. Monitors usage, triggers at 85% threshold, automatically creates new session with loaded memory. Zero user intervention required.",
+  "version": "2.2.2",
+  "description": "Auto context management with real API monitoring, startup optimization and seamless session switching. Features: OpenClaw log-based error monitoring (stop_reason), dual notifications (Feishu + QQ), 1-hour cooldown, layered reading (core<5KB + summary<10KB), dual thresholds (startup 30% + dialog 85%).",
   "author": "米粒儿",
   "license": "MIT",
   "keywords": [
@@ -10,7 +10,14 @@
     "session",
     "automatic",
     "seamless",
-    "switching"
+    "switching",
+    "startup-optimization",
+    "layered-reading",
+    "token-saving",
+    "api-monitoring",
+    "real-time-monitoring",
+    "error-monitoring",
+    "stop-reason"
   ],
   "repository": {
     "type": "git",
@@ -22,12 +29,16 @@
   },
   "scripts": {
     "install": "bash install.sh",
-    "test": "bash scripts/seamless-switch.sh"
+    "test": "bash scripts/seamless-switch.sh",
+    "monitor": "bash scripts/context-monitor.sh",
+    "error-monitor": "bash scripts/stop-reason-monitor-v2.sh"
   },
   "files": [
     "SKILL.md",
     "README.md",
     "install.sh",
-    "scripts/seamless-switch.sh"
+    "scripts/seamless-switch.sh",
+    "scripts/context-monitor.sh",
+    "scripts/stop-reason-monitor-v2.sh"
   ]
 }
