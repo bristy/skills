@@ -1,5 +1,5 @@
 ---
-name: Browser Automation
+name: browser-automation
 description: |
   Vision-driven browser automation using Midscene. Operates entirely from screenshots — no DOM or accessibility labels required. Can interact with all visible elements on screen regardless of technology stack.
 
@@ -27,6 +27,7 @@ allowed-tools:
 > 1. **Never run midscene commands in the background.** Each command must run synchronously so you can read its output (especially screenshots) before deciding the next action. Background execution breaks the screenshot-analyze-act loop.
 > 2. **Run only one midscene command at a time.** Wait for the previous command to finish, read the screenshot, then decide the next action. Never chain multiple commands together.
 > 3. **Allow enough time for each command to complete.** Midscene commands involve AI inference and screen interaction, which can take longer than typical shell commands. A typical command needs about 1 minute; complex `act` commands may need even longer.
+> 4. **Always report task results before finishing.** After completing the automation task, you MUST proactively summarize the results to the user — including key data found, actions completed, screenshots taken, and any relevant findings. Never silently end after the last automation step; the user expects a complete response in a single interaction.
 
 Automate web browsing using `npx @midscene/web@1`. Launches a headless Chrome via Puppeteer that **persists across CLI calls** — no session loss between commands. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
 
@@ -60,25 +61,30 @@ MIDSCENE_MODEL_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai
 MIDSCENE_MODEL_FAMILY="gemini"
 ```
 
-Example: Qwen3-VL
+Example: Qwen 3.5
 
 ```bash
-MIDSCENE_MODEL_API_KEY="your-openrouter-api-key"
-MIDSCENE_MODEL_NAME="qwen/qwen3-vl-235b-a22b-instruct"
-MIDSCENE_MODEL_BASE_URL="https://openrouter.ai/api/v1"
-MIDSCENE_MODEL_FAMILY="qwen3-vl"
+MIDSCENE_MODEL_API_KEY="your-aliyun-api-key"
+MIDSCENE_MODEL_NAME="qwen3.5-plus"
+MIDSCENE_MODEL_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
+MIDSCENE_MODEL_FAMILY="qwen3.5"
+MIDSCENE_MODEL_REASONING_ENABLED="false"
+# If using OpenRouter, set:
+# MIDSCENE_MODEL_API_KEY="your-openrouter-api-key"
+# MIDSCENE_MODEL_NAME="qwen/qwen3.5-plus"
+# MIDSCENE_MODEL_BASE_URL="https://openrouter.ai/api/v1"
 ```
 
-Example: Doubao Seed 1.6
+Example: Doubao Seed 2.0 Lite
 
 ```bash
 MIDSCENE_MODEL_API_KEY="your-doubao-api-key"
-MIDSCENE_MODEL_NAME="doubao-seed-1-6-250615"
+MIDSCENE_MODEL_NAME="doubao-seed-2-0-lite"
 MIDSCENE_MODEL_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
-MIDSCENE_MODEL_FAMILY="doubao-vision"
+MIDSCENE_MODEL_FAMILY="doubao-seed"
 ```
 
-Commonly used models: Doubao Seed 1.6, Qwen3-VL, Zhipu GLM-4.6V, Gemini-3-Pro, Gemini-3-Flash.
+Commonly used models: Doubao Seed 2.0 Lite, Qwen 3.5, Zhipu GLM-4.6V, Gemini-3-Pro, Gemini-3-Flash.
 
 If the model is not configured, ask the user to set it up. See [Model Configuration](https://midscenejs.com/model-common-config) for supported providers.
 
@@ -135,6 +141,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 2. **Take screenshot** to see the current state, make sure the page is loaded.
 3. **Execute action** using `act` to perform the desired action or target-driven instructions.
 4. **Close** the browser when done (or **disconnect** to keep it for later)
+5. **Report results** — summarize what was accomplished, present key findings and data extracted during the task, and list any generated files (screenshots, logs, etc.) with their paths
 
 ## Best Practices
 
@@ -145,7 +152,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 5. **Close when done**: Use `close` to shut down the browser and free resources.
 6. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 7. **Batch related operations into a single `act` command**: When performing consecutive operations within the same page, combine them into one `act` prompt instead of splitting them into separate commands. For example, "fill in the email and password fields, then click the Login button" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
-8. **Summarize report files after completion**: After finishing the automation task, collect and summarize all report files (screenshots, logs, output files, etc.) for the user. Present a clear summary of what was accomplished, what files were generated, and where they are located, making it easy for the user to review the results.
+8. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
 
 **Example — Dropdown selection:**
 
