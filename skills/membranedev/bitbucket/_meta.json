@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "bitbucket",
+  "displayName": "Bitbucket",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772780543047,
+    "commit": null
+  },
+  "history": []
+}
