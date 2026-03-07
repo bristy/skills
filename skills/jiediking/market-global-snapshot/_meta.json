@@ -3,9 +3,15 @@
   "slug": "market-global-snapshot",
   "displayName": "Market Global Snapshot",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1772853519658,
-    "commit": "https://github.com/openclaw/skills/commit/1cb5a78d15deac6f94bc532fa0a7463a0ff77521"
+    "version": "0.2.0",
+    "publishedAt": 1772857173443,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1772853519658,
+      "commit": "https://github.com/openclaw/skills/commit/1cb5a78d15deac6f94bc532fa0a7463a0ff77521"
+    }
+  ]
 }

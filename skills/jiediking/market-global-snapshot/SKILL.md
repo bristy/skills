@@ -1,5 +1,5 @@
 ---
-name: market-snapshot
+name: market-global-snapshot
 description: Generate a structured global market snapshot report including major stock indices and commodities. Use when user asks for market data, stock market report, daily market summary, or needs current prices and changes for indices (S&P 500, Dow Jones, NASDAQ, SSE Composite, Shenzhen, STAR Market, Nikkei 225, Sensex) and commodities (Gold, Silver, Crude Oil, Copper).
 ---
 
