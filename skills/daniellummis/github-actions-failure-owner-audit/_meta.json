@@ -3,9 +3,15 @@
   "slug": "github-actions-failure-owner-audit",
   "displayName": "GitHub Actions Failure Owner Audit",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1772824421967,
-    "commit": "https://github.com/openclaw/skills/commit/e356fbb9e8efc56498b0eeefb5d15ce312518172"
+    "version": "1.2.0",
+    "publishedAt": 1772874687927,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1772824421967,
+      "commit": "https://github.com/openclaw/skills/commit/e356fbb9e8efc56498b0eeefb5d15ce312518172"
+    }
+  ]
 }
