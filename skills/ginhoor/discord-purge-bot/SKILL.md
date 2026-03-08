@@ -87,3 +87,15 @@ node scripts/purge-nuke.mjs --channel-id 123456789012345678 --confirm "NUKE-XXXX
 - Empty preview with expected history: check `READ_MESSAGE_HISTORY`.
 - Heavy 429: reduce parallelism and keep retry handling enabled.
 - `bulk-delete` failures: expect messages older than 14 days, runner falls back to single deletes.
+- Cannot reach Discord behind a proxy: export `HTTP_PROXY`/`HTTPS_PROXY` (uppercase recommended) and run with `NODE_USE_ENV_PROXY=1`, or use a recent Node that supports `setGlobalProxyFromEnv()`.
+- If your proxy tool exposes both HTTP and SOCKS ports, point `HTTP_PROXY`/`HTTPS_PROXY` at the HTTP port; `ALL_PROXY=socks5://...` alone is not enough for this skill.
+
+### Proxy Example
+
+```bash
+export HTTP_PROXY=http://127.0.0.1:7890
+export HTTPS_PROXY=http://127.0.0.1:7890
+export NODE_USE_ENV_PROXY=1
+
+node scripts/purge-preview.mjs --channel-id 123456789012345678 --max-scan 200
+```

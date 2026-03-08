@@ -1,6 +1,31 @@
+import * as http from 'node:http';
+
 import { normalizeToken, sanitizeObject, sleep } from './common.mjs';
 
 const API_BASE = 'https://discord.com/api/v10';
+
+function enableProxyFromEnvironment() {
+  const hasProxyEnv = [
+    'HTTP_PROXY',
+    'http_proxy',
+    'HTTPS_PROXY',
+    'https_proxy',
+    'NO_PROXY',
+    'no_proxy',
+  ].some((name) => Boolean(process.env[name]));
+
+  if (!hasProxyEnv || typeof http.setGlobalProxyFromEnv !== 'function') {
+    return;
+  }
+
+  try {
+    http.setGlobalProxyFromEnv();
+  } catch (error) {
+    process.emitWarning(`Failed to configure proxy from environment: ${error.message}`);
+  }
+}
+
+enableProxyFromEnvironment();
 
 function buildUrl(pathname, query) {
   const url = new URL(pathname, API_BASE);

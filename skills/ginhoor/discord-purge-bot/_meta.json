@@ -3,9 +3,15 @@
   "slug": "discord-purge-bot",
   "displayName": "Discord Purge Bot",
   "latest": {
-    "version": "0.1.1",
-    "publishedAt": 1772805448524,
-    "commit": "https://github.com/openclaw/skills/commit/e8ae84de06be0b68e19fc0a03d7ceb84279a3e5e"
+    "version": "0.1.2",
+    "publishedAt": 1772878503665,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.1",
+      "publishedAt": 1772805448524,
+      "commit": "https://github.com/openclaw/skills/commit/e8ae84de06be0b68e19fc0a03d7ceb84279a3e5e"
+    }
+  ]
 }
