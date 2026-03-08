@@ -1,13 +1,18 @@
 {
   "owner": "kepanwang",
   "slug": "infinite-oracle",
-  "displayName": "infinite-oracle",
+  "displayName": "Infinite Oracle",
   "latest": {
-    "version": "1.0.10",
-    "publishedAt": 1772384683832,
-    "commit": "https://github.com/openclaw/skills/commit/3fcfe3e9e5cf2095cf2bc755106f3c042834edfd"
+    "version": "1.0.11",
+    "publishedAt": 1772894111324,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.10",
+      "publishedAt": 1772384683832,
+      "commit": "https://github.com/openclaw/skills/commit/3fcfe3e9e5cf2095cf2bc755106f3c042834edfd"
+    },
     {
       "version": "1.0.3",
       "publishedAt": 1772081623565,
