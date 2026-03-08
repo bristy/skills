@@ -1,13 +1,18 @@
 {
   "owner": "sfsf332",
   "slug": "loudy-ai-auto-task",
-  "displayName": "Loudy.ai 自动任务",
+  "displayName": "Loudy.ai Auto Task",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1772704262344,
-    "commit": "https://github.com/openclaw/skills/commit/c2863c44ab5ea9394b9807e691ea11a70bbec3aa"
+    "version": "1.1.0",
+    "publishedAt": 1772877602714,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1772704262344,
+      "commit": "https://github.com/openclaw/skills/commit/c2863c44ab5ea9394b9807e691ea11a70bbec3aa"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1772615811586,

@@ -1,7 +1,7 @@
 {
   "name": "loudy-ai-auto-task",
-  "version": "1.0.0",
-  "description": "自动从 loudy.ai 领取任务、写稿、发布推文并追踪任务状态",
+  "version": "1.0.1",
+  "description": "Loudy.ai 任务自动化工具 - 查询奖池、提交任务链接、追踪审核和支付状态",
   "main": "SKILL.md",
   "files": [
     "SKILL.md",
@@ -11,9 +11,9 @@
   "scripts": {},
   "keywords": [
     "loudy",
-    "twitter",
     "automation",
-    "task"
+    "task",
+    "api"
   ],
   "author": "",
   "license": "MIT"

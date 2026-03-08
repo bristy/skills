@@ -21,7 +21,7 @@ metadata:
 ## ⚠️ 安全警告
 
 - 🔐 **API Key 安全**：建议使用环境变量 `export LOUDY_API_KEY=你的密钥`，**不要**写入 TOOLS.md 或其他共享文件
-- 📝 **文件系统访问**：本工具会读写 `/root/.openclaw/workspace/` 目录下的文件
+- 📝 **文件系统访问**：本工具会读写工作区目录下的文件（默认：`/root/.openclaw/workspace/`，可通过 `OPENCLAW_WORKSPACE` 环境变量自定义）
 - ⏰ **可选的 Cron 任务**：如需自动检查，需手动配置 cron 任务
 
 ## 快速开始
@@ -150,35 +150,40 @@ AI: 调用 check_task.py 查询审核和支付状态
 定时检查脚本，获取当前奖池并格式化输出
 
 ### scripts/cron_check.sh
-Cron 定时任务脚本，每5分钟检查一次新任务
+Cron 定时任务脚本，每5分钟检查一次新任务。使用 `OPENCLAW_WORKSPACE` 环境变量自定义工作目录。
 
 ## 配置定时检查（可选）
 
 ### 1. 设置环境变量
 ```bash
 export LOUDY_API_KEY="你的API Key"
+export OPENCLAW_WORKSPACE="/root/.openclaw/workspace"  # 可选，默认值
 ```
 
 ### 2. 配置 Cron 定时检查（可选）
 ```bash
-# 添加定时任务（每5分钟检查一次）
-echo "*/5 * * * * /usr/lib/node_modules/openclaw/skills/loudy-ai-auto-task/scripts/cron_check.sh" | crontab -
+# 方法1: 使用工作区安装路径（推荐）
+SKILL_DIR="/root/.openclaw/workspace/skills/claw-loudyai-skill"
+(crontab -l 2>/dev/null; echo "*/5 * * * * $SKILL_DIR/scripts/cron_check.sh") | crontab -
+
+# 方法2: 如果安装到系统路径
+(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/lib/node_modules/openclaw/skills/loudy-ai-auto-task/scripts/cron_check.sh") | crontab -
 ```
 
 ### 3. 配置 Heartbeat 通知（可选）
 在 HEARTBEAT.md 中添加：
 ```
 ## Loudy.ai 任务检查
-检查 /root/.openclaw/workspace/loudy_has_new.txt 是否存在：
-- 如果存在 → 读取 /root/.openclaw/workspace/loudy_tasks.json 内容
+检查工作区目录下的 loudy_has_new.txt 是否存在：
+- 如果存在 → 读取 loudy_tasks.json 内容
 - 发送消息通知用户
-- 删除 /root/.openclaw/workspace/loudy_has_new.txt
+- 删除 loudy_has_new.txt
 ```
 
 ## 注意事项
 
 - ⚠️ **API Key 安全**：建议使用环境变量 `export LOUDY_API_KEY=你的密钥`，**不要**写入 TOOLS.md 或其他共享文件
-- 📝 **文件系统访问**：本工具会读写 `/root/.openclaw/workspace/` 目录下的文件（如 `loudy_tasks.json`, `loudy_has_new.txt`）
+- 📝 **文件系统访问**：本工具会读写工作区目录下的文件（默认：`/root/.openclaw/workspace/`，可通过 `OPENCLAW_WORKSPACE` 环境变量自定义），包括 `loudy_tasks.json`, `loudy_has_new.txt`
 - ⏰ **可选的 Cron 任务**：如需自动检查，需手动配置 cron 任务（可选功能）
 - 🐦 **Twitter 功能说明**：本工具**不包含** Twitter/X 自动发布功能，用户需手动发布推文后提供链接
 - ⏳ **任务截止时间**：任务有截止时间 (activityEnd)，需在截止前提交
