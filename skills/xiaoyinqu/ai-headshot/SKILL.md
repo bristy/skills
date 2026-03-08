@@ -20,7 +20,7 @@ metadata:
       env:
         - SKILLBOSS_API_KEY
     primaryEnv: SKILLBOSS_API_KEY
-    installHint: "Get API key at https://skillboss.co/console?utm_source=clawhub&utm_medium=skill&utm_campaign=ai-headshot - $2 FREE credits included!"
+    installHint: "Get API key at https://skillboss.co/pricing?utm_source=clawhub&utm_medium=skill&utm_campaign=ai-headshot - $2 FREE credits included!"
 ---
 
 # AI Headshot Generator
@@ -44,7 +44,7 @@ curl https://api.heybossai.com/v1/run \
 
 ## Get Started
 
-1. Get API key: [skillboss.co/console](https://skillboss.co/console?utm_source=clawhub&utm_medium=skill&utm_campaign=ai-headshot)
+1. Get API key: [skillboss.co/pricing](https://skillboss.co/pricing?utm_source=clawhub&utm_medium=skill&utm_campaign=ai-headshot)
 2. Set `SKILLBOSS_API_KEY`
 3. Start building!
 
