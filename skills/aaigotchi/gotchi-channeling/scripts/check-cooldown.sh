@@ -1,40 +1,57 @@
 #!/usr/bin/env bash
-#
 # Check Gotchi channeling cooldown status
 # Returns: ready:0 or waiting:SECONDS
-#
-# Usage: ./check-cooldown.sh <gotchi-id>
 
 set -euo pipefail
 
-if [ $# -lt 1 ]; then
-  echo "❌ Usage: check-cooldown.sh <gotchi-id>"
+usage() {
+  cat <<USAGE
+Usage: ./scripts/check-cooldown.sh <gotchi-id>
+
+Prints one machine-readable line:
+  ready:0
+  waiting:<seconds>
+USAGE
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ "$#" -ne 1 ]; then
+  usage
   exit 1
 fi
 
 GOTCHI_ID="$1"
-REALM_DIAMOND="0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372"
-RPC_URL="${BASE_MAINNET_RPC:-https://mainnet.base.org}"
-COOLDOWN_SECONDS=86400  # 24 hours
+COOLDOWN_SECONDS=86400
 
-# Get last channeled timestamp from contract
-# This reads the s_gotchiChannelings mapping
-LAST_CHANNELED=$(cast call $REALM_DIAMOND \
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib.sh
+source "$SCRIPT_DIR/lib.sh"
+
+require_bin cast
+require_bin jq
+load_config
+require_numeric "$GOTCHI_ID" "gotchi-id"
+
+if ! LAST_CHANNELED_HEX="$(cast call "$REALM_DIAMOND" \
   "s_gotchiChannelings(uint256)" \
   "$GOTCHI_ID" \
-  --rpc-url "$RPC_URL" 2>/dev/null || echo "0")
+  --rpc-url "$RPC_URL" 2>/dev/null)"; then
+  err "Failed to query cooldown from RPC"
+fi
 
-LAST_CHANNELED_DEC=$(cast --to-dec "$LAST_CHANNELED" 2>/dev/null || echo "0")
-CURRENT_TIME=$(date +%s)
+LAST_CHANNELED_DEC="$(cast --to-dec "$LAST_CHANNELED_HEX" 2>/dev/null || true)"
+[[ "$LAST_CHANNELED_DEC" =~ ^[0-9]+$ ]] || err "Unexpected cooldown value from contract"
+
+CURRENT_TIME="$(date +%s)"
 TIME_SINCE=$((CURRENT_TIME - LAST_CHANNELED_DEC))
 TIME_REMAINING=$((COOLDOWN_SECONDS - TIME_SINCE))
 
 if [ "$TIME_REMAINING" -le 0 ]; then
-  # Ready to channel
   echo "ready:0"
-  exit 0
 else
-  # Still on cooldown
   echo "waiting:$TIME_REMAINING"
-  exit 0
 fi

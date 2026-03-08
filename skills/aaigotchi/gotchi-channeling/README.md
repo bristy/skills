@@ -1,116 +1,53 @@
-# Gotchi Channeling 🔮
+# Gotchi Channeling
 
-Autonomous Aavegotchi Alchemica harvesting. Channel daily, earn FUD/FOMO/ALPHA/KEK, no signatures required!
+Automate Aavegotchi Alchemica channeling on Base via Bankr wallet submission.
 
-## Quick Start
+## Scripts
 
-```bash
-# 1. Configure your gotchis
-edit config.json
-
-# 2. Channel one gotchi
-./scripts/channel.sh 9638 867
-
-# 3. Channel all configured gotchis
-./scripts/channel-all.sh
-
-# 4. Check cooldown status
-./scripts/check-cooldown.sh 9638
-```
-
-## Example Output
-
-```
-🔮 Gotchi Channeling
-====================
-👻 Gotchi: #9638
-🏰 Parcel: #867
-
-⏰ Checking cooldown...
-✅ Cooldown ready!
-
-📦 Building transaction...
-   Function: channelAlchemica
-   Parcel: 867
-   Gotchi: 9638
-
-🦞 Submitting to Bankr...
-
-============================================
-✅ CHANNELING SUCCESSFUL!
-============================================
-
-👻 Gotchi #9638 channeled on Parcel #867
-📦 Block: 42427318
-🔗 Transaction: 0xfda4f0a...
-
-💎 Alchemica Earned:
-   🔥 FUD:   135.20
-   😱 FOMO:  67.60
-   🧠 ALPHA: 33.80
-   💚 KEK:   13.52
-   💰 Total: 250.12 Alchemica
-
-⏰ Next channel: 2026-02-22 03:25 UTC
-
-LFGOTCHi! 🦞🔮💜
-```
+- `./scripts/check-cooldown.sh <gotchi-id>`
+  - Returns `ready:0` or `waiting:<seconds>`
+- `./scripts/channel.sh <gotchi-id> <parcel-id>`
+  - Channels one gotchi if cooldown is ready
+- `./scripts/channel-all.sh`
+  - Reads `config.json` and channels all ready entries
 
 ## Requirements
 
-- ✅ Bankr API key configured
-- ✅ `cast` (Foundry) installed
-- ✅ `jq` for JSON parsing
-- ✅ Own REALM parcel with Aaltar
-- ✅ Own Aavegotchi gotchi(s)
+- `cast` (Foundry)
+- `jq`
+- `curl`
+- Bankr API key
 
-## Configuration
+Bankr API key resolution order:
+1. `BANKR_API_KEY`
+2. user systemd environment (`systemctl --user show-environment`)
+3. `~/.openclaw/skills/bankr/config.json`
+4. `~/.openclaw/workspace/skills/bankr/config.json`
 
-Edit `config.json`:
+## Config
+
+Default config path: `./config.json`
+Override path: `GOTCHI_CHANNELING_CONFIG_FILE=/path/to/config.json`
+
+Example:
 
 ```json
 {
+  "realmDiamond": "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372",
+  "rpcUrl": "https://mainnet.base.org",
+  "chainId": 8453,
   "channeling": [
     {
       "parcelId": "867",
       "gotchiId": "9638",
-      "description": "My main gotchi"
+      "description": "Primary pair"
     }
   ]
 }
 ```
 
-## Daily Automation
+## Notes
 
-Add to cron:
-
-```bash
-# Channel all gotchis daily at 9 AM UTC
-0 9 * * * cd ~/.openclaw/workspace/skills/gotchi-channeling && ./scripts/channel-all.sh
-```
-
-## Contracts
-
-- **REALM Diamond:** `0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372`
-- **Chain:** Base (8453)
-- **Function:** `channelAlchemica(parcelId, gotchiId, 0, 0x)`
-
-## Features
-
-- ✅ Secure Bankr wallet integration
-- ✅ No private keys exposed
-- ✅ Multi-gotchi support
-- ✅ Automatic cooldown checking
-- ✅ Reward tracking
-- ✅ Transaction logging
-- ✅ Signature-free (legacy param ignored)
-
-## Learn More
-
-See [SKILL.md](SKILL.md) for full documentation.
-
----
-
-**Made with 💜 by AAI 👻**
-
-LFGOTCHi! 🦞🔮
+- Cooldown is 24h (`86400` seconds).
+- `channel.sh` fails closed if cooldown/RPC checks fail.
+- `channel-all.sh --help` is non-destructive.

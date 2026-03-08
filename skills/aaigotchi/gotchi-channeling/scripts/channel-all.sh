@@ -1,39 +1,45 @@
 #!/usr/bin/env bash
-#
 # Channel all configured gotchis
-# Reads from config.json and channels each ready gotchi
-#
-# Usage: ./channel-all.sh
 
 set -euo pipefail
 
+usage() {
+  cat <<USAGE
+Usage: ./scripts/channel-all.sh
+
+Reads config.json channeling entries and channels all ready gotchis.
+USAGE
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ "$#" -gt 0 ]; then
+  usage
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$(dirname "$SCRIPT_DIR")/config.json"
+# shellcheck source=lib.sh
+source "$SCRIPT_DIR/lib.sh"
+
+require_bin jq
+load_config
+
+if ! jq -e '.channeling | type == "array" and length > 0' "$CONFIG_FILE" >/dev/null 2>&1; then
+  err "No channeling entries in $CONFIG_FILE"
+fi
+
+ENTRIES="$(jq -r '.channeling[] | "\(.gotchiId // "")\t\(.parcelId // "")\t\(.description // "")"' "$CONFIG_FILE")"
 
 echo "🔮 Channeling All Gotchis"
 echo "========================="
-echo ""
+echo
 
-# Check if config exists
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "❌ Config not found: $CONFIG_FILE"
-  echo ""
-  echo "Create config.json with your gotchis:"
-  echo '{'
-  echo '  "channeling": ['
-  echo '    {"parcelId": "867", "gotchiId": "9638"}'
-  echo '  ]'
-  echo '}'
-  exit 1
-fi
-
-# Read gotchis from config
-GOTCHIS=$(jq -r '.channeling[] | "\(.gotchiId):\(.parcelId)"' "$CONFIG_FILE")
-
-if [ -z "$GOTCHIS" ]; then
-  echo "❌ No gotchis configured in $CONFIG_FILE"
-  exit 1
-fi
+echo "📊 Checking gotchis..."
+echo
 
 TOTAL=0
 READY=0
@@ -41,70 +47,81 @@ WAITING=0
 CHANNELED=0
 FAILED=0
 
-echo "📊 Checking gotchis..."
-echo ""
+while IFS=$'\t' read -r GOTCHI_ID PARCEL_ID DESCRIPTION; do
+  [ -n "$GOTCHI_ID" ] || continue
 
-# Check each gotchi
-while IFS=: read -r GOTCHI_ID PARCEL_ID; do
   TOTAL=$((TOTAL + 1))
-  
   echo "👻 Gotchi #$GOTCHI_ID (Parcel #$PARCEL_ID)"
-  
-  # Check cooldown
-  COOLDOWN_RESULT=$("$SCRIPT_DIR/check-cooldown.sh" "$GOTCHI_ID" 2>/dev/null || echo "waiting:0")
-  
-  if [[ "$COOLDOWN_RESULT" =~ ^ready ]]; then
-    echo "   ✅ Ready to channel!"
+  if [ -n "$DESCRIPTION" ]; then
+    echo "   📝 $DESCRIPTION"
+  fi
+
+  if [[ ! "$GOTCHI_ID" =~ ^[0-9]+$ ]] || [[ ! "$PARCEL_ID" =~ ^[0-9]+$ ]]; then
+    echo "   ❌ Invalid gotchiId/parcelId in config"
+    FAILED=$((FAILED + 1))
+    echo
+    continue
+  fi
+
+  if ! COOLDOWN_RESULT="$($SCRIPT_DIR/check-cooldown.sh "$GOTCHI_ID" 2>&1)"; then
+    echo "   ❌ Cooldown check failed: $COOLDOWN_RESULT"
+    FAILED=$((FAILED + 1))
+    echo
+    continue
+  fi
+
+  if [[ "$COOLDOWN_RESULT" =~ ^ready: ]]; then
     READY=$((READY + 1))
-    
-    # Channel this gotchi
-    if "$SCRIPT_DIR/channel.sh" "$GOTCHI_ID" "$PARCEL_ID" > /tmp/channel-${GOTCHI_ID}.log 2>&1; then
-      echo "   ✅ Channeled successfully!"
+    echo "   ✅ Ready to channel"
+
+    LOG_FILE="$(mktemp "/tmp/channel-${GOTCHI_ID}-XXXX.log")"
+    if "$SCRIPT_DIR/channel.sh" "$GOTCHI_ID" "$PARCEL_ID" >"$LOG_FILE" 2>&1; then
       CHANNELED=$((CHANNELED + 1))
-      
-      # Extract rewards from log
-      REWARDS=$(grep "Total:" /tmp/channel-${GOTCHI_ID}.log | tail -1 || echo "")
-      if [ -n "$REWARDS" ]; then
-        echo "   💎 $REWARDS"
+      echo "   ✅ Channeled successfully"
+
+      REWARDS_LINE="$(grep -E "Total:" "$LOG_FILE" | tail -1 || true)"
+      if [ -n "$REWARDS_LINE" ]; then
+        echo "   💎 $REWARDS_LINE"
       fi
     else
-      echo "   ❌ Channeling failed (see /tmp/channel-${GOTCHI_ID}.log)"
       FAILED=$((FAILED + 1))
+      echo "   ❌ Channeling failed (log: $LOG_FILE)"
     fi
-  else
-    WAIT_TIME=$(echo "$COOLDOWN_RESULT" | cut -d: -f2)
-    HOURS=$((WAIT_TIME / 3600))
-    MINS=$(((WAIT_TIME % 3600) / 60))
-    echo "   ⏰ Wait ${HOURS}h ${MINS}m"
+  elif [[ "$COOLDOWN_RESULT" =~ ^waiting:([0-9]+)$ ]]; then
     WAITING=$((WAITING + 1))
+    WAIT_TIME="${BASH_REMATCH[1]}"
+    echo "   ⏰ Wait $(format_wait "$WAIT_TIME")"
+  else
+    FAILED=$((FAILED + 1))
+    echo "   ❌ Unexpected cooldown output: $COOLDOWN_RESULT"
   fi
-  
-  echo ""
-done <<< "$GOTCHIS"
 
-# Summary
+  echo
+done <<< "$ENTRIES"
+
 echo "============================================"
 echo "📊 CHANNELING SUMMARY"
 echo "============================================"
 echo "Total gotchis: $TOTAL"
 echo "Ready: $READY"
-echo "Channeled: $CHANNELED ✅"
-echo "Failed: $FAILED $([ $FAILED -gt 0 ] && echo '❌' || echo '')"
-echo "Still waiting: $WAITING ⏰"
-echo ""
+echo "Channeled: $CHANNELED"
+echo "Failed: $FAILED"
+echo "Still waiting: $WAITING"
+echo
 
-if [ $CHANNELED -gt 0 ]; then
-  echo "✅ Successfully channeled $CHANNELED gotchi(s)!"
-  echo ""
-  echo "LFGOTCHi! 🦞🔮💜"
-elif [ $READY -eq 0 ]; then
-  echo "⏰ No gotchis ready to channel yet."
-  echo "Check back later! 👻"
-else
-  echo "⚠️  Some gotchis were ready but channeling failed."
-  echo "Check logs in /tmp/channel-*.log"
+if [ "$FAILED" -gt 0 ]; then
+  echo "⚠️  Completed with failures"
+  exit 1
 fi
 
-echo ""
+if [ "$CHANNELED" -gt 0 ]; then
+  echo "✅ Successfully channeled $CHANNELED gotchi(s)!"
+elif [ "$READY" -eq 0 ]; then
+  echo "⏰ No gotchis ready to channel yet"
+else
+  echo "⚠️  No channels were submitted"
+fi
 
-exit 0
+echo
+
+echo "LFGOTCHi!"
