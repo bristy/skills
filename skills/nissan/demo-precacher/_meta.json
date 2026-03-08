@@ -1,0 +1,11 @@
+{
+  "owner": "nissan",
+  "slug": "demo-precacher",
+  "displayName": "Demo Precacher",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772823952804,
+    "commit": null
+  },
+  "history": []
+}
