@@ -3,21 +3,17 @@
 
 Usage: python3 skill_comparator.py [workspace_path]
 
-For each installed skill, checks if a better alternative exists on ClawHub
-(higher stars, more downloads). Uses description-based category matching
-instead of naive keyword overlap.
+This tool is intentionally conservative: it suggests adjacent or overlapping
+skills, not authoritative replacements.
 """
 
-import os, sys, json, time, re
+import sys, json, time, re
 from pathlib import Path
 from urllib.request import Request, urlopen
 
 ws = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.home() / ".openclaw" / "workspace"
 API = "https://clawhub.ai/api/v1"
 
-# Category definitions for semantic matching
-# Keywords are checked as substrings against slug+summary
-# Higher-weight keywords (tuples with weight) get priority
 CATEGORIES = {
     "stock-analysis": {
         "keywords": {"stock", "equity", "portfolio tracker", "trading", "valuation", "ticker", "shares", "invest", "yfinance", "yahoo finance"},
@@ -89,72 +85,63 @@ CATEGORIES = {
     },
 }
 
+
+def fetch_json(url, timeout=10):
+    req = Request(url)
+    with urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read())
+
+
 def fetch_skill_stats(slug):
-    """Fetch skill stats from ClawHub API."""
     try:
-        req = Request(f"{API}/skills/{slug}")
-        with urlopen(req, timeout=8) as resp:
-            data = json.loads(resp.read())
-            sk = data.get("skill", {})
-            stats = sk.get("stats", {})
-            return {
-                "slug": slug,
-                "name": sk.get("displayName", slug),
-                "summary": sk.get("summary", ""),
-                "stars": stats.get("stars", 0),
-                "downloads": stats.get("downloads", 0),
-                "installs": stats.get("installsCurrent", 0),
-                "comments": stats.get("comments", 0),
-            }
-    except:
+        data = fetch_json(f"{API}/skills/{slug}", timeout=8)
+        sk = data.get("skill", {})
+        stats = sk.get("stats", {})
+        return {
+            "slug": slug,
+            "name": sk.get("displayName", slug),
+            "summary": sk.get("summary", ""),
+            "stars": stats.get("stars", 0),
+            "downloads": stats.get("downloads", 0),
+            "installs": stats.get("installsCurrent", 0),
+            "comments": stats.get("comments", 0),
+        }
+    except Exception:
         return None
 
+
 def fetch_catalog(sort="stars", limit=50):
-    """Fetch skill catalog from ClawHub."""
     try:
-        req = Request(f"{API}/skills?sort={sort}&limit={limit}")
-        with urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read())
-            return [item["slug"] for item in data.get("items", [])]
-    except:
+        data = fetch_json(f"{API}/skills?sort={sort}&limit={limit}", timeout=10)
+        return [item["slug"] for item in data.get("items", [])]
+    except Exception:
         return []
 
+
 def categorize_skill(slug, summary):
-    """Assign a skill to categories based on its slug and summary.
-    
-    Slug matches get 3x weight (more reliable than summary text).
-    Excludes are checked against full text to prevent miscategorization.
-    """
     slug_lower = slug.lower()
     summary_lower = summary.lower()
     full_text = f"{slug_lower} {summary_lower}"
-    
     matched = []
     for cat, spec in CATEGORIES.items():
-        # Check excludes against full text
         if any(ex in full_text for ex in spec["exclude"]):
             continue
-        
-        # Score: slug matches worth 3x, summary matches worth 1x
         score = 0
         for kw in spec["keywords"]:
             if kw in slug_lower:
                 score += 3
             elif kw in summary_lower:
                 score += 1
-        
         if score >= 1:
             matched.append((cat, score))
-    
     matched.sort(key=lambda x: x[1], reverse=True)
-    return [cat for cat, _ in matched[:2]]  # Top 2 categories
+    return [cat for cat, _ in matched[:2]]
+
 
 def get_installed_skills():
-    """Get list of installed skills with descriptions."""
     skills_dir = ws / "skills"
     if not skills_dir.exists():
         return {}
-    
     installed = {}
     for d in skills_dir.iterdir():
         if d.is_dir() and (d / "SKILL.md").exists():
@@ -164,27 +151,33 @@ def get_installed_skills():
             installed[d.name] = {"description": desc}
     return installed
 
+
+def is_strong_overlap(a, b):
+    cats_a = set(a.get("categories", []))
+    cats_b = set(b.get("categories", []))
+    shared = cats_a & cats_b
+    if len(shared) >= 2:
+        return True
+    return len(shared) == 1 and len(cats_a) == 1 and len(cats_b) == 1
+
+
 def main():
     print("\n📦 Skill Comparator — Checking installed skills against ClawHub")
     print("=" * 60)
-    
     installed = get_installed_skills()
     if not installed:
         print("No skills installed.")
         return
-    
+
     print(f"Found {len(installed)} installed skills. Fetching stats...\n")
-    
-    # Fetch stats for installed skills
     installed_stats = {}
     for slug in installed:
         stats = fetch_skill_stats(slug)
         if stats:
+            stats["categories"] = categorize_skill(slug, stats.get("summary", ""))
             installed_stats[slug] = stats
-            installed_stats[slug]["categories"] = categorize_skill(slug, stats.get("summary", ""))
-        time.sleep(0.3)
-    
-    # Fetch top catalog
+        time.sleep(0.1)
+
     print("Fetching ClawHub catalog...")
     top_slugs = fetch_catalog("stars", 50)
     catalog_stats = {}
@@ -194,86 +187,81 @@ def main():
             if stats:
                 stats["categories"] = categorize_skill(slug, stats.get("summary", ""))
                 catalog_stats[slug] = stats
-            time.sleep(0.3)
-    
-    # Report installed skills
+            time.sleep(0.1)
+
     print(f"\n📊 Installed Skills ({len(installed_stats)} with ClawHub data):")
     print("-" * 60)
-    
     sorted_installed = sorted(installed_stats.values(), key=lambda x: x["stars"], reverse=True)
     for s in sorted_installed:
         cats = ", ".join(s.get("categories", [])) or "uncategorized"
         print(f"  ⭐{s['stars']:>4} 📥{s['downloads']:>6} | {s['slug']} [{cats}]")
-    
-    # Find missing top skills
+
     print(f"\n🏆 Top ClawHub Skills NOT Installed:")
     print("-" * 60)
-    missing_top = [(slug, catalog_stats[slug]) for slug in top_slugs 
-                   if slug in catalog_stats and slug not in installed]
-    
+    missing_top = [(slug, catalog_stats[slug]) for slug in top_slugs if slug in catalog_stats and slug not in installed]
     for slug, stats in missing_top[:15]:
         cats = ", ".join(stats.get("categories", [])) or "general"
         print(f"  ⭐{stats['stars']:>4} 📥{stats['downloads']:>6} | {slug} [{cats}] — {stats['summary'][:50]}")
-    
-    # Find potential upgrades (same category, higher stars)
-    print(f"\n🔄 Potential Upgrades (same category, higher rated):")
+
+    print(f"\n🔎 Adjacent / Overlapping Skills (not authoritative replacements):")
     print("-" * 60)
-    
-    upgrades_found = False
-    seen_suggestions = set()
-    
+    suggestions_found = False
+    seen = set()
+    adjacent = []
+
     for slug, info in installed_stats.items():
-        my_cats = set(info.get("categories", []))
-        if not my_cats:
-            continue
-        
-        my_stars = info["stars"]
-        
-        # Find catalog skills in same category with more stars
         candidates = []
-        for cat_slug, cat_info in catalog_stats.items():
-            cat_cats = set(cat_info.get("categories", []))
-            shared_cats = my_cats & cat_cats
-            
-            if shared_cats and cat_info["stars"] > my_stars * 1.5 and cat_info["stars"] >= 10:
-                key = f"{slug}->{cat_slug}"
-                if key not in seen_suggestions:
-                    seen_suggestions.add(key)
-                    candidates.append(cat_info)
-        
+        for other_slug, other in catalog_stats.items():
+            if not is_strong_overlap(info, other):
+                continue
+            if other["stars"] < max(10, info["stars"]):
+                continue
+            key = (slug, other_slug)
+            if key in seen:
+                continue
+            seen.add(key)
+            candidates.append(other)
         candidates.sort(key=lambda x: x["stars"], reverse=True)
-        
         if candidates:
-            upgrades_found = True
-            cats_str = ", ".join(my_cats)
-            print(f"\n  {slug} (⭐{my_stars}) [{cats_str}] — consider:")
+            suggestions_found = True
+            adjacent.append({
+                "installed": slug,
+                "installedStars": info["stars"],
+                "categories": info.get("categories", []),
+                "alternatives": candidates[:2],
+            })
+            print(f"\n  {slug} (⭐{info['stars']}) [{', '.join(info.get('categories', [])) or 'uncategorized'}] — adjacent options:")
             for c in candidates[:2]:
-                c_cats = ", ".join(c.get("categories", []))
-                print(f"    → {c['slug']} (⭐{c['stars']} 📥{c['downloads']}) [{c_cats}]")
+                print(f"    → {c['slug']} (⭐{c['stars']} 📥{c['downloads']}) [{', '.join(c.get('categories', [])) or 'general'}]")
                 print(f"      {c['summary'][:80]}")
 
-    if not upgrades_found:
-        print("  ✅ No obvious upgrades found — your skills are well-chosen!")
+    if not suggestions_found:
+        print("  ✅ No strong-overlap adjacent skills found.")
 
-    # Category coverage analysis
     print(f"\n📋 Category Coverage:")
     print("-" * 60)
-    
     covered_cats = set()
     for info in installed_stats.values():
         covered_cats.update(info.get("categories", []))
-    
     uncovered = set(CATEGORIES.keys()) - covered_cats
     if uncovered:
         print(f"  Covered: {', '.join(sorted(covered_cats))}")
         print(f"  Not covered: {', '.join(sorted(uncovered))}")
     else:
-        print(f"  ✅ All categories covered!")
+        print("  ✅ All categories covered!")
 
-    # Save report
     report = {
         "installed": sorted_installed,
         "missing_top": [{"slug": s, **st} for s, st in missing_top[:15]],
+        "adjacent_skills": [
+            {
+                "installed": item["installed"],
+                "installedStars": item["installedStars"],
+                "categories": item["categories"],
+                "alternatives": item["alternatives"],
+            }
+            for item in adjacent
+        ],
         "covered_categories": sorted(covered_cats),
         "uncovered_categories": sorted(uncovered) if uncovered else [],
         "timestamp": __import__("datetime").datetime.now().isoformat()
@@ -282,6 +270,7 @@ def main():
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False))
     print(f"\n📊 Report saved: {report_path}")
+
 
 if __name__ == "__main__":
     main()

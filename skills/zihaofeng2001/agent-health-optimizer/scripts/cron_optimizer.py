@@ -1,174 +1,188 @@
 #!/usr/bin/env python3
-"""Cron Optimizer — analyze and fix cron job issues.
+"""Cron Optimizer — analyze and selectively fix cron job issues.
 
 Usage:
-  python3 cron_optimizer.py          # Read-only analysis
-  python3 cron_optimizer.py --fix    # Auto-repair (creates backup first)
+  python3 cron_optimizer.py [workspace_path]          # Read-only analysis
+  python3 cron_optimizer.py --fix [workspace_path]    # Safe auto-repair
 
-Detects: time collisions, missing stagger, delivery duplication,
-error states, suboptimal session targets.
+The fixer is intentionally conservative:
+- It does NOT enable delivery on jobs that intentionally use delivery=none.
+- It does NOT add stagger to exact-time jobs.
+- It only auto-adds stagger to recurring top-of-hour stampede-prone jobs.
 """
 
-import subprocess, sys, json, re, os
+import subprocess, sys, json
 from datetime import datetime
 from pathlib import Path
 
 FIX_MODE = "--fix" in sys.argv
 ws = Path(sys.argv[-1]) if len(sys.argv) > 1 and not sys.argv[-1].startswith("-") else Path.home() / ".openclaw" / "workspace"
 
+
 def run_cmd(args, timeout=15):
-    """Run a command and return stdout."""
     try:
         r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
-        return r.stdout.strip(), r.returncode
+        return r.stdout.strip(), r.returncode, r.stderr.strip()
     except Exception as e:
-        return str(e), 1
+        return "", 1, str(e)
+
 
 def get_all_jobs():
-    """Fetch all cron jobs as JSON via openclaw cron list --json."""
-    out, code = run_cmd(["openclaw", "cron", "list", "--json"])
+    out, code, err = run_cmd(["openclaw", "cron", "list", "--json"])
     if code != 0:
-        return {}
+        return {}, err
     try:
         data = json.loads(out)
-        jobs_list = data.get("jobs", [])
-        return {j["id"]: j for j in jobs_list}
-    except:
-        return {}
+        return {j["id"]: j for j in data.get("jobs", [])}, ""
+    except Exception as e:
+        return {}, str(e)
+
 
 def backup_cron_state(jobs_detail):
-    """Save current cron state as backup before modifications."""
     backup_path = ws / "memory" / "cron-backup.json"
     backup_path.parent.mkdir(parents=True, exist_ok=True)
-    backup = {
-        "timestamp": datetime.now().isoformat(),
-        "jobs": jobs_detail
-    }
+    backup = {"timestamp": datetime.now().isoformat(), "jobs": jobs_detail}
     backup_path.write_text(json.dumps(backup, indent=2, ensure_ascii=False))
     print(f"💾 Cron state backed up to: {backup_path}")
     return backup_path
 
+
+def schedule_label(job):
+    schedule = job.get("schedule", {})
+    kind = schedule.get("kind", "")
+    if kind == "cron":
+        return f"cron:{schedule.get('expr', '')} @ {schedule.get('tz', '') or 'local'}"
+    if kind == "every":
+        return f"every:{schedule.get('everyMs', '')}ms"
+    if kind == "at":
+        return f"at:{schedule.get('at', '')}"
+    return "unknown"
+
+
+def is_top_of_hour_cron(job):
+    schedule = job.get("schedule", {})
+    if schedule.get("kind") != "cron":
+        return False
+    expr = (schedule.get("expr") or "").strip()
+    parts = expr.split()
+    if len(parts) not in (5, 6):
+        return False
+    minute = parts[-5] if len(parts) == 5 else parts[-5]
+    hour = parts[-4] if len(parts) == 5 else parts[-4]
+    return minute == "0" and hour in {"*", "*/2", "*/3", "*/4", "*/6", "*/8", "*/12"}
+
+
+def is_precise_job(job):
+    schedule = job.get("schedule", {})
+    if schedule.get("kind") != "cron":
+        return schedule.get("kind") == "at"
+    expr = (schedule.get("expr") or "").strip()
+    parts = expr.split()
+    if len(parts) not in (5, 6):
+        return False
+    minute = parts[-5]
+    hour = parts[-4]
+    return minute.isdigit() and hour.isdigit()
+
+
 def main():
     print("\n⏰ Cron Optimizer")
     print("=" * 60)
+    print("🔧 FIX MODE — safe, conservative repairs only" if FIX_MODE else "👀 READ-ONLY MODE — analysis only")
 
-    if FIX_MODE:
-        print("🔧 FIX MODE — will attempt auto-repairs (backup created first)")
-    else:
-        print("👀 READ-ONLY MODE — analysis only")
-
-    # Get all jobs via JSON
-    jobs = get_all_jobs()
+    jobs, err = get_all_jobs()
     if not jobs:
-        print("No cron jobs found or could not fetch details.")
+        print(f"No cron jobs found or could not fetch details. {err}".strip())
         return
 
     print(f"Found {len(jobs)} cron jobs.\n")
 
     issues = []
     fixes = []
+    fix_candidates = []
+    has_stagger = []
+    no_stagger = []
 
-    # Check 1: Error states
+    # Error states
     for jid, job in jobs.items():
         state = job.get("state", {})
         name = job.get("name", jid[:8])
         if state.get("lastStatus") == "error" or state.get("lastRunStatus") == "error":
             err = state.get("lastError", "unknown")
             consecutive = state.get("consecutiveErrors", 0)
-            issues.append(f"🚨 [{name}] ERROR state (consecutive: {consecutive}): {err[:100]}")
+            issues.append(f"🚨 [{name}] ERROR state (consecutive: {consecutive}): {err[:120]}")
 
-    # Check 2: Missing stagger
-    no_stagger = []
-    has_stagger = []
+    # Stagger analysis: warn generally, but only auto-fix risky recurring top-of-hour jobs.
     for jid, job in jobs.items():
         schedule = job.get("schedule", {})
-        stagger_ms = schedule.get("staggerMs", 0)
+        stagger_ms = schedule.get("staggerMs", 0) or 0
         name = job.get("name", jid[:8])
-        if stagger_ms and stagger_ms > 0:
+        if stagger_ms > 0:
             has_stagger.append(name)
+            continue
+        no_stagger.append((jid, name))
+        if is_top_of_hour_cron(job):
+            issues.append(f"⚠️ [{name}] has no stagger on {schedule_label(job)} — possible top-of-hour stampede risk")
+            fix_candidates.append((jid, name))
+        elif is_precise_job(job):
+            issues.append(f"ℹ️ [{name}] has no stagger on {schedule_label(job)} — likely intentional exact timing")
         else:
-            no_stagger.append((jid, name))
-
-    if no_stagger:
-        issues.append(f"⚠️ {len(no_stagger)} jobs have no stagger: {', '.join(n for _,n in no_stagger)}")
-        if FIX_MODE:
-            for jid, name in no_stagger:
-                out, code = run_cmd(["openclaw", "cron", "edit", jid, "--stagger", "2m"])
-                if code == 0:
-                    fixes.append(f"✅ Added 2m stagger to [{name}]")
-                else:
-                    fixes.append(f"❌ Failed to add stagger to [{name}]")
+            issues.append(f"💡 [{name}] has no stagger on {schedule_label(job)} — consider only if this job contributes to API bursts")
 
     if has_stagger:
         print(f"  ✅ {len(has_stagger)} jobs have stagger configured")
 
-    # Check 3: Time collisions
+    # Time collisions
     schedules = {}
     for jid, job in jobs.items():
-        schedule = job.get("schedule", {})
-        expr = schedule.get("expr", "")
-        tz = schedule.get("tz", "")
-        key = f"{expr} @ {tz}"
-        if key not in schedules:
-            schedules[key] = []
-        schedules[key].append(job.get("name", jid[:8]))
+        key = schedule_label(job)
+        schedules.setdefault(key, []).append(job.get("name", jid[:8]))
 
     for sched, names in schedules.items():
         if len(names) > 1:
             issues.append(f"⚠️ Time collision on '{sched}': {', '.join(names)}")
 
-    # Check 4: Delivery mode — jobs should have announce enabled to reach the user
+    # Delivery analysis: delivery=none is valid; only flag suspicious announce setups.
     for jid, job in jobs.items():
-        delivery = job.get("delivery", {})
+        delivery = job.get("delivery", {}) or {}
         mode = delivery.get("mode", "none")
         name = job.get("name", jid[:8])
-        if mode == "none" or mode is None:
-            issues.append(f"⚠️ [{name}] has delivery=none — output won't reach user. Consider enabling announce.")
-            if FIX_MODE:
-                out, code = run_cmd(["openclaw", "cron", "edit", jid, "--announce"])
-                if code == 0:
-                    fixes.append(f"✅ Enabled announce on [{name}]")
+        if mode in ("none", None):
+            issues.append(f"ℹ️ [{name}] has delivery=none — valid for internal/background jobs")
 
-    # Check 5: Missing delivery target — announce without 'to' will silently fail
-    for jid, job in jobs.items():
-        delivery = job.get("delivery", {})
-        mode = delivery.get("mode", "none")
-        to = delivery.get("to", "")
-        name = job.get("name", jid[:8])
-        if mode == "announce" and not to:
-            issues.append(f"🚨 [{name}] has announce enabled but missing 'to' (delivery target) — will fail silently! Use --to <chatId>.")
-            if FIX_MODE:
-                # Cannot auto-fix: we don't know the user's chat ID
-                fixes.append(f"⚠️ [{name}] needs --to <chatId> — cannot auto-fix, set manually")
+        if mode == "announce" and not delivery.get("to") and delivery.get("channel") not in (None, "", "last"):
+            issues.append(f"🚨 [{name}] has announce enabled but missing 'to' for explicit channel delivery — may fail")
 
-    # Check 6: Session target
+    # Session target advice
     for jid, job in jobs.items():
         target = job.get("sessionTarget", "")
         name = job.get("name", jid[:8])
         payload = job.get("payload", {})
         kind = payload.get("kind", "")
         if target == "main" and kind == "agentTurn":
-            issues.append(f"💡 [{name}] uses main session for agentTurn — consider isolated for autonomous tasks")
+            issues.append(f"💡 [{name}] uses main session for agentTurn — consider isolated for autonomous/background tasks")
 
-    # Check 6: Timeout adequacy
+    # Timeout heuristics
     for jid, job in jobs.items():
         payload = job.get("payload", {})
         timeout = payload.get("timeoutSeconds", 30)
-        msg = payload.get("message", "")
+        msg = payload.get("message", "") or ""
         name = job.get("name", jid[:8])
-        # Heuristic: if message mentions multiple steps/commands, timeout should be higher
         step_count = msg.lower().count("step") + msg.lower().count("```") + msg.lower().count("curl")
         if step_count > 3 and timeout < 180:
-            issues.append(f"💡 [{name}] has {step_count} steps but only {timeout}s timeout — consider increasing")
+            issues.append(f"💡 [{name}] has {step_count} step-like markers but only {timeout}s timeout — consider increasing")
 
-    # Backup before fixes
-    if FIX_MODE and fixes:
-        backup_cron_state({jid: job for jid, job in jobs.items()})
+    if FIX_MODE and fix_candidates:
+        backup_cron_state(jobs)
+        for jid, name in fix_candidates:
+            out, code, err = run_cmd(["openclaw", "cron", "edit", jid, "--stagger", "2m"])
+            if code == 0:
+                fixes.append(f"✅ Added 2m stagger to [{name}]")
+            else:
+                fixes.append(f"❌ Failed to add stagger to [{name}]: {err or out}")
 
-    # Summary
     print("\n📋 Analysis Results:")
     print("-" * 40)
-
     if not issues:
         print("  ✅ No issues found — cron setup looks good!")
     else:
@@ -179,14 +193,14 @@ def main():
         print(f"\n🔧 Fixes Applied ({len(fixes)}):")
         for f in fixes:
             print(f"  {f}")
-    elif issues and not FIX_MODE:
-        print(f"\n💡 Run with --fix to auto-repair (creates backup first)")
+    elif fix_candidates and not FIX_MODE:
+        print("\n💡 Run with --fix to auto-add stagger only to recurring top-of-hour jobs")
 
-    # Save report
     report = {
         "total_jobs": len(jobs),
         "with_stagger": len(has_stagger),
         "without_stagger": len(no_stagger),
+        "fix_candidates": [name for _, name in fix_candidates],
         "issues": issues,
         "fixes": fixes,
         "fix_mode": FIX_MODE,
@@ -197,6 +211,7 @@ def main():
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False))
     print(f"\n📊 Report saved: {report_path}")
+
 
 if __name__ == "__main__":
     main()
