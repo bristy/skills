@@ -1,11 +1,17 @@
 {
   "owner": "qidu",
   "slug": "get-up",
-  "displayName": "ip lookup ( get ip )",
+  "displayName": "Dream dance of Clawra",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1770178823384,
-    "commit": "https://github.com/clawdbot/skills/commit/d1e6814663eba02f0f60d0b9e151744b02049138"
+    "version": "1.0.5",
+    "publishedAt": 1772896731059,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1770178823384,
+      "commit": "https://github.com/clawdbot/skills/commit/d1e6814663eba02f0f60d0b9e151744b02049138"
+    }
+  ]
 }
