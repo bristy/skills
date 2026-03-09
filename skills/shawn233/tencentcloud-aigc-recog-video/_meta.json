@@ -1,0 +1,11 @@
+{
+  "owner": "shawn233",
+  "slug": "tencentcloud-aigc-recog-video",
+  "displayName": "TencentCloud Video AIGC Detection",
+  "latest": {
+    "version": "1.0.3",
+    "publishedAt": 1772980554683,
+    "commit": null
+  },
+  "history": []
+}
