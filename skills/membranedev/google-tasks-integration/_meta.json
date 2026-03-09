@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "google-tasks-integration",
+  "displayName": "Google Tasks",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772938949564,
+    "commit": null
+  },
+  "history": []
+}
