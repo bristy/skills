@@ -1,7 +1,7 @@
 ---
 name: skill-hub-gateway
 description: Unified gateway skill for async execute and poll workflows.
-version: 2.1.1
+version: 2.1.2
 metadata:
   openclaw:
     skillKey: skill-hub-gateway
@@ -32,6 +32,7 @@ Chinese documentation: `SKILL.zh-CN.md`
 
 - Execute: `POST /skill/execute`
 - Poll: `GET /skill/runs/:run_id`
+- For image capabilities, `image_url` must be a direct image file URL (response `Content-Type` should be `image/*`), not a webpage URL.
 - Terminal states: `succeeded` and `failed`
 - `succeeded` returns `output`
 - `failed` returns `error` (`code`, `message`)

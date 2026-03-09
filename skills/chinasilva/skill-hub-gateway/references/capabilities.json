@@ -8,7 +8,11 @@
         "type": "object",
         "required": ["image_url"],
         "properties": {
-          "image_url": { "type": "string", "format": "uri" }
+          "image_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Direct image URL returning image/* content type; webpage URLs are invalid."
+          }
         }
       },
       "example_input": {
@@ -23,7 +27,11 @@
         "type": "object",
         "required": ["image_url"],
         "properties": {
-          "image_url": { "type": "string", "format": "uri" }
+          "image_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Direct image URL returning image/* content type; webpage URLs are invalid."
+          }
         }
       },
       "example_input": {

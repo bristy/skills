@@ -15,6 +15,7 @@
 
 - 提交：`POST /skill/execute`
 - 轮询：`GET /skill/runs/:run_id`
+- 图片类能力要求 `image_url` 为可直接下载图片的直链（返回头应为 `image/*`），不能是网页地址。
 - 终态：`succeeded` / `failed`
 - `succeeded` 返回 `output`
 - `failed` 返回 `error.code`、`error.message`
