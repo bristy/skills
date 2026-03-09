@@ -60,7 +60,7 @@ Mission Control provides comprehensive monitoring and control for OpenClaw agent
 
 2. **Access locally:** http://localhost:3000
 
-3. **Access via Tailscale:** https://ubuntu-openclaw.taila0448b.ts.net
+3. **Access via Tailscale:** https://<your-host>.taila0448b.ts.net (run `tailscale serve 3000` to enable)
 
 ## Pages
 
