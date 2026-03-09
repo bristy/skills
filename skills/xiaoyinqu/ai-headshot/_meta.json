@@ -3,11 +3,16 @@
   "slug": "ai-headshot",
   "displayName": "Ai Headshot",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1772866118992,
-    "commit": "https://github.com/openclaw/skills/commit/a530974c614670ba5c9f5ede619b0cc0dc2ac227"
+    "version": "1.0.3",
+    "publishedAt": 1773039716215,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1772866118992,
+      "commit": "https://github.com/openclaw/skills/commit/a530974c614670ba5c9f5ede619b0cc0dc2ac227"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1772754393227,
