@@ -15,6 +15,7 @@ MIT License — https://github.com/jzOcb/context-doctor
 """
 
 import argparse
+import io
 import json
 import os
 import select
@@ -327,6 +328,62 @@ def render_terminal(workspace: str, ctx_size: int) -> None:
     print()
 
 
+def generate_summary(workspace: str, ctx_size: int) -> str:
+    """Generate a concise text summary of context window health."""
+    files = scan_workspace(workspace)
+    skills = find_skills(workspace)
+    version = get_version()
+
+    total_chars = sum(f[2] for f in files)
+    total_tok = sum(f[3] for f in files)
+    grand_tok = total_tok + sum(DEFAULT_OVERHEAD.values())
+    used_pct = grand_tok / ctx_size * 100
+    free_pct = 100 - used_pct
+
+    truncated = [f for f in files if f[1] == "TRUNCATED"]
+    missing = [f for f in files if f[1] == "MISSING" and f[0] not in EXPECTED_MISSING]
+    ok_files = [f for f in files if f[1] == "OK"]
+
+    lines = []
+    lines.append(f"🧠 Context Doctor — OpenClaw {version}")
+    lines.append("")
+
+    # Health verdict
+    if used_pct < 10:
+        lines.append(f"🟢 Healthy — bootstrap {used_pct:.1f}%, conversation space {free_pct:.1f}%")
+    elif used_pct < 15:
+        lines.append(f"🟡 Moderate — bootstrap {used_pct:.1f}%, consider trimming")
+    else:
+        lines.append(f"🔴 Heavy — bootstrap {used_pct:.1f}%, agent may lose context early")
+    lines.append("")
+
+    # Files summary
+    lines.append(f"📁 Workspace: {len(ok_files)} files OK, {total_chars:,} chars ({total_tok:,} tok)")
+    if truncated:
+        for f in truncated:
+            lines.append(f"  ⚠️ {f[0]} TRUNCATED ({f[2]:,} chars) — instructions silently cut!")
+    if missing:
+        for f in missing:
+            lines.append(f"  ❌ {f[0]} MISSING")
+
+    # Top 3 largest files
+    sorted_files = sorted([f for f in files if f[1] == "OK"], key=lambda x: x[2], reverse=True)
+    if sorted_files:
+        top3 = sorted_files[:3]
+        lines.append(f"  📊 Largest: {', '.join(f'{f[0]}({f[3]}tok)' for f in top3)}")
+
+    lines.append("")
+
+    # Budget breakdown
+    lines.append(f"📊 Token Budget ({ctx_size:,} ctx window):")
+    lines.append(f"  Bootstrap: {grand_tok:,} tok ({used_pct:.1f}%)")
+    lines.append(f"  Free: {ctx_size - grand_tok:,} tok ({free_pct:.1f}%)")
+    lines.append("")
+    lines.append(f"🔧 {len(skills)} skills installed (loaded on-demand, not in bootstrap)")
+
+    return "\n".join(lines)
+
+
 def render_png(workspace: str, ctx_size: int, output_path: str) -> None:
     """Render the visualization as a PNG image (for chat/share use).
 
@@ -426,8 +483,8 @@ def render_png(workspace: str, ctx_size: int, output_path: str) -> None:
 
     text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "")
 
-    # Render with Rich
-    console = RichConsole(record=True, width=85, force_terminal=True)
+    # Render with Rich — capture to StringIO so ANSI noise stays off stdout
+    console = RichConsole(record=True, width=85, force_terminal=True, file=io.StringIO())
     console.print(RichText.from_ansi(text))
     svg = console.export_svg(title="context-doctor")
 
@@ -541,11 +598,19 @@ def main():
         "--png", metavar="PATH",
         help="Render as PNG image to PATH (for sharing in chat)",
     )
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        help="Print a concise text summary (use with --png for image + text)",
+    )
     args = parser.parse_args()
 
     if args.ctx_size <= 0:
         print("Error: --ctx-size must be > 0", file=sys.stderr)
         sys.exit(1)
+    if args.png and args.json:
+        print("Error: --png and --json cannot be used together", file=sys.stderr)
+        sys.exit(2)
 
     NO_COLOR = args.no_color or not sys.stdout.isatty()
 
@@ -558,8 +623,13 @@ def main():
 
     if args.png:
         render_png(workspace, args.ctx_size, args.png)
+        if args.summary:
+            print("---")
+            print(generate_summary(workspace, args.ctx_size))
     elif args.json:
         render_json(workspace, args.ctx_size)
+    elif args.summary:
+        print(generate_summary(workspace, args.ctx_size))
     else:
         render_terminal(workspace, args.ctx_size)
 
