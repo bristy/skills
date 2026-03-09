@@ -1,0 +1,11 @@
+{
+  "owner": "ppopen",
+  "slug": "openclaw-skill-wake-on-lan",
+  "displayName": "Wake On Lan",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772924691201,
+    "commit": null
+  },
+  "history": []
+}
