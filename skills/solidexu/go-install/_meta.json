@@ -1,0 +1,11 @@
+{
+  "owner": "solidexu",
+  "slug": "go-install",
+  "displayName": "Go Install",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773017976008,
+    "commit": null
+  },
+  "history": []
+}
