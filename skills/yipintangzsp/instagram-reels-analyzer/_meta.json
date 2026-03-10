@@ -1,11 +1,17 @@
 {
   "owner": "yipintangzsp",
   "slug": "instagram-reels-analyzer",
-  "displayName": "Instagram Reels 分析器",
+  "displayName": "Instagram Reels Analyzer",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772813484408,
-    "commit": "https://github.com/openclaw/skills/commit/72d442ce4c5841d4b8ecb41706d23049e4d8f2c6"
+    "version": "1.1.0",
+    "publishedAt": 1773112012249,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772813484408,
+      "commit": "https://github.com/openclaw/skills/commit/72d442ce4c5841d4b8ecb41706d23049e4d8f2c6"
+    }
+  ]
 }
