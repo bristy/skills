@@ -1,0 +1,11 @@
+{
+  "owner": "neck-cn",
+  "slug": "tencentcloud-video-face-fusion",
+  "displayName": "TencentCloud  Video Face Fusion",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773062128526,
+    "commit": null
+  },
+  "history": []
+}
