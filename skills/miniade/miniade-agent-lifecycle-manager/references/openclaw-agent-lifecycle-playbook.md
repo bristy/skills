@@ -1,17 +1,34 @@
 # OpenClaw Agent Lifecycle Playbook
 
+## Runtime requirements
+
+Required CLI tools:
+
+- `openclaw`
+- `jq`
+
 ## 1) Create agent workspace + registry
 
 ```bash
 openclaw agents add <AGENT_ID> --workspace ~/.openclaw/workspace-<AGENT_ID>
 ```
 
-## 2) Inherit auth profile (optional, from main)
+## 2) Inherit auth profile (optional, explicit consent only)
+
+Only do this when the user has explicitly approved credential inheritance.
 
 ```bash
 mkdir -p ~/.openclaw/agents/<AGENT_ID>/agent/
 cp ~/.openclaw/agents/main/agent/auth-profiles.json ~/.openclaw/agents/<AGENT_ID>/agent/
 ```
+
+Or use the helper script:
+
+```bash
+scripts/create-telegram-agent.sh --inherit-auth <AGENT_ID> <TELEGRAM_TOKEN>
+```
+
+If consent was not given, skip this step.
 
 ## 3) Add Telegram channel account
 

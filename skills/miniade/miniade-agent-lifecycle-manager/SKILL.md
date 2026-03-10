@@ -1,6 +1,13 @@
 ---
 name: agent-lifecycle-manager
-description: "Manage full OpenClaw agent lifecycle operations on a node: create/register agents, configure channel bindings, inherit credentials, approve pairing, archive and delete agents, refresh status dashboards, and write lifecycle change logs. Use when a user asks to onboard a new agent, reconfigure an existing agent, retire/archive/delete agents, or maintain agent status boards and lifecycle audit records."
+description: "Manage full OpenClaw agent lifecycle operations on a node: create/register agents, configure channel bindings, optionally inherit credentials with explicit consent, approve pairing, archive and delete agents, refresh status dashboards, and write lifecycle change logs. Use when a user asks to onboard a new agent, reconfigure an existing agent, retire/archive/delete agents, or maintain agent status boards and lifecycle audit records."
+metadata:
+  {
+    "openclaw": {
+      "emoji": "🛠️",
+      "requires": { "bins": ["openclaw", "jq"] }
+    }
+  }
 ---
 
 # Agent Lifecycle Manager
@@ -23,6 +30,7 @@ If deleting an agent, always archive first and require explicit confirmation.
   - `AGENT_ID`
   - `TELEGRAM_TOKEN`
   - optional `WORKSPACE` (default: `~/.openclaw/workspace-<AGENT_ID>`)
+  - optional credential inheritance flag (`--inherit-auth` or `INHERIT_AUTH=1`) only with explicit user consent
 - Pairing approval (separate step):
   - `AGENT_ID`
   - `PAIRING_CODE` (obtained only after user sends `/start` to the bot)
@@ -52,6 +60,7 @@ For deterministic execution, use scripts in this skill:
 - Configure bindings via `openclaw config get/set` (append entry; do not overwrite blindly).
 - Do not restart gateway by default after binding/config changes.
 - Use pairing command with explicit channel flag: `openclaw pairing approve <PAIRING_CODE> --channel telegram`.
+- Credential inheritance is optional and must be explicitly approved before copying `auth-profiles.json` from another agent workspace.
 - Never hard-delete before successful archive.
 - For deletion, prefer `scripts/delete-agent-safe.sh` (archive verification + explicit confirmation + cleanup + logging).
 - After every lifecycle change, run dashboard refresh + lifecycle logging.
