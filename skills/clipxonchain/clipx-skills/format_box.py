@@ -117,15 +117,33 @@ def main():
         print(data.get("caption", ""))
         return
 
-    # binance_announcements: plain markdown (bold header, 🔸 bullets, blank line after each)
+    # binance_announcements: plain markdown, 40 chars/line, 🔸 bullets, blank line after each
     if analysis_type == "binance_announcements" and items:
+        def _wrap(prefix: str, text: str, w: int = 40) -> list:
+            avail = w - len(prefix)
+            words = text.split()
+            out, cur, cur_len = [], [], 0
+            for word in words:
+                add = len(word) + (1 if cur else 0)
+                if cur_len + add <= avail:
+                    cur.append(word)
+                    cur_len += add
+                else:
+                    if cur:
+                        out.append(prefix + " ".join(cur))
+                    cur, cur_len = [word], len(word)
+                    prefix, avail = " " * len(prefix), w - len(prefix)
+            if cur:
+                out.append(prefix + " ".join(cur))
+            return out
         print()
         print("**📢 Binance Announcements**")
         print()
         for it in items:
             name = (it.get("name") or "").strip()
             if name:
-                print(f"🔸 {name}")
+                for line in _wrap("🔸 ", name, 40):
+                    print(line)
                 print()
         print()
         return

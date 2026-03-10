@@ -24,22 +24,27 @@ Calls the ClipX BNBChain API via `python "{baseDir}/api_client_cli.py"` to fetch
 
 When the user says "clipx", "bnbchain", "bnbchain analysis", or asks for BNB Chain reports without specifying which one, output this menu exactly:
 
-🟡 ClipX / BNBChain Analysis — Choose one:
+Output this menu inside a code block (triple backticks) so it displays as a formatted box:
 
-1. TVL Rank — Top 10 protocols by Total Value Locked
-2. Fees Rank — Top 10 protocols by fees paid (24h/7d/30d)
-3. Revenue Rank — Top 10 protocols by revenue (24h/7d/30d)
-4. DApps Rank — Top 10 DApps by users (7d)
-5. Full Ecosystem — DeFi, Games, Social, NFTs, AI, Infra, RWA leaders
-6. Social Hype — Top 10 social hype tokens
-7. Meme Rank — Top 10 meme tokens by score
-8. Network metrics — Latest block, gas price, sync state
-9. Market Insight — Binance 24h volume leaders (top USDT pairs)
-10. Market Insight (Live) — Volume Leaders + Top Gainers + Top Losers (snapshot)
-11. Binance Announcements — Top 10 newest from Binance
-12. DEX Volume — Top 10 DEXs by trading volume on BNB Chain (24h/7d/30d)
-
-Reply with a number (1–12).
+```
+========================================
+🟡 ClipX / BNBChain Analysis
+========================================
+ 1. TVL Rank
+ 2. Fees Rank (24h/7d/30d)
+ 3. Revenue Rank (24h/7d/30d)
+ 4. DApps Rank
+ 5. Full Ecosystem
+ 6. Social Hype
+ 7. Meme Rank
+ 8. Network Metrics
+ 9. Market Insight
+10. Market Insight (Live)
+11. Binance Announcements
+12. DEX Volume (24h/7d/30d)
+========================================
+Reply with a number (1–12)
+```
 
 ---
 
