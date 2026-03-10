@@ -34,8 +34,10 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import ConsolidateMemoriesReducer from "./consolidate_memories_reducer";
 import DeleteMemoryReducer from "./delete_memory_reducer";
 import StoreMemoryReducer from "./store_memory_reducer";
+import UpdateMemoryReducer from "./update_memory_reducer";
 
 // Import all procedure arg schemas
 
@@ -57,8 +59,10 @@ const tablesSchema = __schema({
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema("consolidate_memories", ConsolidateMemoriesReducer),
   __reducerSchema("delete_memory", DeleteMemoryReducer),
   __reducerSchema("store_memory", StoreMemoryReducer),
+  __reducerSchema("update_memory", UpdateMemoryReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

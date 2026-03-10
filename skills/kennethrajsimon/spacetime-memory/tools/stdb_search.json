@@ -1,7 +1,7 @@
 {
   "name": "stdb_search",
   "description": "Search local SpacetimeDB memories.",
-  "command": "npx tsx tools/stdb_search.ts",
+  "command": "node /root/.openclaw/workspace/skills/spacetime-memory/tools/stdb_search.js",
   "parameters": {
     "type": "object",
     "properties": {

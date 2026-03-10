@@ -5,8 +5,8 @@ const sdk_1 = require("../sdk");
 const argsStr = process.argv[2] || "{}";
 const args = JSON.parse(argsStr);
 const queryStr = args.query?.toLowerCase() || "";
-const URL = 'http://127.0.0.1:3001';
-const DB_NAME = 'stdb-memory-1vgys';
+const URL = process.env.SPACETIMEDB_URL || "http://127.0.0.1:3001";
+const DB_NAME = process.env.SPACETIMEDB_NAME || "stdb-memory-1vgys";
 async function main() {
     let db;
     await new Promise((resolve, reject) => {

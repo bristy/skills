@@ -6,9 +6,13 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
+import ConsolidateMemoriesReducer from "../consolidate_memories_reducer";
 import DeleteMemoryReducer from "../delete_memory_reducer";
 import StoreMemoryReducer from "../store_memory_reducer";
+import UpdateMemoryReducer from "../update_memory_reducer";
 
+export type ConsolidateMemoriesParams = __Infer<typeof ConsolidateMemoriesReducer>;
 export type DeleteMemoryParams = __Infer<typeof DeleteMemoryReducer>;
 export type StoreMemoryParams = __Infer<typeof StoreMemoryReducer>;
+export type UpdateMemoryParams = __Infer<typeof UpdateMemoryReducer>;
 

@@ -11,8 +11,10 @@ exports.DbConnection = exports.DbConnectionBuilder = exports.SubscriptionBuilder
 /* tslint:disable */
 const spacetimedb_1 = require("spacetimedb");
 // Import all reducer arg schemas
+const consolidate_memories_reducer_1 = __importDefault(require("./consolidate_memories_reducer"));
 const delete_memory_reducer_1 = __importDefault(require("./delete_memory_reducer"));
 const store_memory_reducer_1 = __importDefault(require("./store_memory_reducer"));
+const update_memory_reducer_1 = __importDefault(require("./update_memory_reducer"));
 // Import all procedure arg schemas
 // Import all table schema definitions
 const memory_table_1 = __importDefault(require("./memory_table"));
@@ -26,7 +28,7 @@ const tablesSchema = (0, spacetimedb_1.schema)({
     }, memory_table_1.default),
 });
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
-const reducersSchema = (0, spacetimedb_1.reducers)((0, spacetimedb_1.reducerSchema)("delete_memory", delete_memory_reducer_1.default), (0, spacetimedb_1.reducerSchema)("store_memory", store_memory_reducer_1.default));
+const reducersSchema = (0, spacetimedb_1.reducers)((0, spacetimedb_1.reducerSchema)("consolidate_memories", consolidate_memories_reducer_1.default), (0, spacetimedb_1.reducerSchema)("delete_memory", delete_memory_reducer_1.default), (0, spacetimedb_1.reducerSchema)("store_memory", store_memory_reducer_1.default), (0, spacetimedb_1.reducerSchema)("update_memory", update_memory_reducer_1.default));
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */
 const proceduresSchema = (0, spacetimedb_1.procedures)();
 /** The remote SpacetimeDB module schema, both runtime and type information. */

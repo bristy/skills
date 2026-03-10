@@ -1,11 +1,17 @@
 {
   "owner": "kennethrajsimon",
   "slug": "spacetime-memory",
-  "displayName": "spacetime-memory",
+  "displayName": "SpacetimeDB Memory",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773169813767,
-    "commit": "https://github.com/openclaw/skills/commit/c9c1952208bd8976fccf723ed252a4b6b6eab79e"
+    "version": "1.1.5",
+    "publishedAt": 1773179988253,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773169813767,
+      "commit": "https://github.com/openclaw/skills/commit/c9c1952208bd8976fccf723ed252a4b6b6eab79e"
+    }
+  ]
 }
