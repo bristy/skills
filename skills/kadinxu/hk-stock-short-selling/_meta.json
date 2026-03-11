@@ -1,0 +1,11 @@
+{
+  "owner": "kadinxu",
+  "slug": "hk-stock-short-selling",
+  "displayName": "港股卖空数据",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773154602629,
+    "commit": null
+  },
+  "history": []
+}
