@@ -1,0 +1,11 @@
+{
+  "owner": "nucliweb",
+  "slug": "webperf-core-web-vitals",
+  "displayName": "Webperf Core Web Vitals",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1773226483039,
+    "commit": null
+  },
+  "history": []
+}
