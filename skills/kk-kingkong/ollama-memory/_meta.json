@@ -1,0 +1,11 @@
+{
+  "owner": "kk-kingkong",
+  "slug": "ollama-memory",
+  "displayName": "Ollama Memory",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773050450790,
+    "commit": null
+  },
+  "history": []
+}
