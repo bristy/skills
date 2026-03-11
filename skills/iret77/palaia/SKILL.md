@@ -18,6 +18,20 @@ metadata:
 
 # Palaia — Agent Memory Skill
 
+## Communication During Setup
+
+- After each major step, send a brief status message to the user. Don't go silent.
+- If a step takes longer than ~10 seconds, say what you're doing: "Installing sentence-transformers, this takes a moment…"
+- If something unexpected happens (e.g. CUDA error, provider fails), explain what happened and what you're doing instead — immediately.
+- Don't batch all steps and report at the end. Report after each step.
+
+Example pacing:
+1. "Installing Palaia…" → [runs pip install] → "Done. Initializing…"
+2. "Checking your system for available search providers…" → [runs palaia doctor + detect] → "Found: [X]. Quick question:"
+3. [Onboarding conversation — max 3 questions]
+4. "Configuring chain… warming up model (this takes ~15 seconds)…" → "Ready."
+5. "All set. Here's your setup: [one sentence summary]"
+
 ## Setup Flow (follow this exactly)
 
 ### Step 1: Install and initialize
@@ -31,21 +45,34 @@ palaia init
 palaia doctor
 ```
 
-Review **every** warning before continuing. For each finding, ask the user explicitly:
+Review **every** warning before continuing. For each warning found by `palaia doctor`, immediately offer to fix it — do not wait for the user to ask:
 
-**smart-memory skill detected:**
-Tell the user: "I found an existing smart-memory installation. Palaia replaces it. Should I migrate your existing memories and then deactivate smart-memory?"
+**HEARTBEAT.md legacy patterns:**
+→ Tell the user: "Your heartbeat still uses old memory patterns. Should I update it to use Palaia? (Takes a moment, no data loss)"
+- If yes: update HEARTBEAT.md, replace `memory_search`/`memory_get`/direct file reads with `palaia query`/`palaia write` equivalents
+- If no: skip, move to next warning
+
+**Smart-Memory skill detected:**
+→ Tell the user: "The old smart-memory skill is still installed. Should I remove it? (Only after confirming Palaia has your memories)"
 - If yes: run `palaia migrate <workspace-path>`, then remove the smart-memory skill folder
 - If no: continue, but both systems will run in parallel (not recommended)
 
-**OpenClaw memory plugin still set to memory-core:**
-Tell the user: "Should I switch OpenClaw to use Palaia as the memory system?"
+**OpenClaw plugin still memory-core:**
+→ Tell the user: "Palaia isn't connected to OpenClaw's memory system yet. Should I switch it? (Requires a quick OpenClaw restart)"
 - If yes: update OpenClaw config (`plugins.slots.memory = "palaia"`), restart OpenClaw
 - If no: Palaia runs standalone (no `memory_search`/`memory_get` tool integration)
 
-**HEARTBEAT.md legacy patterns:**
-Tell the user: "Your heartbeat has old memory commands. Should I update them to use Palaia?"
-- If yes: update HEARTBEAT.md, replace `memory_search`/`memory_get`/direct file reads with `palaia query`/`palaia write` equivalents
+**openai-only chain (no local fallback):**
+→ Tell the user: "Your search has no local backup. Should I install fastembed as a fallback? (Small download, no GPU needed)"
+- If yes: `pip install fastembed`, then `palaia warmup`, update chain to include fastembed before bm25
+- If no: skip (warn: "Search may degrade when OpenAI is unavailable")
+
+Rules:
+- For each warning: ask immediately, one question at a time
+- Do not batch all questions — address them in order
+- Do not wait for the user to notice and ask
+- After user answers yes/no, move to next warning
+- Report when all warnings are resolved
 
 **Do not proceed until all warnings are addressed or explicitly dismissed by the user.**
 
@@ -61,15 +88,24 @@ Tell the user:
 Quick setup: 3 short questions."
 
 **Question 1 — Search quality:**
-If an OpenAI API key is present on this system:
-  Ask: "Should I use your OpenAI key for smarter memory search? It gives better results."
-  → yes: put openai first in chain
-  → no: use sentence-transformers (install if needed) or BM25
 
-If no OpenAI key:
-  Ask: "Should I install a local search model for better memory search? It's free, runs offline, takes about 300MB."
-  → yes: pip install sentence-transformers, then palaia warmup
-  → no: BM25 only (say: "Search will be keyword-based — you can improve this later")
+If an OpenAI API key is present AND a local model (sentence-transformers/fastembed/ollama) is also detected:
+  → Just confirm: "I'll use your OpenAI key with a local backup model. Good setup."
+  → No question needed.
+
+If an OpenAI API key is present BUT no local model is installed:
+  → Tell the user: "You have an OpenAI API key — great for search quality. But without a local backup, search quality drops significantly when OpenAI is unavailable. I recommend installing a small local model (300MB, free, runs offline). Should I do that?"
+  → yes: pip install sentence-transformers (if CUDA issues: pip install fastembed instead — lighter, no GPU needed), then palaia warmup, chain = openai → sentence-transformers → bm25
+  → no: chain = openai → bm25 (warn: "Note: search may fail or degrade without a local fallback.")
+
+If no OpenAI key AND no local model:
+  → Tell the user: "No search provider found yet. I recommend installing a free local model (300MB). Should I do that?"
+  → yes: pip install sentence-transformers (if CUDA issues: pip install fastembed instead — lighter, no GPU needed), then palaia warmup, chain = sentence-transformers → bm25
+  → no: BM25 only (warn: "Search will be keyword-based — you can improve this later with palaia detect.")
+
+If no OpenAI key BUT local model detected:
+  → Just confirm: "Using local search model — works offline, no API costs."
+  → No question needed.
 
 **Question 2 — Existing memory (only ask if legacy memory files exist OR smart-memory detected):**
   Ask: "You have existing memory. Should I bring it into Palaia?"
@@ -101,9 +137,10 @@ palaia config set-chain <provider1> [provider2] bm25
 
 If only BM25 is shown and you want semantic search:
 ```bash
-pip install sentence-transformers   # fast local option
+pip install sentence-transformers   # Recommended for most systems
 palaia warmup                       # pre-load model
 ```
+If sentence-transformers fails or requires CUDA: use fastembed instead (`pip install fastembed`) — lighter, no GPU needed.
 
 ### Step 4: Warm up models
 ```bash
@@ -117,6 +154,27 @@ palaia migrate <path> --dry-run   # Preview first
 palaia migrate <path>             # Then import
 ```
 Note: If smart-memory migration was already handled in Step 2, skip this unless there are other sources to import.
+
+### Step 6: Add Palaia maintenance to your heartbeat (mandatory)
+
+This is required. Palaia's tiering (HOT → WARM → COLD) only runs when triggered.
+Without periodic maintenance, all entries stay HOT forever and search quality degrades over time.
+
+Check if `HEARTBEAT.md` exists in the workspace (`~/.openclaw/workspace/HEARTBEAT.md`).
+
+**If it exists:** Append the following block at the end (before any final comments):
+
+```
+# TASK: Palaia Maintenance (daily + weekly)
+# [INSTRUCTION for LLM]:
+# Daily: run `palaia gc` — moves entries between HOT/WARM/COLD based on age and access.
+# Weekly (Sunday): run `palaia gc --aggressive` — also clears COLD tier.
+# Fast operation, never blocks user queries. Only run if palaia is installed (check: which palaia).
+```
+
+**If it does not exist:** Create `HEARTBEAT.md` with the block above as its first task.
+
+Tell the user: "I've added a Palaia maintenance task to your heartbeat schedule. This keeps your memory organized automatically — nothing you need to do."
 
 ## Commands Reference
 
