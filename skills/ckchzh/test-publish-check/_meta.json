@@ -1,0 +1,11 @@
+{
+  "owner": "ckchzh",
+  "slug": "test-publish-check",
+  "displayName": "Test & Publish Checker",
+  "latest": {
+    "version": "2.0.0",
+    "publishedAt": 1773162739260,
+    "commit": null
+  },
+  "history": []
+}
