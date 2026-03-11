@@ -1,11 +1,17 @@
 {
   "owner": "stepuuu",
   "slug": "portfolio-daily-tracker",
-  "displayName": "Skills",
+  "displayName": "Portfolio Daily Tracker",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773032473607,
-    "commit": "https://github.com/openclaw/skills/commit/10c4e2091333163d09639084aa6e73a90da8585d"
+    "version": "1.2.0",
+    "publishedAt": 1773150722505,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773032473607,
+      "commit": "https://github.com/openclaw/skills/commit/10c4e2091333163d09639084aa6e73a90da8585d"
+    }
+  ]
 }

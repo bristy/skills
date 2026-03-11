@@ -1,10 +1,36 @@
 ---
 name: portfolio-daily-tracker
 description: Track and report multi-group stock portfolios with daily snapshots, live Yahoo Finance prices, P&L analytics, and push notifications (Feishu/Telegram). Supports A-shares, HK, US markets. Use when asked about holdings, buy/sell/rebalance positions, generate daily portfolio reports, check drawdown or returns, update fund/cash balances, or run the full snapshot-report-push pipeline.
-version: 1.1.0
+version: 1.2.0
+setup: scripts/setup.sh
+env:
+  OPENAI_API_KEY:
+    description: OpenAI API key for AI chat features
+    required: false
+  FEISHU_WEBHOOK:
+    description: Feishu/Lark webhook URL for push notifications
+    required: false
+  TELEGRAM_BOT_TOKEN:
+    description: Telegram bot token for push notifications
+    required: false
+  PORTFOLIO_DIR:
+    description: Override default portfolio data directory path
+    required: false
+requires:
+  - python3 >= 3.9
+  - pip packages: yfinance, pandas, requests, fastapi, uvicorn
+  - Engine scripts installed via setup.sh (clones repo with portfolio_manager.py, portfolio_snapshot.py, portfolio_report.py)
 ---
 
 # Portfolio Daily Tracker Skill
+
+## Prerequisites
+
+This skill requires the engine scripts from the main repository. Run setup first:
+```bash
+bash scripts/setup.sh [target_dir]
+```
+This clones the repo, creates data directories, copies config templates, and installs Python dependencies. The Python engine scripts (`portfolio_manager.py`, `portfolio_snapshot.py`, `portfolio_report.py`, `portfolio_daily_update.py`) are located in `engine/scripts/` after setup.
 
 ## Trigger Conditions
 
@@ -196,4 +222,20 @@ Agent: [runs: portfolio_manager.py set-fund --group Growth --value 160000]
 4. **Fund and cash**: Use `set-fund` and `set-cash` commands to update
 5. **Weekends/holidays**: Can modify holdings, but price snapshots may not change
 6. **Margin/leverage**: When cash is negative, margin amount and leverage ratio are auto-calculated
-7. **Drawdown**: Calculated from full historical data in history.csv
+7. **Drawdown**: Profit-based drawdown algorithm, calculated from full history.csv (excludes capital injection/withdrawal impact)
+8. **Capital changes**: Cost increases/decreases (injections, withdrawals) are recorded as `capital_change`; daily P&L `market_daily_change` automatically excludes capital flow
+9. **Snapshot fault tolerance**: If a day's snapshot JSON is missing, the API auto-synthesizes from CSV history + closest snapshot; date navigator never has gaps
+10. **CSV 11-column format**: `date,total_value,total_cost,total_profit,return_pct,daily_change,daily_change_pct,max_drawdown_pct,capital_change,market_daily_change,market_daily_change_pct`
+
+## Changelog
+
+### v1.2.0 (2026-03-10)
+- **fix**: Daily P&L correctly excludes capital injections/withdrawals (`market_daily_change = daily_change - capital_change`)
+- **fix**: Date navigator uses CSV + snapshot file union, no longer skips dates with missing snapshots
+- **fix**: Auto-synthesize snapshot when JSON is missing (rebuilt from CSV + closest snapshot)
+- **fix**: Drawdown algorithm changed to profit-based, excluding capital flow impact
+- **fix**: CSV upgraded to 11-column format with `capital_change`/`market_daily_change`/`market_daily_change_pct`
+- **fix**: Support `成本增加/减少` (cost delta) parsing pattern
+
+### v1.1.0 (2026-03-08)
+- Initial ClawHub release with multi-market support, AI chat, backtesting engine

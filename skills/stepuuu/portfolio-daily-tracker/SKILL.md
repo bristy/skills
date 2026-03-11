@@ -1,10 +1,36 @@
 ---
 name: portfolio-daily-tracker
 description: Track and report multi-group stock portfolios with daily snapshots, live Yahoo Finance prices, P&L analytics, and push notifications (Feishu/Telegram). Supports A-shares, HK, US markets. Use when asked about holdings, buy/sell/rebalance positions, generate daily portfolio reports, check drawdown or returns, update fund/cash balances, or run the full snapshot-report-push pipeline.
-version: 1.1.0
+version: 1.2.0
+setup: scripts/setup.sh
+env:
+  OPENAI_API_KEY:
+    description: OpenAI API key for AI chat features
+    required: false
+  FEISHU_WEBHOOK:
+    description: Feishu/Lark webhook URL for push notifications
+    required: false
+  TELEGRAM_BOT_TOKEN:
+    description: Telegram bot token for push notifications
+    required: false
+  PORTFOLIO_DIR:
+    description: Override default portfolio data directory path
+    required: false
+requires:
+  - python3 >= 3.9
+  - pip packages: yfinance, pandas, requests, fastapi, uvicorn
+  - Engine scripts installed via setup.sh (clones repo with portfolio_manager.py, portfolio_snapshot.py, portfolio_report.py)
 ---
 
 # Portfolio Daily Tracker Skill
+
+## Prerequisites / 前置条件
+
+This skill requires the engine scripts from the main repository. Run setup first:
+```bash
+bash scripts/setup.sh [target_dir]
+```
+This clones the repo, creates data directories, copies config templates, and installs Python dependencies. The Python engine scripts (`portfolio_manager.py`, `portfolio_snapshot.py`, `portfolio_report.py`, `portfolio_daily_update.py`) are located in `engine/scripts/` after setup.
 
 ## 触发条件
 
@@ -196,4 +222,20 @@ Agent: [runs: portfolio_manager.py set-fund --group Growth --value 160000]
 4. **基金和现金**: 使用 `set-fund` 和 `set-cash` 命令更新
 5. **周末/节假日**: 可以修改持仓，但价格快照获取可能无变化
 6. **融资/杠杆**: 现金为负值时自动计算融资额和杠杆比率
-7. **回撤**: 从 history.csv 全量历史数据计算
+7. **回撤**: 基于利润的回撤算法，从 history.csv 全量历史数据计算（排除资金注入/取出影响）
+8. **资金变动**: 成本增加/减少（如注资、取出）会被记录为 `capital_change`，日盈亏 `market_daily_change` 自动排除资金变动
+9. **快照缺失容错**: 即使某天的快照 JSON 被删除，API 会从 CSV 历史数据自动合成，日期导航不会出现缺口
+10. **CSV 11列格式**: `date,total_value,total_cost,total_profit,return_pct,daily_change,daily_change_pct,max_drawdown_pct,capital_change,market_daily_change,market_daily_change_pct`
+
+## Changelog
+
+### v1.2.0 (2026-03-10)
+- **fix**: 日盈亏正确排除资金注入/取出（`market_daily_change = daily_change - capital_change`）
+- **fix**: 日期导航使用 CSV + 快照文件并集，不再因快照缺失而跳过日期
+- **fix**: 快照缺失时自动合成 synthetic snapshot（从 CSV + 最近快照重建）
+- **fix**: 回撤算法改为基于利润的计算方式，排除资金流影响
+- **fix**: CSV 升级为 11 列格式，新增 `capital_change`/`market_daily_change`/`market_daily_change_pct`
+- **fix**: 支持 `成本增加/减少` 解析模式
+
+### v1.1.0 (2026-03-08)
+- Initial ClawHub release with multi-market support, AI chat, backtesting engine
