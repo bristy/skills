@@ -1,0 +1,11 @@
+{
+  "owner": "zhouwenbin2000",
+  "slug": "weather-support",
+  "displayName": "国内天气查询技能 - 基于uapis.cn免费API。支持全国3000+城市，无需注册和API密钥",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773159892616,
+    "commit": null
+  },
+  "history": []
+}
