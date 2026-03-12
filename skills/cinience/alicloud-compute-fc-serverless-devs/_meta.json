@@ -3,11 +3,16 @@
   "slug": "alicloud-compute-fc-serverless-devs",
   "displayName": "Alicloud Compute Fc Serverless Devs",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1770973212140,
-    "commit": "https://github.com/openclaw/skills/commit/e23e4bb2f1fdd17df7e6fb51feb3a84f6ca0fd4a"
+    "version": "1.0.3",
+    "publishedAt": 1773221937776,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1770973212140,
+      "commit": "https://github.com/openclaw/skills/commit/e23e4bb2f1fdd17df7e6fb51feb3a84f6ca0fd4a"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1770768511458,
