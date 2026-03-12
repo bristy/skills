@@ -1,0 +1,11 @@
+{
+  "owner": "paulieb14",
+  "slug": "subgraph-registry-mcp",
+  "displayName": "Subgraph Registry",
+  "latest": {
+    "version": "0.3.1",
+    "publishedAt": 1773352055575,
+    "commit": null
+  },
+  "history": []
+}
