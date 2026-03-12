@@ -1,6 +1,6 @@
 # Fast.io for AI Agents
 
-> **Version:** 1.25.0 | **Last updated:** 2026-02-21
+> **Version:** 1.26.0 | **Last updated:** 2026-03-06
 >
 > This guide is available at the `/current/agents/` endpoint on the connected API server.
 
@@ -337,12 +337,17 @@ summarized, and indexed for RAG. This enables:
 
 > **Coming soon:** RAG indexing support for images, video, and audio files. Currently only documents and code are indexed.
 
-Intelligence is enabled by default when creating workspaces via the API for agent accounts. If your team only needs a
-shared workspace for coordination, you can disable it to conserve credits. If you want to query your content — enable it.
+Intelligence is enabled by default when creating workspaces via the API for agent accounts. **Agents should explicitly
+set intelligence to `false` unless the user needs RAG queries across many documents or AI-powered semantic search.**
+The ingestion cost (10 credits/page) is significant and non-refundable — a 100-page document costs 1,000 credits to
+ingest. If your team only needs a shared workspace for coordination, disable it to conserve credits.
 
-**Agent use case:** Create a workspace per project or client. Enable intelligence if agents or humans need to query the
-content. Upload reports, datasets, and deliverables. Invite other agents and human stakeholders. Everything is organized,
-searchable, and versioned — and the whole team can see it.
+**Agent use case:** Create a workspace per project or client. Enable intelligence only if agents or humans need to query the
+content via RAG or semantic search. Upload reports, datasets, and deliverables. Invite other agents and human stakeholders.
+Everything is organized, searchable, and versioned — and the whole team can see it.
+
+> **Cost-saving tips:** Disable intelligence on storage-only workspaces to avoid ingestion costs. Use attach-only AI chat
+> (no intelligence needed) for one-off file analysis — up to 20 files can be attached directly without indexing.
 
 ### 2. Shares — Structured Agent-Human Exchange
 
@@ -431,18 +436,20 @@ right — the intent is unambiguous when file parameters are present.
 #### Intelligence Setting — When to Enable It
 
 The `intelligence` toggle on a workspace controls whether uploaded documents and code files are automatically ingested, summarized, and
-indexed for RAG.
+indexed for RAG. **For most workflows, intelligence should be OFF.** Ingestion costs 10 credits/page and is non-refundable — a 100-page
+document costs 1,000 credits. This can be the largest credit consumer for agent accounts.
 
-**Enable intelligence when:**
-- You have many files and need to search across them to answer questions
+**Enable intelligence only when:**
+- You have many files and need RAG queries across them to answer questions
 - You want scoped RAG queries against folders or the entire workspace
-- You need auto-summarization and metadata extraction
-- You're building a persistent knowledge base
+- You need AI-powered semantic search across large document sets
+- You're building a persistent knowledge base that will be queried repeatedly
 
-**Disable intelligence when:**
-- You're using the workspace purely for team coordination and file exchange
-- You only need to analyze specific files (use file attachments instead)
-- You want to conserve credits (ingestion costs 10 credits/page)
+**Disable intelligence (recommended default) when:**
+- You're using the workspace for file storage, sharing, or team coordination
+- You only need to analyze specific files (use file attachments instead — no intelligence needed)
+- You're uploading deliverables, reports, or outputs that don't need to be queried
+- You want to conserve credits — disabling avoids all ingestion costs
 
 Even with intelligence disabled, you can still use `chat_with_files` with **file attachments** — any file that has a
 ready preview can be attached directly to a chat for one-off analysis.
@@ -626,6 +633,77 @@ Instead of downloading and parsing all 50, create a `chat_with_files` scoped to 
 searches the indexed content, retrieves relevant passages, and answers with citations. Pass the cited answer — with
 source references — back to the user.
 
+#### Semantic Search — Fast Retrieval Without LLM
+
+Semantic search lets you find relevant document chunks by meaning without creating a chat or waiting for an LLM response.
+It returns ranked text snippets with relevance scores — no LLM round-trip, no token cost beyond the search itself.
+
+**When to use search vs chat:**
+
+| | Semantic Search | AI Chat |
+|---|---|---|
+| **What it does** | Returns raw document chunks ranked by relevance | Creates an LLM-generated answer with citations |
+| **Speed** | Fast — vector lookup only | Slower — retrieval + LLM generation |
+| **Cost** | Low — no LLM token cost | Higher — LLM tokens consumed per message |
+| **Best for** | Retrieval, lookup, finding specific content | Synthesis, analysis, summarizing across documents |
+| **Returns** | Text snippets + scores + file references | Natural language answer + citations |
+
+**Endpoints:**
+
+```
+GET /current/workspace/{workspace_id}/ai/search/
+GET /current/share/{share_id}/ai/search/
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `query_text` | string | Yes | — | Search query, 2–1,000 characters |
+| `files_scope` | string | No | All indexed files | Comma-separated `nodeId:versionId` pairs (max 100) |
+| `folders_scope` | string | No | All indexed files | Comma-separated `nodeId:depth` pairs (max 100, depth 1–10) |
+| `limit` | integer | No | 100 | Results per page, 1–500 |
+| `offset` | integer | No | 0 | Pagination offset |
+
+Requires `intelligence=true` on the workspace or share. Only files with `ai_state: ready` are included.
+
+**Response example:**
+
+```json
+{
+  "result": true,
+  "results": [
+    {
+      "content": "The quarterly revenue showed a 15% increase...",
+      "score": 0.95,
+      "node": {
+        "id": "f3jm5-zqzfx-pxdr2-dx8z5-bvnb3-rpjfm4",
+        "type": "file",
+        "name": "quarterly-report.pdf",
+        "mimetype": "application/pdf",
+        "ai": { "state": "ready", "attach": true, "summary": true }
+      }
+    }
+  ],
+  "pagination": { "total": 25, "limit": 100, "offset": 0, "has_more": false }
+}
+```
+
+Each result contains:
+- `content` — the matched text snippet from the indexed document
+- `score` — relevance score (0.0–1.0, higher is more relevant)
+- `node` — full file resource (or `null` if the file was deleted)
+
+**Agent memory pattern:** Upload context documents (meeting notes, research, reference material) to an intelligent
+workspace. Later, use `ai/search` to retrieve relevant chunks without burning LLM credits. This is significantly
+cheaper than creating a chat for every lookup and is ideal for agents that need to recall information across sessions —
+treat the intelligent workspace as a persistent memory store and search as the retrieval mechanism.
+
+**Agent use case — multi-step research:** An agent researching a topic uploads 200 papers to a workspace with
+intelligence enabled. For each research question, it calls `ai/search` to find the most relevant passages, reads the
+top results, and only escalates to AI chat when it needs the LLM to synthesize across multiple sources. This approach
+uses a fraction of the credits compared to chatting for every question.
+
 ### 5. File Preview — No Download Required
 
 Files uploaded to Fast.io get automatic preview generation. When humans open a share or workspace, they see the content
@@ -781,7 +859,7 @@ Large files use chunked uploads. The flow has five steps:
    | `storing` | Being added to storage | Keep polling |
    | **`stored`** | **Done** — file is in storage | Read `new_file_id`, clean up |
    | `assembly_failed` | Assembly error (terminal) | Check `status_message` |
-   | `store_failed` | Storage error (retryable) | Keep polling, server retries |
+   | `store_failed` | Storage import failed (terminal) | Check `status_message`, handle error |
 
    Stop polling when status is `stored`, `assembly_failed`, or `store_failed`.
 
@@ -1391,12 +1469,12 @@ the human upgrades when they're ready. The agent retains admin access to keep ma
 
 ### Build a Knowledge Base
 
-1. Create a workspace **with intelligence enabled**
+1. Create a workspace **with intelligence enabled** (this is one of the workflows that justifies the ingestion cost)
 2. Upload all reference documents
 3. AI auto-indexes and summarizes everything on upload
-4. Use AI chat scoped to folders or the full workspace to query across all documents
-5. Use `ai` action `search` to find files by meaning, not just filename — returns ranked document chunks with relevance scores
-6. Answers include citations to specific pages and files
+4. Use **semantic search** (`ai/search`) for fast, low-cost retrieval — find relevant document chunks by meaning without an LLM round-trip. Best for lookup, recall, and memory workflows
+5. Use **AI chat** (`chat_with_files`) when you need the LLM to synthesize, analyze, or summarize across documents — returns a natural language answer with citations
+6. Combine both: search first to find relevant content cheaply, then chat only when synthesis is needed
 
 ### Set Up an Agentic Team Workspace
 
@@ -1417,7 +1495,7 @@ the human upgrades when they're ready. The agent retains admin access to keep ma
 
 ### Extract Structured Metadata From Documents
 
-1. Create a workspace **with intelligence enabled**
+1. Create a workspace **with intelligence enabled** (metadata extraction requires ingestion — budget for ingestion costs)
 2. Create a metadata template with the fields you need (e.g., invoice_number, amount, vendor, due_date)
 3. Assign the template to the workspace (`POST .../metadata/template/assign/`)
 4. Upload files — metadata is automatically extracted during ingestion against the template schema
@@ -1571,7 +1649,7 @@ automated execution.
 - AI chat: 1 credit per 100 tokens
 - File uploads: storage credits (100 credits/GB)
 - Downloads: bandwidth credits (212 credits/GB)
-- Document ingestion: 10 credits/page (when intelligence is enabled)
+- Document ingestion: 10 credits/page (when intelligence is enabled) — this can be the largest credit consumer. A 100-page document costs 1,000 credits to ingest.
 
 ### Code Mode — Streamlined Tools for Headless Agents
 
@@ -1587,7 +1665,7 @@ tools — the full interactive experience with action-based routing across every
 | `auth`     | Authentication — same as Named Mode (`signin`, `signup`, `set-api-key`, `pkce-login`, etc.) |
 | `upload`   | File uploads — same as Named Mode (`create-session`, `chunk`, `finalize`, `text-file`, etc.)|
 | `search`   | Keyword/tag search over 285 API endpoints                                                   |
-| `execute`  | Run agent-provided JavaScript against the Fast.io API in a sandboxed environment            |
+| `execute`  | Make authenticated API calls to Fast.io (structured method/path/body/params)                |
 
 #### `search` Tool
 
@@ -1605,29 +1683,26 @@ concept docs (pagination, error codes, etc.).
 
 #### `execute` Tool
 
-Runs agent-provided JavaScript in a sandboxed `AsyncFunction` with a `fastio` proxy object that handles auth
-injection, envelope parsing, and error extraction. The sandbox has whitelisted globals only (`JSON`, `Math`, `Date`,
-etc.), blocks prototype chain escapes, and enforces a 60-second timeout.
+Makes authenticated API calls to the Fast.io API using structured parameters. The tool automatically injects the
+session token, unwraps the API response envelope, and extracts errors — agents receive clean response data without
+boilerplate. Non-JSON responses (text, binary) are handled gracefully.
 
 **Parameters:**
 
-| Parameter    | Type   | Required | Description                                              |
-|--------------|--------|----------|----------------------------------------------------------|
-| `code`       | string | Yes      | JavaScript code to execute in the sandbox                |
-| `timeout_ms` | number | No       | Execution timeout in milliseconds (1,000–60,000)         |
+| Parameter    | Type   | Required | Description                                                        |
+|--------------|--------|----------|--------------------------------------------------------------------|
+| `method`     | enum   | Yes      | HTTP method: `get`, `post`, `postJson`, `delete`, `put`            |
+| `path`       | string | Yes      | API endpoint path (e.g., `/current/org/{id}/list/workspaces/`)     |
+| `body`       | object | No       | Request body (for `post`, `postJson`, `put`)                       |
+| `params`     | object | No       | Query string parameters                                            |
+| `timeout_ms` | number | No       | Request timeout in milliseconds                                    |
 
-**`fastio` proxy methods:**
+**Special paths:**
 
-| Method              | Description                           |
-|---------------------|---------------------------------------|
-| `fastio.get(path)`  | `GET` request to the Fast.io API      |
-| `fastio.post(path, body)` | `POST` with form-encoded body   |
-| `fastio.postJson(path, body)` | `POST` with JSON body        |
-| `fastio.put(path, body)` | `PUT` request                    |
-| `fastio.delete(path)` | `DELETE` request                   |
-
-The proxy automatically injects the authenticated session token, unwraps the API response envelope, and extracts errors
-— agents receive clean response data without boilerplate.
+| Path                           | Purpose                                           |
+|--------------------------------|---------------------------------------------------|
+| `/readnote/`                   | Read note content in code mode                    |
+| `download://{file_id}`         | MCP resource path for reading file content        |
 
 #### Code Mode Workflow Pattern
 
@@ -1635,21 +1710,20 @@ Code Mode agents follow a **search → review → execute → iterate** loop:
 
 1. **Search** — use the `search` tool to discover relevant API endpoints by keyword or tag
 2. **Review** — examine the returned endpoint details (method, path, parameters, summary)
-3. **Execute** — call the endpoint programmatically via the `execute` tool using the `fastio` proxy
+3. **Execute** — call the endpoint with structured parameters (`method`, `path`, `body`, `params`)
 4. **Iterate** — refine based on results, search for additional endpoints as needed
 
 This pattern replaces the need for 19+ individually named tools. Agents discover endpoints dynamically via search and
-call them programmatically via execute, without needing pre-registered tool definitions for each operation.
+call them with structured parameters via execute, without needing pre-registered tool definitions for each operation.
 
 **Example — list workspaces in an org:**
 
-```javascript
+```
 // Search: search tool with query "list workspaces"
 // → returns: GET /current/org/{id}/list/workspaces/
 
 // Execute:
-const result = await fastio.get('/current/org/{org_id}/list/workspaces/');
-return result;
+execute method="get" path="/current/org/{org_id}/list/workspaces/"
 ```
 
 ### Response Hints — Guided Agent Workflows
@@ -1709,7 +1783,7 @@ use `auth` action `email-verify`; "workspace not found" → check workspace ID w
 **`ai_capabilities` — AI mode availability:**
 
 Included in `workspace` action `details` responses. Shows the available AI modes for the workspace:
-- **Intelligence ON:** `files_scope`, `folders_scope`, `files_attach` (full RAG with indexed search), plus `search` action for semantic search (vector-based document chunk retrieval with relevance scores)
+- **Intelligence ON:** `files_scope`, `folders_scope`, `files_attach` (full RAG with indexed search), plus `search` action for semantic search (vector-based document chunk retrieval with relevance scores — no LLM round-trip, returns ranked snippets). Use search for fast retrieval/lookup; use chat for synthesis/analysis.
 - **Intelligence OFF:** `files_attach` only (max 20 files, 200 MB total). Semantic search is not available.
 
 **`_ai_state_legend` — File AI processing state:**
@@ -1865,6 +1939,10 @@ workspaces and shares where files live.
 REST endpoints directly. Enable workflow first via `workspace` action `enable-workflow` or `share` action
 `enable-workflow`.
 
+**Share permissions:** Workflow features on shares require Member-level access or higher. Guests and public guests
+cannot access workflow features (tasks, todos, approvals, worklogs) on shares. Toggle endpoints (enable/disable)
+remain Admin-only.
+
 ### 1. Task Lists & Tasks
 
 Organize work into lists with individual tasks. Task lists belong to a workspace or share and contain ordered tasks.
@@ -1877,10 +1955,10 @@ Organize work into lists with individual tasks. Task lists belong to a workspace
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /tasks/workspace/{workspace_id}/` | List task lists in a workspace |
-| `GET /tasks/share/{share_id}/` | List task lists in a share |
-| `POST /tasks/workspace/{workspace_id}/create/` | Create a task list in a workspace |
-| `POST /tasks/share/{share_id}/create/` | Create a task list in a share |
+| `GET /workspace/{workspace_id}/tasks/` | List task lists in a workspace |
+| `GET /share/{share_id}/tasks/` | List task lists in a share |
+| `POST /workspace/{workspace_id}/tasks/create/` | Create a task list in a workspace |
+| `POST /share/{share_id}/tasks/create/` | Create a task list in a share |
 | `GET /tasks/{list_id}/details/` | Get task list details |
 | `POST /tasks/{list_id}/update/` | Update a task list |
 | `POST /tasks/{list_id}/delete/` | Delete a task list |
@@ -1893,8 +1971,8 @@ Organize work into lists with individual tasks. Task lists belong to a workspace
 | `POST /tasks/{list_id}/items/{task_id}/assign/` | Assign a task |
 | `POST /tasks/{list_id}/items/bulk-status/` | Bulk status change |
 | `POST /tasks/{list_id}/items/reorder/` | Bulk reorder tasks |
-| `POST /tasks/workspace/{workspace_id}/reorder/` | Bulk reorder task lists |
-| `POST /tasks/share/{share_id}/reorder/` | Bulk reorder task lists |
+| `POST /workspace/{workspace_id}/tasks/reorder/` | Bulk reorder task lists |
+| `POST /share/{share_id}/tasks/reorder/` | Bulk reorder task lists |
 
 ### 2. Worklogs
 
@@ -1937,8 +2015,8 @@ with a comment.
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /approvals/workspace/{workspace_id}/` | List approvals in a workspace |
-| `GET /approvals/share/{share_id}/` | List approvals in a share |
+| `GET /workspace/{workspace_id}/approvals/` | List approvals in a workspace |
+| `GET /share/{share_id}/approvals/` | List approvals in a share |
 | `POST /approvals/{entity_type}/{entity_id}/create/` | Create an approval request |
 | `GET /approvals/{approval_id}/details/` | Get approval details |
 | `POST /approvals/{approval_id}/resolve/` | Resolve (approve or reject) |
@@ -1953,16 +2031,16 @@ not done. Support assignees and bulk toggle operations.
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /todos/workspace/{workspace_id}/` | List todos in a workspace |
-| `GET /todos/share/{share_id}/` | List todos in a share |
-| `POST /todos/workspace/{workspace_id}/create/` | Create a todo in a workspace |
-| `POST /todos/share/{share_id}/create/` | Create a todo in a share |
+| `GET /workspace/{workspace_id}/todos/` | List todos in a workspace |
+| `GET /share/{share_id}/todos/` | List todos in a share |
+| `POST /workspace/{workspace_id}/todos/create/` | Create a todo in a workspace |
+| `POST /share/{share_id}/todos/create/` | Create a todo in a share |
 | `GET /todos/{todo_id}/details/` | Get todo details |
 | `POST /todos/{todo_id}/details/update/` | Update a todo |
 | `POST /todos/{todo_id}/details/delete/` | Delete a todo |
 | `POST /todos/{todo_id}/details/toggle/` | Toggle done/not done |
-| `POST /todos/workspace/{workspace_id}/bulk-toggle/` | Bulk toggle in a workspace |
-| `POST /todos/share/{share_id}/bulk-toggle/` | Bulk toggle in a share |
+| `POST /workspace/{workspace_id}/todos/bulk-toggle/` | Bulk toggle in a workspace |
+| `POST /share/{share_id}/todos/bulk-toggle/` | Bulk toggle in a share |
 
 ### Enabling Workflow
 
