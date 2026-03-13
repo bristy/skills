@@ -3,9 +3,15 @@
   "slug": "uimap",
   "displayName": "Uimap",
   "latest": {
-    "version": "0.1.4",
-    "publishedAt": 1772989862657,
-    "commit": "https://github.com/openclaw/skills/commit/28e3b567d9f4fa20a7e7c7e4914a6cc1df5aa135"
+    "version": "0.1.5",
+    "publishedAt": 1773250743388,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.4",
+      "publishedAt": 1772989862657,
+      "commit": "https://github.com/openclaw/skills/commit/28e3b567d9f4fa20a7e7c7e4914a6cc1df5aa135"
+    }
+  ]
 }
