@@ -16,7 +16,7 @@ metadata:
 
 ## 功能描述
 
-本 Skill 调用 **腾讯云图片内容安全（IMS）** 的 `ImageModeration` 接口，通过设置 `Type=IMAGE_AIGC` 来检测输入图片是否为 AI 生成。
+本技能用于检测图像是否由AIGC生成，支持对 Stable Diffusion、Midjourney、GPT‑4o 等主流模型生成的图像进行识别。
 
 ### 🎯 核心能力
 

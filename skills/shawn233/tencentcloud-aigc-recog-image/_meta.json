@@ -3,11 +3,16 @@
   "slug": "tencentcloud-aigc-recog-image",
   "displayName": "TencentCloud Image AIGC Detection",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1773114918757,
-    "commit": "https://github.com/openclaw/skills/commit/d67b795e936ccf24976ad725cd1d85d5d2e1dde7"
+    "version": "1.0.7",
+    "publishedAt": 1773234972300,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1773114918757,
+      "commit": "https://github.com/openclaw/skills/commit/d67b795e936ccf24976ad725cd1d85d5d2e1dde7"
+    },
     {
       "version": "1.0.3",
       "publishedAt": 1772980542724,
