@@ -3,9 +3,15 @@
   "slug": "whitebit",
   "displayName": "whitebit",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772758541519,
-    "commit": "https://github.com/openclaw/skills/commit/adce34ef499a79662ec17e3fcf34fb4fe613f985"
+    "version": "1.0.4",
+    "publishedAt": 1773275326934,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772758541519,
+      "commit": "https://github.com/openclaw/skills/commit/adce34ef499a79662ec17e3fcf34fb4fe613f985"
+    }
+  ]
 }
