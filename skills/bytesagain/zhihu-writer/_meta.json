@@ -3,9 +3,15 @@
   "slug": "zhihu-writer",
   "displayName": "Zhihu Writer",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773361834271,
-    "commit": "https://github.com/openclaw/skills/commit/63fb607e7a7be921579cacb51673a7285433a200"
+    "version": "2.2.0",
+    "publishedAt": 1773422042215,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773361834271,
+      "commit": "https://github.com/openclaw/skills/commit/63fb607e7a7be921579cacb51673a7285433a200"
+    }
+  ]
 }
