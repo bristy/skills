@@ -1,0 +1,11 @@
+{
+  "owner": "dofbi",
+  "slug": "nocodb-api",
+  "displayName": "NocoDB API",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773215381943,
+    "commit": null
+  },
+  "history": []
+}
