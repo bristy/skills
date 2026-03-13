@@ -3,19 +3,21 @@
     "timezone": "Asia/Shanghai",
     "language": ""
   },
+  "check_interval_minutes": 10,
   "threshold": {
     "abs_pp": 5.0,
-    "per_category_abs_pp": {
-      "AI": 4.0,
-      "Crypto": 8.0
-    },
+    "per_category_abs_pp": {},
     "per_entry_abs_pp": {}
   },
   "delivery": {
     "primary": {
-      "channel": "webhook",
-      "target": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
-    }
+      "channel": "openclaw",
+      "target": "direct"
+    },
+    "fallback": []
+  },
+  "source": {
+    "retries": 2
   },
   "digest": {
     "frequency": "weekly",
@@ -25,8 +27,5 @@
   },
   "baseline": {
     "cleanup_after_expiry_days": 90
-  },
-  "source": {
-    "retries": 2
   }
 }

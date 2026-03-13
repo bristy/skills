@@ -1,13 +1,18 @@
 {
   "owner": "vahnxu",
   "slug": "signalradar",
-  "displayName": "Signalradar",
+  "displayName": "SignalRadar",
   "latest": {
-    "version": "0.5.7",
-    "publishedAt": 1772707798554,
-    "commit": "https://github.com/openclaw/skills/commit/5f1bc7547baefc34075bbc7c59c882809c811031"
+    "version": "0.9.1",
+    "publishedAt": 1773315060913,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.5.7",
+      "publishedAt": 1772707798554,
+      "commit": "https://github.com/openclaw/skills/commit/5f1bc7547baefc34075bbc7c59c882809c811031"
+    },
     {
       "version": "0.5.2",
       "publishedAt": 1772556370395,

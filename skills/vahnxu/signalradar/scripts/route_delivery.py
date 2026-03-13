@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Build DeliveryEnvelope objects and execute minimal delivery adapters.
 
-v0.5.0: Removed dedup logic. Extracted deliver_hit() as importable function.
+v0.8.0 note:
+- file/webhook adapters perform concrete delivery
+- openclaw adapter reports platform-managed delivery semantics honestly
+- digest delivery reuses the same routing contract as HIT events
 """
 
 from __future__ import annotations
@@ -59,7 +62,13 @@ def _route_parts(route: str) -> tuple[str, str]:
 def deliver_envelope(envelope: dict[str, Any], route: str, timeout_sec: int) -> dict[str, Any]:
     channel, target = _route_parts(route)
     if channel == "openclaw":
-        return {"ok": True, "status": "accepted", "adapter": "openclaw", "target": target or "direct"}
+        return {
+            "ok": True,
+            "status": "platform",
+            "adapter": "openclaw",
+            "target": target or "direct",
+            "note": "Delivery is handled by the current OpenClaw session or scheduler announce path.",
+        }
     if channel == "file":
         if not target:
             return {"ok": False, "status": "error", "adapter": "file", "error": "missing file target"}
@@ -71,7 +80,14 @@ def deliver_envelope(envelope: dict[str, Any], route: str, timeout_sec: int) -> 
     if channel == "webhook":
         if not target.startswith("http://") and not target.startswith("https://"):
             return {"ok": False, "status": "error", "adapter": "webhook", "target": target, "error": "invalid webhook url"}
-        body = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
+        # Add platform-specific fields for broad webhook compatibility.
+        # Slack/Telegram require "text", Discord requires "content".
+        # The full envelope is preserved for structured consumers.
+        webhook_payload = dict(envelope)
+        ht = str(envelope.get("human_text", ""))
+        webhook_payload["text"] = ht       # Slack, Telegram Bot API, MS Teams
+        webhook_payload["content"] = ht    # Discord
+        body = json.dumps(webhook_payload, ensure_ascii=False).encode("utf-8")
         req = urllib.request.Request(target, data=body, method="POST", headers={"Content-Type": "application/json", "User-Agent": "signalradar/1.0"})
         try:
             with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
@@ -152,6 +168,56 @@ def deliver_hit(
         "status": outcome.get("status", "error"),
         "envelope": envelope,
         "request_id": event.get("request_id"),
+        **outcome,
+    }
+
+
+def deliver_digest(
+    report: dict[str, Any],
+    config: dict[str, Any],
+    *,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Build envelope and deliver a digest report."""
+    delivery = config.get("delivery", {})
+    primary = delivery.get("primary", {})
+    route_primary = f"{primary.get('channel', 'openclaw')}:{primary.get('target', 'direct')}"
+    fallback_routes = [
+        f"{fb.get('channel', '')}:{fb.get('target', '')}"
+        for fb in delivery.get("fallback", [])
+        if isinstance(fb, dict)
+    ]
+
+    now = utc_now().isoformat().replace("+00:00", "Z")
+    report_key = str(report.get("report_key", "unknown"))
+    envelope = {
+        "schema_version": "1.2.0",
+        "delivery_id": f"digest:{report_key}",
+        "request_id": report_key,
+        "idempotency_key": f"sr:digest:{report_key}",
+        "severity": "P2",
+        "route": {"primary": route_primary, "fallback": fallback_routes},
+        "human_text": str(report.get("human_text", "")),
+        "machine_payload": {"digest_report": report.get("machine_payload", report)},
+        "ts": now,
+        "kind": "digest",
+    }
+
+    if dry_run:
+        return {
+            "ok": True,
+            "status": "dry_run",
+            "envelope": envelope,
+            "request_id": report_key,
+        }
+
+    routes = [route_primary] + fallback_routes
+    outcome = attempt_delivery(envelope, routes, timeout_sec=8)
+    return {
+        "ok": outcome.get("ok", False),
+        "status": outcome.get("status", "error"),
+        "envelope": envelope,
+        "request_id": report_key,
         **outcome,
     }
 
