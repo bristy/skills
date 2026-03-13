@@ -3,9 +3,15 @@
   "slug": "code-auditor",
   "displayName": "Code Auditor",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773170231002,
-    "commit": "https://github.com/openclaw/skills/commit/09b15f3dc80154a0f91d02f3e60153a8683a93ff"
+    "version": "1.0.1",
+    "publishedAt": 1773253712441,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773170231002,
+      "commit": "https://github.com/openclaw/skills/commit/09b15f3dc80154a0f91d02f3e60153a8683a93ff"
+    }
+  ]
 }
