@@ -3,9 +3,15 @@
   "slug": "vision-bot",
   "displayName": "Vision Bot",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773174074473,
-    "commit": "https://github.com/openclaw/skills/commit/3a2be561270de3c7a0203153506960c4913fa668"
+    "version": "1.0.1",
+    "publishedAt": 1773253994645,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773174074473,
+      "commit": "https://github.com/openclaw/skills/commit/3a2be561270de3c7a0203153506960c4913fa668"
+    }
+  ]
 }
