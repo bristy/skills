@@ -3,9 +3,15 @@
   "slug": "rendermark",
   "displayName": "RenderMark",
   "latest": {
-    "version": "0.1.7",
-    "publishedAt": 1773128606402,
-    "commit": "https://github.com/openclaw/skills/commit/a10fd6e9b7aaa3831019e726bd0a5ff5ed04f266"
+    "version": "0.1.8",
+    "publishedAt": 1773261614646,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.7",
+      "publishedAt": 1773128606402,
+      "commit": "https://github.com/openclaw/skills/commit/a10fd6e9b7aaa3831019e726bd0a5ff5ed04f266"
+    }
+  ]
 }
