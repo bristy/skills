@@ -1,6 +1,6 @@
 ---
 name: clawaimail
-version: 0.1.2
+version: 0.2.2
 description: Give your AI agent a real email address. Send, receive, and manage emails via API.
 author: ClawAIMail
 author_url: https://clawaimail.com

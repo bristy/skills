@@ -3,9 +3,15 @@
   "slug": "clawaimail",
   "displayName": "ClawAIMail",
   "latest": {
-    "version": "0.2.1",
-    "publishedAt": 1772971415596,
-    "commit": "https://github.com/openclaw/skills/commit/1a39a136468f6467f4c19435c0e415487cc30493"
+    "version": "0.2.2",
+    "publishedAt": 1773203899395,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.2.1",
+      "publishedAt": 1772971415596,
+      "commit": "https://github.com/openclaw/skills/commit/1a39a136468f6467f4c19435c0e415487cc30493"
+    }
+  ]
 }
