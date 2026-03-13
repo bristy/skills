@@ -44,15 +44,21 @@ Use one explicit wait after each action instead of sleeping.
 Prefer inline `eval-js` only for short expressions:
 
 ```powershell
-& 'D:\silmairl cdp\silmaril.cmd' eval-js "document.title" --yes --json
+& 'D:\silmairl cdp\silmaril.cmd' eval-js "document.title" --allow-unsafe-js --yes --json
 ```
 
 Prefer file mode for longer logic:
 
 ```powershell
 Set-Content -LiteralPath 'C:\Users\hangx\silmaril-expr.js' -Encoding UTF8 -Value "JSON.stringify(Array.from(document.querySelectorAll('a[href]')).map(a => a.href))"
-& 'D:\silmairl cdp\silmaril.cmd' eval-js --file 'C:\Users\hangx\silmaril-expr.js' --yes --json
+& 'D:\silmairl cdp\silmaril.cmd' eval-js --file 'C:\Users\hangx\silmaril-expr.js' --allow-unsafe-js --yes --json
 ```
+
+High-risk rule:
+
+- `eval-js` requires `--allow-unsafe-js` unless `SILMARIL_ALLOW_UNSAFE_JS=1` is already set for a trusted local session.
+- Proxy commands require `--allow-mitm` unless `SILMARIL_ALLOW_MITM=1` is already set for a trusted local session.
+- Proxy listeners stay loopback-only unless `--allow-nonlocal-bind` is explicitly requested.
 
 ## Targeting rules
 

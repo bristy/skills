@@ -13,6 +13,28 @@ Use this skill to operate the local Silmaril toolkit from PowerShell.
 - If that path is missing, look for `silmaril.cmd` on `PATH` or in a nearby checkout.
 - Invoke from PowerShell with `& 'D:\silmairl cdp\silmaril.cmd' ...`.
 
+## Install the toolkit if missing
+
+Use this setup on Windows when the toolkit is not already present:
+
+Only clone or copy the toolkit after the user explicitly approves fetching or installing remote code.
+
+1. Clone or copy the repository:
+
+   `git clone https://github.com/Malac12/CDP-tools.git "D:\silmairl cdp"`
+
+2. Ensure Chrome, Chromium, or Edge is installed.
+
+   The toolkit checks standard Windows install paths and falls back to `chrome.exe` on `PATH`.
+
+3. Run the toolkit from PowerShell:
+
+   `& 'D:\silmairl cdp\silmaril.cmd' openbrowser --json`
+   `& 'D:\silmairl cdp\silmaril.cmd' openUrl 'https://example.com' --json`
+   `& 'D:\silmairl cdp\silmaril.cmd' get-text 'body' --json`
+
+This is sufficient for the core CDP workflow. No machine-wide PowerShell execution policy change is required because `silmaril.cmd` invokes PowerShell with `ExecutionPolicy Bypass`.
+
 ## Default workflow
 
 1. Start or attach a CDP browser with `openbrowser`.
@@ -29,6 +51,10 @@ Use this skill to operate the local Silmaril toolkit from PowerShell.
 - Prefer stable selectors such as `data-test`, `data-testid`, semantic IDs, and meaningful attributes.
 - Use either `--target-id` or `--url-match` when multiple tabs exist; never use both together.
 - Pass `--yes` for page actions and mutations such as `click`, `type`, `set-text`, `set-html`, and `eval-js`.
+- Treat `eval-js`, `proxy-override`, `proxy-switch`, and `openurl-proxy` as high-risk commands.
+- Use `--allow-unsafe-js` for `eval-js`, or set `SILMARIL_ALLOW_UNSAFE_JS=1` only for a trusted local session.
+- Use `--allow-mitm` for proxy commands, or set `SILMARIL_ALLOW_MITM=1` only for a trusted local session.
+- Keep proxy listeners on loopback addresses unless the user explicitly requests `--allow-nonlocal-bind`.
 - Put long JavaScript in a file and use `eval-js --file` instead of pasting large inline expressions.
 - Avoid fixed sleeps when a wait command can express the intended state.
 
