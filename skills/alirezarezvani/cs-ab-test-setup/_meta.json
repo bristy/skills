@@ -1,11 +1,17 @@
 {
   "owner": "alirezarezvani",
   "slug": "cs-ab-test-setup",
-  "displayName": "Ab Test Setup",
+  "displayName": "ab-test-setup",
   "latest": {
-    "version": "2.1.1",
-    "publishedAt": 1773087969476,
-    "commit": "https://github.com/openclaw/skills/commit/30451b9be6f5ade891c4102c4981c3d18c555516"
+    "version": "1.0.0",
+    "publishedAt": 1773244203439,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.1.1",
+      "publishedAt": 1773087969476,
+      "commit": "https://github.com/openclaw/skills/commit/30451b9be6f5ade891c4102c4981c3d18c555516"
+    }
+  ]
 }
