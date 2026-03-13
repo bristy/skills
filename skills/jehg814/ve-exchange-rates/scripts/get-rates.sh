@@ -38,7 +38,7 @@ BUY_JSON=$(curl -s -X POST "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv
     "proMerchantAds": false,
     "shieldMerchantAds": false,
     "filterType": "tradable"
-  }' 2>/dev/null)
+  }' 2>/dev/null | tr -d '\0')
 
 # Query para venta (sell) - usuarios que compran USDT  
 SELL_JSON=$(curl -s -X POST "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search" \
@@ -53,7 +53,7 @@ SELL_JSON=$(curl -s -X POST "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/ad
     "proMerchantAds": false,
     "shieldMerchantAds": false,
     "filterType": "tradable"
-  }' 2>/dev/null)
+  }' 2>/dev/null | tr -d '\0')
 
 # Calcular promedios
 # Check if we got valid data
