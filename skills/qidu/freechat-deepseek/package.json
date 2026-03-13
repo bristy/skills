@@ -1,6 +1,6 @@
 {
   "name": "freechat-deepseek",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "acceptLicenseTerms": true,
   "description": "browse https://chat.deepseek.com , ask DeepSeek your questions and get answers for you.",
   "alias": [
