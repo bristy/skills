@@ -1,7 +1,7 @@
 {
   "name": "soul-weaver",
   "version": "1.0.0",
-  "description": "Generate OpenClaw agent configuration files through authorized API access. Requires manual verification and official API key application process.",
+  "description": "AI Soul Weaver - 12 Curated Celebrity Templates + Custom Generation. Generate OpenClaw agent configurations through dialog or select from 12 world-famous tech & business leaders.",
   "main": "index.js",
   "keywords": [
     "openclaw",
@@ -36,7 +36,8 @@
     "version": "1.0.0",
     "category": "productivity",
     "permissions": [
-      "network"
+      "network",
+      "filesystem"
     ]
   }
 }

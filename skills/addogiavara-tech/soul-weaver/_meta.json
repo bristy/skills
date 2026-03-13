@@ -3,9 +3,15 @@
   "slug": "soul-weaver",
   "displayName": "Soul Weaver",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773069464186,
-    "commit": "https://github.com/openclaw/skills/commit/60b51ea5168f6b3210d4efd618c15b5fd7e83b56"
+    "version": "1.0.3",
+    "publishedAt": 1773388754444,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773069464186,
+      "commit": "https://github.com/openclaw/skills/commit/60b51ea5168f6b3210d4efd618c15b5fd7e83b56"
+    }
+  ]
 }

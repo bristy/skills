@@ -1,90 +1,169 @@
-# Soul Weaver
+# AI Soul Weaver
 
 [![OpenClaw Skill](https://img.shields.io/badge/OpenClaw-Skill-blue)](https://clawhub.ai)
-[![Version](https://img.shields.io/badge/version-1.0.1-green)](package.json)
+[![Version](https://img.shields.io/badge/version-1.1.0-green)](package.json)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+[![Templates](https://img.shields.io/badge/templates-12-orange)](SKILL.md)
 
-Generate OpenClaw agent configuration files through authorized API access. Requires manual verification and official API key application process.
+**12 Celebrity Templates + Custom Generation** - Choose from 12 carefully selected world-famous personalities or create your own unique AI assistant configuration.
 
 ## ✨ Features
 
-- 🎭 **9 Celebrity Templates**: Elon Musk, Steve Jobs, Albert Einstein, Jeff Bezos, Leonardo da Vinci, Qian Xuesen, Andrew Ng, Marie Kondo, Tim Ferriss
-- 💼 **5 Profession Templates**: Developer, Writer, Researcher, Analyst, Collaborator
-- 🛠️ **Smart Tool Recommendation**: Recommends appropriate OpenClaw tools
+- 🎭 **12 Curated Celebrity Templates**: Tech pioneers, entrepreneurs, scientists, business leaders, and innovators
+- 🔧 **10 Configuration Files**: Complete OpenClaw agent setup
+- 💬 **Dialog-based Selection**: Natural language template selection
+- 🛠️ **Local Template Access**: Works offline without API
 - 🌐 **Multi-language Support**: Chinese (ZH) and English (EN)
-- 🔐 **Authorized Access**: Requires official API key and verification
+- ⚡ **Rapid Deployment**: Quick setup and testing
 
 ## 🚀 Quick Start
 
-### Step 1: Manual Verification
-First visit the official website to manually create and verify configurations.
+### Method 1: Dialog Selection (Easiest)
+```javascript
+// Basic template selection
+"I want to use Elon Musk template"
+"Show me all templates"
+"Create a custom AI assistant"
 
-### Step 2: API Key Application
-Apply for an API key through the official AI Soul Weaver platform:
-
-**Website**: https://sora2.wboke.com
-
-Application process:
-1. Visit the official website
-2. Register an account and login
-3. Apply for API access in your account dashboard
-4. Submit usage details and requirements
-5. Receive API key and endpoint information
-6. Review and accept terms of service
-
-### Step 3: Authorized Usage
-
-```bash
-/skill soul-weaver create --apiKey="YOUR_API_KEY" --aiName="MyAI" --celebrity="musk"
+// Category-based selection  
+"Show me tech templates"
+"Which templates are for startups?"
+"I need a science-themed assistant"
 ```
 
-### Basic Usage
-
+### Method 2: Direct API Specification
 ```javascript
-const result = await skills.soul-weaver.handler({
-  apiKey: "your_authorized_api_key", // Required: from official application
-  apiEndpoint: "https://your-api-endpoint.com", // Optional: defaults to official endpoint
-  aiName: "MuskAI",
-  celebrityName: "musk", 
-  profession: "Entrepreneur",
-  language: "EN"
+const result = await skills.soulWeaver.handler({
+  apiKey: 'sk-your-actual-token-here',  // Required: Your AI Soul Weaver Cloud API key
+  apiEndpoint: 'https://sora2.wboke.com/api/v1/compile', // Official endpoint
+  aiName: 'MyAI',
+  templateId: 'elon-musk',      // Or other template IDs
+  userName: 'User',
+  language: 'EN' // or 'CN'
 });
+```
 
-if (result.success) {
-  console.log("Generated files:", Object.keys(result.files));
-} else {
-  console.log("Error:", result.message);
-}
+## 🔧 Implementation Strategies
+
+### Strategy 1: Incremental Update (Recommended)
+**Preserve your configuration while adding new capabilities**
+
+1. **Backup** current configuration first!
+2. Apply only `SOUL.md` from template (core mindset)
+3. Apply `IDENTITY.md` from template (capabilities)  
+4. Keep `USER.md`, `TOOLS.md`, `MEMORY.md` unchanged
+5. Test and validate the fusion
+6. Gradually apply other files if needed
+
+### Strategy 2: Fusion Mode  
+**Blend template features with your existing personality**
+
+1. Analyze your current configuration
+2. Identify key traits to preserve
+3. Select complementary template features  
+4. Create custom fusion configuration
+5. Test and refine the blended personality
+
+### Strategy 3: Full Replacement (Use with Caution)
+**Complete template implementation**
+
+1. Complete backup of all files
+2. Apply all 10 template files
+3. Manually restore critical personal settings
+4. Test thoroughly 
+5. Adjust as needed
+
+## 🛡️ Backup Procedure (CRITICAL)
+
+### Always Backup Before Changes:
+```javascript
+const backupDir = `D:\\backup_${getTimestamp()}`;
+
+// Backup these core files:
+- SOUL.md (your core personality)
+- IDENTITY.md (your capabilities)  
+- USER.md (user preferences)
+- MEMORY.md (long-term memory)
+- TOOLS.md (tool configurations)
+- AGENTS.md (workflow rules)
+- HEARTBEAT.md (checklist system)
 ```
 
 ## 📋 Generated Files
 
-Each configuration generates 6 core files for reference:
+Each template includes 10 configuration files:
 
 | File | Description |
 |------|-------------|
-| SOUL.md | Core values and behavior principles |
+| SOUL.md | Core values and behavioral principles |
 | IDENTITY.md | Role definition and capabilities |
-| MEMORY.md | Memory management systems |
 | USER.md | User preferences and goals |
-| TOOLS.md | Recommended tool configurations |
+| MEMORY.md | Memory management system |
+| TOOLS.md | Tool configuration (6 required tools) |
 | AGENTS.md | Task execution flow |
+| HEARTBEAT.md | Heartbeat checklist |
+| KNOWLEDGE.md | Domain knowledge |
+| SECURITY.md | Security guidelines |
+| WORKFLOWS.md | Repeatable processes |
 
-## 🔧 API Integration
+## 🎯 Recommended Usage Pattern
 
-### Authorization Required
-```
-API key required - users must provide their own authorized key
-```
+### For Technical Users:
+1. Start with `linus-torvalds` or `guido-van-rossum`
+2. Use incremental update strategy
+3. Focus on problem-solving enhancements
 
-### Security Notes
+### For Business Users:  
+1. Start with `elon-musk` or `steve-jobs`
+2. Use fusion mode for innovation + execution
+3. Focus on strategic thinking
 
-- Users must provide their own API key from official channels
-- No hardcoded API keys or endpoints in the skill
-- Manual verification required before automated access
-- No system files are modified or replaced automatically
-- Requires explicit user invocation with valid API key
+### For Creative Users:
+1. Start with `leonardo-da-vinci` or `albert-einstein` 
+2. Use fusion mode for creative + analytical blend
+3. Focus on innovative solutions
+
+### For Leadership Roles:
+1. Start with `zhang-yiming` or `simon-sinek`
+2. Use incremental update for leadership qualities
+3. Focus on team guidance
+
+## ⚠️ Important Considerations
+
+### Before Implementation:
+- ✅ Always backup first
+- ✅ Understand what each template changes
+- ✅ Test in isolated environment if possible
+- ✅ Have recovery plan ready
+
+### During Implementation:
+- 🔄 Apply changes gradually
+- 👁️ Monitor for unexpected behavior
+- 📊 Track performance changes
+- 🔧 Be ready to adjust or revert
+
+### After Implementation:
+- 📈 Evaluate effectiveness
+- 💬 Gather user feedback  
+- ⚡ Optimize based on results
+- 🎯 Refine the fusion
+
+## 🆘 Troubleshooting
+
+### Common Issues:
+- Personality conflicts → Use fusion mode instead of full replacement
+- Performance degradation → Revert and try incremental approach  
+- Unexpected behavior → Check backup and restore if needed
+- Feature mismatch → Choose different template better aligned with needs
+
+### Recovery Procedures:
+- Immediate restoration from backup
+- Gradual rollback of changes
+- Consultation with template characteristics
+- Alternative template selection
 
 ---
 
-Built with ❤️ by the AI Soul Weaver Team
+**Remember**: The goal is enhancement, not replacement. Always preserve what works well while carefully adding new capabilities.
+
+*Generated by AI Soul Weaver - Your partner in AI personality development*
