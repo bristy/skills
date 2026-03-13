@@ -6,7 +6,7 @@ The CLI connects to the Linkly AI desktop app's MCP server, giving fast access t
 
 ## Prerequisites
 
-The **Linkly AI desktop app** must be running with MCP server enabled. The CLI automatically discovers the app via `~/.linkly/port`.
+The **Linkly AI desktop app** must be running with MCP server enabled. By default, the CLI automatically discovers the app via `~/.linkly/port`. Alternatively, use LAN mode (`--endpoint` + `--token`) or Remote mode (`--remote` with a saved API key).
 
 ## Installation
 
@@ -135,20 +135,41 @@ Claude Desktop configuration (`claude_desktop_config.json`):
 }
 ```
 
+### auth set-key — Save API key for remote access
+
+```bash
+linkly auth set-key <API_KEY>
+```
+
+| Option      | Description                      |
+| ----------- | -------------------------------- |
+| `<API_KEY>` | API key from linkly.ai dashboard |
+
+Saves the key to `~/.linkly/credentials.json` for use with `--remote`.
+
 ### self-update — Update CLI
 
 ```bash
 linkly self-update
 ```
 
+## Connection Options
+
+These options are available on `search`, `grep`, `outline`, `read`, and `status` commands (not on `mcp`, `auth`, or `self-update`):
+
+| Flag               | Scope  | Description                                                                               |
+| ------------------ | ------ | ----------------------------------------------------------------------------------------- |
+| `--endpoint <url>` | LAN    | Connect to a specific MCP endpoint (e.g. `http://192.168.1.100:60606/mcp`)                |
+| `--token <token>`  | LAN    | Bearer token for LAN authentication (use with `--endpoint`, conflicts with `--remote`)    |
+| `--remote`         | Remote | Connect via `mcp.linkly.ai` tunnel (conflicts with `--endpoint`, requires `auth set-key`) |
+
 ## Global Options
 
-| Flag               | Description                                                            |
-| ------------------ | ---------------------------------------------------------------------- |
-| `--endpoint <url>` | Connect to a specific MCP endpoint (e.g. `http://127.0.0.1:60606/mcp`) |
-| `--json`           | Output in structured JSON format (useful for scripting)                |
-| `-V, --version`    | Print version                                                          |
-| `-h, --help`       | Print help                                                             |
+| Flag            | Description                                             |
+| --------------- | ------------------------------------------------------- |
+| `--json`        | Output in structured JSON format (useful for scripting) |
+| `-V, --version` | Print version                                           |
+| `-h, --help`    | Print help                                              |
 
 ## JSON Output Format
 

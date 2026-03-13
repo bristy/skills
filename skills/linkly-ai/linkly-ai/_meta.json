@@ -3,11 +3,16 @@
   "slug": "linkly-ai",
   "displayName": "Linkly Ai Skills",
   "latest": {
-    "version": "0.1.10",
-    "publishedAt": 1773111647079,
-    "commit": "https://github.com/openclaw/skills/commit/d59a3f462534c5063510abef89a18454ef9f943d"
+    "version": "0.1.11",
+    "publishedAt": 1773330167953,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.1.10",
+      "publishedAt": 1773111647079,
+      "commit": "https://github.com/openclaw/skills/commit/d59a3f462534c5063510abef89a18454ef9f943d"
+    },
     {
       "version": "0.1.8",
       "publishedAt": 1772738780441,
