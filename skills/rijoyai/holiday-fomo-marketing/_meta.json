@@ -3,9 +3,15 @@
   "slug": "holiday-fomo-marketing",
   "displayName": "Holiday Fomo Marketing",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1772789968486,
-    "commit": "https://github.com/openclaw/skills/commit/a45b84aefc4bff5108394c65e7b9b98b5fa9579a"
+    "version": "0.1.1",
+    "publishedAt": 1773196478701,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1772789968486,
+      "commit": "https://github.com/openclaw/skills/commit/a45b84aefc4bff5108394c65e7b9b98b5fa9579a"
+    }
+  ]
 }
