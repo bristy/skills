@@ -1,6 +1,6 @@
 ---
 name: Pinduoduo Listing
-description: >-
+description: "拼多多商品文案。标题优化、详情页、SKU描述、百亿补贴文案、价格战策略、评价回复、秒杀文案。Pinduoduo listing generator with title optimization, d. Use when you need pinduoduo listing capabilities. Triggers on: pinduoduo listing."
   拼多多商品文案。标题优化、详情页、SKU描述、百亿补贴文案、价格战策略、评价回复、秒杀文案。Pinduoduo listing generator with title optimization, detail page, SKU descriptions, pricing strategy, review replies, seckill copy. 拼多多运营、电商文案、商品上架、价格策略、凑单满减。Use when listing products on Pinduoduo.
 ---
 # Pinduoduo Listing
@@ -27,3 +27,6 @@ description: >-
 
 ---
 *Pinduoduo Listing by BytesAgain*
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com
