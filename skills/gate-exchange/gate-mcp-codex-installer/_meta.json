@@ -1,0 +1,11 @@
+{
+  "owner": "gate-exchange",
+  "slug": "gate-mcp-codex-installer",
+  "displayName": "Gate MCP Codex Installer",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773374012451,
+    "commit": null
+  },
+  "history": []
+}
