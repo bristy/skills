@@ -1,4 +1,4 @@
-# ProcessGuard v2.1.3 — Critical Process Monitor & Auto-Restart
+# ProcessGuard v2.1.4 — Critical Process Monitor & Auto-Restart
 
 Monitor critical processes, auto-restart on failure, track CPU/memory, alert humans when things go sideways. Keep your services running without babysitting.
 
@@ -380,4 +380,5 @@ unless explicitly configured by the user.
 ---
 
 🛠️ **Need something custom?** Custom OpenClaw agents & skills starting at $30. If you can describe it, I can build it. → [Hire me on Fiverr](https://www.fiverr.com/s/jjmlZ0v)
+
 

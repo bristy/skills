@@ -2,7 +2,7 @@
 name: "ProcessGuard — Critical Process Monitor & Auto-Restart"
 description: "Monitor critical processes and auto-restart on failure. Tracks CPU and memory usage, escalates alerts via webhook, callback, or file, and writes a dead man's switch heartbeat so you know if ProcessGuard itself goes down. HTTP dashboard included. Zero required dependencies — CPU/memory monitoring unlocked with optional pidusage install."
 author: "@TheShadowRose"
-version: "2.1.3"
+version: "2.1.4"
 tags: ["process-guard", "monitor", "auto-restart", "uptime", "devops"]
 license: "MIT"
 ---
@@ -47,4 +47,5 @@ guard.start();
 ```
 
 See README.md for full documentation, all config options, and advanced examples.
+
 

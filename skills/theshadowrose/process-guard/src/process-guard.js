@@ -1,5 +1,5 @@
 /**
- * ProcessGuard v2.1.3 - Critical Process Monitor & Auto-Restart
+ * ProcessGuard v2.1.4 - Critical Process Monitor & Auto-Restart
  * Full feature: CPU/memory monitoring, alert escalation, dead man's switch, dashboard
  * @author @TheShadowRose
  * @license MIT
@@ -10,7 +10,7 @@
 const http = require('http');
 const https = require('https');
 const net = require('net');
-const { exec, spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 
 // Optional dependency - install with: npm install pidusage
@@ -303,15 +303,20 @@ class ProcessGuard {
     // Always sanitize (blocks shell operators); allowlist check happens in _validateConfig at startup
     this._sanitizeCommand(proc.restart);
     if (proc.cooldown) await new Promise(r => setTimeout(r, proc.cooldown));
+    // spawn with shell:false — no shell interpolation, no injection surface
+    const parts = proc.restart.trim().split(/\s+/);
     return new Promise(resolve => {
-      exec(proc.restart, { timeout: 15000 }, (err) => {
-        if (err) {
-          this._log(`${proc.name}: restart FAILED - ${err.message}`);
-          resolve(false);
-        } else {
-          this._log(`${proc.name}: restart OK`);
-          resolve(true);
-        }
+      const child = spawn(parts[0], parts.slice(1), { shell: false, stdio: 'ignore' });
+      const killTimer = setTimeout(() => { try { child.kill(); } catch {} resolve(false); }, 15000);
+      child.on('error', (err) => {
+        clearTimeout(killTimer);
+        this._log(`${proc.name}: restart FAILED - ${err.message}`);
+        resolve(false);
+      });
+      child.on('close', (code) => {
+        clearTimeout(killTimer);
+        this._log(code === 0 ? `${proc.name}: restart OK` : `${proc.name}: restart exited ${code}`);
+        resolve(code === 0);
       });
     });
   }
@@ -445,4 +450,5 @@ class ProcessGuard {
 }
 
 module.exports = { ProcessGuard };
+
 
