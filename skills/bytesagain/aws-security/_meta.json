@@ -1,0 +1,11 @@
+{
+  "owner": "bytesagain",
+  "slug": "aws-security",
+  "displayName": "Aws Security",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773450705192,
+    "commit": null
+  },
+  "history": []
+}
