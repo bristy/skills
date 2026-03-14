@@ -1,0 +1,11 @@
+{
+  "owner": "openwaygate",
+  "slug": "youtube-subscription",
+  "displayName": "YouTube Subscription",
+  "latest": {
+    "version": "0.10.6-3",
+    "publishedAt": 1773335422017,
+    "commit": null
+  },
+  "history": []
+}
