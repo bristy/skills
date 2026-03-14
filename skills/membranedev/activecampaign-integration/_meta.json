@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "activecampaign-integration",
+  "displayName": "Activecampaign",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773349340881,
+    "commit": null
+  },
+  "history": []
+}
