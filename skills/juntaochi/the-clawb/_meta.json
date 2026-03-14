@@ -3,9 +3,15 @@
   "slug": "the-clawb",
   "displayName": "The Clawb",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773255953155,
-    "commit": "https://github.com/openclaw/skills/commit/c6112b939e686465e5248672c665abef769397b1"
+    "version": "1.0.4",
+    "publishedAt": 1773424570322,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773255953155,
+      "commit": "https://github.com/openclaw/skills/commit/c6112b939e686465e5248672c665abef769397b1"
+    }
+  ]
 }
