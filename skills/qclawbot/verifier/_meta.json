@@ -1,0 +1,11 @@
+{
+  "owner": "qclawbot",
+  "slug": "verifier",
+  "displayName": "Verifier",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773327497336,
+    "commit": null
+  },
+  "history": []
+}
