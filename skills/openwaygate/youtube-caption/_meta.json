@@ -1,0 +1,11 @@
+{
+  "owner": "openwaygate",
+  "slug": "youtube-caption",
+  "displayName": "YouTube Caption",
+  "latest": {
+    "version": "0.10.6-3",
+    "publishedAt": 1773327683318,
+    "commit": null
+  },
+  "history": []
+}
