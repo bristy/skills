@@ -1,0 +1,11 @@
+{
+  "owner": "msaad00",
+  "slug": "agent-bom-runtime",
+  "displayName": "agent-bom runtime",
+  "latest": {
+    "version": "0.70.7",
+    "publishedAt": 1773429284762,
+    "commit": null
+  },
+  "history": []
+}
