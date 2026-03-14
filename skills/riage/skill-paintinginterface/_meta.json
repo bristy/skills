@@ -1,0 +1,11 @@
+{
+  "owner": "riage",
+  "slug": "skill-paintinginterface",
+  "displayName": "the ai painting interface of suichuang api",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773385008774,
+    "commit": null
+  },
+  "history": []
+}
