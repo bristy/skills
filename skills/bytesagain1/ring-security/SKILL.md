@@ -1,7 +1,6 @@
 ---
 name: ring-security
-version: 1.0.0
-description: Monitor and manage Ring doorbells and security cameras. Query device status, review motion events, manage modes, and export event history.
+description: "Monitor and manage Ring doorbells and security cameras. Query device status, review motion events, manage modes, and export event history. Use when you need ring security capabilities. Triggers on: ring security."
 ---
 
 # Ring Security
@@ -194,3 +193,6 @@ fi
 - Video downloads require a Ring Protect subscription
 - API rate limits are not publicly documented; the script includes conservative delays
 - Snapshot URLs expire after a few minutes — download them promptly
+---
+💬 Feedback & Feature Requests: https://bytesagain.com/feedback
+Powered by BytesAgain | bytesagain.com

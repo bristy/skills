@@ -1,11 +1,17 @@
 {
   "owner": "bytesagain1",
   "slug": "ring-security",
-  "displayName": "ring-security",
+  "displayName": "Ring Security",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773227900323,
-    "commit": "https://github.com/openclaw/skills/commit/0edcf38f2387aae1c5656df98fd69c0a389a20cf"
+    "version": "2.3.0",
+    "publishedAt": 1773447665961,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773227900323,
+      "commit": "https://github.com/openclaw/skills/commit/0edcf38f2387aae1c5656df98fd69c0a389a20cf"
+    }
+  ]
 }
