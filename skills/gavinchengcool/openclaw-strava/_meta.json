@@ -1,0 +1,11 @@
+{
+  "owner": "gavinchengcool",
+  "slug": "openclaw-strava",
+  "displayName": "Strava (Official API)",
+  "latest": {
+    "version": "0.1.1",
+    "publishedAt": 1773381828245,
+    "commit": null
+  },
+  "history": []
+}
