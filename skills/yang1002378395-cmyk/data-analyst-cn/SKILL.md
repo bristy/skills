@@ -1,6 +1,6 @@
 ---
 name: data-analyst-cn
-version: 1.0.0
+version: 1.0.2
 description: 数据分析助手 - 数据清洗、统计分析、可视化建议。适合：数据分析师、产品经理、运营。
 metadata:
   openclaw:
