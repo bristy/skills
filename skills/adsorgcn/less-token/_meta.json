@@ -3,9 +3,15 @@
   "slug": "less-token",
   "displayName": "less-token",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773588800607,
-    "commit": "https://github.com/openclaw/skills/commit/eb4e46f60ce30aa275d8667887e8a8d140659f66"
+    "version": "1.0.2",
+    "publishedAt": 1773588923002,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773588800607,
+      "commit": "https://github.com/openclaw/skills/commit/eb4e46f60ce30aa275d8667887e8a8d140659f66"
+    }
+  ]
 }
