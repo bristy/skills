@@ -3,11 +3,16 @@
   "slug": "zonein",
   "displayName": "Zonein: Whale hunting for trading agents on Hyperliquid & Polymarket",
   "latest": {
-    "version": "2.1.6",
-    "publishedAt": 1773301546381,
-    "commit": "https://github.com/openclaw/skills/commit/5c2e3b3a4cf559afb62b98e7d1801ee2e6388ad2"
+    "version": "2.1.9",
+    "publishedAt": 1773499454548,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.1.6",
+      "publishedAt": 1773301546381,
+      "commit": "https://github.com/openclaw/skills/commit/5c2e3b3a4cf559afb62b98e7d1801ee2e6388ad2"
+    },
     {
       "version": "1.0.14",
       "publishedAt": 1771883542652,

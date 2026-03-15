@@ -98,7 +98,7 @@ export ZONEIN_API_KEY="zn_your_key_here"
 `telegram-setup-init`, `telegram-setup`, `telegram-disable`
 
 **Financial commands (require `--confirm` flag — script refuses without it):**
-`agent-fund`, `agent-open`, `agent-close`, `agent-withdraw`, `agent-enable`, `agent-deploy`, `agent-backtest`
+`agent-fund`, `agent-open`, `agent-close`, `agent-update-sl-tp`, `agent-withdraw`, `agent-enable`, `agent-deploy`, `agent-backtest`
 
 You MUST ask the user for approval before running any state-changing or financial command.
 For financial commands, only add `--confirm` after the user explicitly says yes.
@@ -245,7 +245,7 @@ Returns latest AI signal snapshots for the given asset type. Each snapshot inclu
 
 Returns the complete AI analysis: smart money breakdown, technical indicators (multi-timeframe), market data (OI, funding, liquidation), and the composite AI signal. Works for all 4 asset types — use `spot` or `hip3` to get SM + TA analysis for non-perp assets.
 
-### `agent-signal` — Raw composite data for trading agents (NEW)
+### `agent-signal` — Raw composite data for trading agents
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -517,7 +517,9 @@ After sending USDC to the vault address on Arbitrum, call this to auto-bridge fu
 **Gas fees are sponsored by Zonein** — no ETH needed. Users only need to send USDC.
 Returns `tx_hash` and `amount` bridged.
 
-### `agent-open` — Open a position (manual order via chat)
+### `agent-open` — Open a position (executes immediately on Hyperliquid)
+
+Places a market order on Hyperliquid immediately via Privy wallet signing. **Requires `--confirm`** (financial action).
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -525,14 +527,27 @@ Returns `tx_hash` and `amount` bridged.
 | `--coin` | str | yes | BTC, ETH, SOL, HYPE |
 | `--direction` | str | no (default LONG) | LONG or SHORT |
 | `--size` | float | yes | Position size in USD |
-| `--leverage` | int | no | Leverage (1–20) |
+| `--leverage` | int | no | Leverage (1–20, default from agent config) |
 
-### `agent-close` — Close a position
+### `agent-close` — Close a position (executes immediately on Hyperliquid)
+
+Cancels existing SL/TP orders, then places a market close order. **Requires `--confirm`** (financial action).
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
 | `agent_id` | str | yes | Agent ID |
 | `--coin` | str | yes | Coin to close (BTC, ETH, SOL, HYPE) |
+
+### `agent-update-sl-tp` — Update stop-loss / take-profit (executes immediately on Hyperliquid)
+
+Cancels existing SL/TP orders for the coin and places new ones. Provide one or both.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `agent_id` | str | yes | Agent ID |
+| `--coin` | str | yes | Token symbol |
+| `--stop-loss` | float | no | New stop loss price |
+| `--take-profit` | float | no | New take profit price |
 
 ### `agent-orders` — Manual order history
 
@@ -568,7 +583,9 @@ Use this in a cron job to poll for new plans. If no pending plans, returns empty
 
 Returns the complete plan: symbol, direction, entry price, SL/TP, confidence, and full evidence breakdown (SM consensus, TA indicators, market conditions, LLM reasoning).
 
-### `agent-approve` — Approve a pending trade plan
+### `agent-approve` — Approve a pending trade plan (executes immediately on Hyperliquid)
+
+Approving a plan **immediately places the order on Hyperliquid** (market order + SL/TP + leverage). The user gets a Telegram confirmation with fill details.
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -582,6 +599,8 @@ Returns the complete plan: symbol, direction, entry price, SL/TP, confidence, an
 **Requires `--confirm`** (financial action).
 
 ### `agent-reject` — Reject a pending trade plan
+
+Rejecting a plan triggers a **30-minute cooldown** — the agent will not create a new plan for the same token during this period.
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -963,17 +982,17 @@ Show 3 random examples from the 20 below, then ask user to describe their strate
 
 **20 Strategy Examples** (each is unique style + specific metrics):
 
-1. **Trend Confirmation Rider** — "Enter LONG when SM long_ratio ≥55% with ≥3 wallets AND SuperTrend shows 'buy' on 4h AND ADX ≥20 confirms trend strength. Exit when SM flips to short_ratio ≥55% OR RSI 4h crosses above 75."
+1. **Trend Confirmation Rider** — "Enter LONG when SM long_ratio ≥50% with ≥3 wallets AND SuperTrend shows 'buy' on 4h AND ADX ≥15 confirms trend strength. Exit when SM flips to short_ratio ≥55% AND 4h SuperTrend flips to sell."
 
-2. **Momentum Scalper** — "Quick entries when SM wallet_count jumps ≥5 in 1h timeframe with long_ratio ≥60%. RSI must be between 40-65 (not overbought). Take profit at 1.5% or when MACD histogram flips negative. Tight 0.8% stop loss."
+2. **Momentum Scalper** — "Quick entries when SM wallet_count jumps ≥5 in 1h timeframe with long_ratio ≥50%. RSI must be between 35-65 (not overbought). Take profit at 1.5% via exchange TP. Tight 0.8% stop loss on exchange."
 
 3. **Whale Accumulation Hunter** — "Enter when SM 24h long_volume exceeds short_volume by 2x AND wallet_count ≥5 BUT price hasn't moved yet (price_change_24h < 1%). Catch the move before retail notices. Hold until SM consensus weakens below 50%."
 
-4. **Contrarian Funding Fader** — "SHORT when funding_current ≥0.04% (crowded longs) AND RSI 4h ≥72 AND SM short_ratio starting to rise (≥40%). LONG when funding ≤-0.03% AND RSI ≤28 AND SM long_ratio rising. Fade extreme sentiment with SM confirmation."
+4. **Contrarian Funding Fader** — "SHORT when funding_current ≥0.04% (crowded longs) AND RSI 4h ≥72 AND SM short_ratio starting to rise (≥50%). LONG when funding ≤-0.03% AND RSI ≤28 AND SM long_ratio rising. Fade extreme sentiment with SM confirmation."
 
-5. **Multi-Timeframe Sniper** — "Require 1d SuperTrend = 'buy' (macro trend) AND 4h RSI ≤45 (pullback) AND 1h SM long_ratio ≥60% (short-term catalyst). Only enter when all 3 timeframes align. Very patient, 1-2 trades per week."
+5. **Multi-Timeframe Sniper** — "Require 1d SuperTrend = 'buy' (macro trend) AND 4h RSI ≤45 (pullback) AND SM long_ratio ≥50% (catalyst). Only enter when all 3 timeframes align. Very patient, 1-2 trades per week."
 
-6. **Liquidation Cascade Catcher** — "Enter LONG after liquidation_short_4h spikes above $5M (short squeeze starting) AND SM long_ratio ≥55% AND funding_current <0 (shorts paying). Ride the cascade. Exit when liquidation flow reverses."
+6. **Liquidation Cascade Catcher** — "Enter LONG after liquidation_short_4h spikes above $5M (short squeeze starting) AND SM long_ratio ≥50% AND funding_current <0 (shorts paying). Ride the cascade. Exit when SM reverses AND liquidation flow reverses."
 
 7. **OI Divergence Trader** — "LONG when oi_change_4h rising >2% BUT price flat or slightly down (accumulation) AND SM wallet_count increasing. SHORT when OI rising but price pumping with extreme funding >0.03% (late longs about to get rekt)."
 
@@ -981,27 +1000,27 @@ Show 3 random examples from the 20 below, then ask user to describe their strate
 
 9. **Bollinger Squeeze Breakout** — "Wait for Bollinger Band squeeze (bands narrowing) on 4h, then enter direction of first strong candle close outside bands. Confirm with SM ratio ≥55% same direction AND MACD histogram crossing zero. Ride volatility expansion."
 
-10. **Smart Money Front-Runner** — "Enter immediately when SM 1h wallet_count jumps from <3 to ≥5 with strong directional bias (long_ratio ≥65% or short_ratio ≥65%). Don't wait for TA confirmation — speed matters. Tight stop, let winners run."
+10. **Smart Money Front-Runner** — "Enter immediately when SM 1h wallet_count jumps from <3 to ≥5 with strong directional bias (long_ratio ≥55% or short_ratio ≥55%). Don't wait for TA confirmation — speed matters. Tight stop, let winners run."
 
-11. **EMA Trend Surfer** — "Only trade when EMA9 > EMA21 > EMA55 on 4h (clear uptrend). Enter on pullbacks to EMA21 when RSI 1h touches 40-45 AND SM long_ratio holds ≥55%. Exit when EMA9 crosses below EMA21."
+11. **EMA Trend Surfer** — "Only trade when EMA9 > EMA21 > EMA55 on 4h (clear uptrend). Enter on pullbacks to EMA21 when RSI 1h touches 35-45 AND SM long_ratio holds ≥50%. Exit when SM short_ratio ≥55% AND EMA9 crosses below EMA21."
 
 12. **Funding Rate Arbitrageur** — "Go against extreme funding: SHORT when funding ≥0.05% for 3+ consecutive periods AND RSI 4h ≥70. LONG when funding ≤-0.04% AND RSI ≤35. Collect funding while fading overextended positions. Requires SM ≥45% same direction as trade."
 
 13. **Volume Climax Reversal** — "Enter counter-trend after volume_24h spikes 3x average AND RSI hits extreme (≤20 or ≥80) AND SM ratio starts flipping. Catch the exhaustion reversal. Tight stop just beyond the climax candle."
 
-14. **ADX Trend Strength Filter** — "Only enter when ADX 4h ≥25 (strong trend confirmed). Direction from SuperTrend. Require SM consensus ≥55% same direction AND MACD histogram positive for LONG. Skip trades when ADX <20 (ranging market)."
+14. **ADX Trend Strength Filter** — "Only enter when ADX 4h ≥18 (trending market). Direction from SuperTrend. Require SM consensus ≥50% same direction AND MACD histogram positive for LONG. Skip trades when ADX <12 (ranging market)."
 
-15. **OI Momentum Rider** — "Enter LONG when oi_change_4h >2% (money flowing in) AND SM long_ratio ≥55% AND RSI 1h <65. Enter SHORT when oi_change_4h <-2% AND SM short_ratio ≥55%. Follow the institutional flow."
+15. **OI Momentum Rider** — "Enter LONG when oi_change_4h >2% (money flowing in) AND SM long_ratio ≥50% AND RSI 1h <65. Enter SHORT when oi_change_4h <-2% AND SM short_ratio ≥50%. Follow the institutional flow."
 
-16. **Conservative Diamond Hands** — "Only BTC and ETH. Enter when SM consensus ≥70% with ≥7 wallets AND 1d SuperTrend confirmed AND RSI 1d between 35-60 (not extended). Hold through 5-10% drawdowns if SM consensus holds. Target 10%+ moves."
+16. **Conservative Diamond Hands** — "Only BTC and ETH. Enter when SM consensus ≥55% with ≥7 wallets AND 1d SuperTrend confirmed AND RSI 1d between 35-60 (not extended). Hold through 5-10% drawdowns if SM consensus holds. Target 10%+ moves."
 
-17. **Stochastic Crossover Scalper** — "Enter when Stoch K crosses above D from below 20 (bullish crossover) AND SM 1h long_ratio ≥55% AND MACD histogram turning positive. Quick 1-2% targets. Exit immediately if Stoch K crosses back below D."
+17. **Stochastic Crossover Scalper** — "Enter when Stoch K crosses above D from below 20 (bullish crossover) AND SM long_ratio ≥50% AND MACD histogram turning positive. Quick 1-2% targets. Exit via exchange SL/TP."
 
 18. **Long/Short Ratio Contrarian** — "SHORT when market.long_ratio ≥68% (retail extremely long) AND funding positive AND SM short_ratio ≥45% (smart money positioning opposite). LONG when short_ratio ≥65% AND SM long_ratio ≥50%. Fade the herd."
 
-19. **Ichimoku Cloud Breakout** — "Enter when price breaks above Ichimoku cloud on 4h AND conversion line > base line AND SM long_ratio ≥55%. Strong trend continuation signal. Stop loss below cloud. Let it run while above cloud."
+19. **Ichimoku Cloud Breakout** — "Enter when price breaks above Ichimoku cloud on 4h AND conversion line > base line AND SM long_ratio ≥50%. Strong trend continuation signal. Stop loss below cloud. Let it run while above cloud."
 
-20. **Volatility Expansion Entry** — "Enter when ATR 4h expands 50%+ from 20-period average (volatility waking up) AND direction confirmed by SM consensus ≥60% AND SuperTrend aligned. Catch the start of big moves, not the middle."
+20. **Volatility Expansion Entry** — "Enter when ATR 4h expands 50%+ from 20-period average (volatility waking up) AND direction confirmed by SM consensus ≥50% AND SuperTrend aligned. Catch the start of big moves, not the middle."
 
 ---
 
@@ -1062,9 +1081,9 @@ Ask: "What's your wallet address for withdrawals? This restricts where funds can
 
 | User says (intent) | Maps to (condition) |
 |-------------------|---------------------|
-| "smart money is buying / bullish" | `sm.long_ratio >= 55` + `sm.wallet_count >= 3` |
-| "strong smart money / high consensus" | `sm.long_ratio >= 65` + `sm.wallet_count >= 5` |
-| "smart money flipped direction" | `sm.short_ratio >= 55` (for close_long) or `sm.long_ratio >= 55` (for close_short) |
+| "smart money is buying / bullish" | `sm.long_ratio >= 50` + `sm.wallet_count >= 3` (with TA confirm) or `sm.long_ratio >= 55` (standalone) |
+| "strong smart money / high consensus" | `sm.long_ratio >= 55` + `sm.wallet_count >= 5` |
+| "smart money flipped direction" | Exit AND: `sm.short_ratio >= 55` + `ta.4h.supertrend == sell` (for exit long). Use AND, not OR! |
 | "whales are accumulating" | `sm.wallet_count >= 5` + `sm.long_volume > sm.short_volume` |
 | "RSI oversold" | `ta.4h.rsi <= 30` |
 | "RSI overbought" | `ta.4h.rsi >= 70` |
@@ -1072,7 +1091,7 @@ Ask: "What's your wallet address for withdrawals? This restricts where funds can
 | "MACD bullish / momentum rising" | `ta.4h.macd_hist > 0` |
 | "uptrend / trend is up" | `ta.4h.supertrend_advice == "buy"` |
 | "downtrend / trend is down" | `ta.4h.supertrend_advice == "sell"` |
-| "strong trend" | `ta.4h.adx >= 18` (moderate) or `>= 25` (strong) |
+| "strong trend" | `ta.4h.adx >= 15` (moderate) or `>= 20` (strong). In AND group use ≥12; in OR group use ≥18 |
 | "price near lower Bollinger / support" | `ta.4h.bb_lower` (price near lower band) |
 | "EMA bullish cross / golden cross" | `ta.4h.ema_9 > ta.4h.ema_21` |
 | "high funding rate / crowded longs" | `market.funding_current >= 0.03` |
@@ -1090,7 +1109,7 @@ Ask: "What's your wallet address for withdrawals? This restricts where funds can
 
 | Metric | Typical live range | Loose | Moderate | Strict | Notes |
 |--------|-------------------|-------|----------|--------|-------|
-| `sm.long_ratio` / `sm.short_ratio` | 30–70% | ≥50 | ≥55 | ≥65 | `stable` cat has stronger bias than `high_win_rate` |
+| `sm.long_ratio` / `sm.short_ratio` | 30–70% (avg 44-46% in neutral) | ≥50 | ≥55 | ≥60 | `stable` cat has stronger bias. In neutral markets rarely exceeds 55% |
 | `sm.wallet_count` | 10–300+ | ≥1 | ≥3 | ≥5 | More wallets = higher confidence. Varies by category filter |
 | `sm.{tf}.wallet_count` | 0–100+ | ≥1 | ≥2 | ≥3 | Per-TF count. 1h has fewest wallets, 24h has most |
 | `sm.long_volume` / `sm.short_volume` | 0–50M+ USD | — | — | — | Use for volume-weighted signals; compare long vs short |
@@ -1111,7 +1130,7 @@ Ask: "What's your wallet address for withdrawals? This restricts where funds can
 | Metric | Typical live range | Loose | Moderate | Strict | Notes |
 |--------|-------------------|-------|----------|--------|-------|
 | `ta.{tf}.supertrend_advice` | "buy" / "sell" | =="buy" | =="buy" | =="buy" | Direct trend signal. One of the clearest indicators |
-| `ta.{tf}.adx` | 10–50 | ≥15 | ≥18 | ≥25 | Trend STRENGTH only. 10–20=ranging, 20–30=trending, 30+=strong |
+| `ta.{tf}.adx` | 10–50 | ≥12 | ≥15 | ≥20 | Trend STRENGTH only. <15=ranging, 15–25=trending, 25+=strong. In ranging markets (BTC/SOL) stays 10–15 for days |
 | `ta.{tf}.plus_di` / `minus_di` | 10–40 | — | — | — | Use with ADX: +DI>-DI=bullish, -DI>+DI=bearish |
 | `ta.{tf}.aroon_up` / `aroon_down` | 0–100 | ≥60 / ≤40 | ≥70 / ≤30 | ≥80 / ≤20 | Strong uptrend: up>70, down<30 |
 
@@ -1141,27 +1160,82 @@ Ask: "What's your wallet address for withdrawals? This restricts where funds can
 
 > **Key observations from live data:**
 > - SM ratios fluctuate widely by category — `stable` category has stronger directional bias than `high_win_rate`.
-> - ADX in ranging markets stays 10–20; only trending markets reach 25+. Use ≥18 as a practical minimum.
+> - ADX in ranging markets stays 10–15 for days (BTC/SOL observed at 12). Use ≥12 in AND groups, ≥15–18 in OR groups. Never use ≥20+ as a flat AND condition.
 > - `funding_current` is usually near 0.01; extreme values (>0.03 or <-0.03) are rare but very significant.
 > - Moving averages and Bollinger Bands are price-level metrics — compare them to each other or current price, not to fixed thresholds.
+
+**⚠️ AND/OR Condition Design Guidelines (CRITICAL):**
+
+All `trigger_conditions` must follow the **AND=easy, OR=strict** principle to avoid agents that never trade:
+
+| Rule | Guideline | Example |
+|------|-----------|---------|
+| **AND conditions** | Each should pass individually **~70-80%** of the time. Use relaxed thresholds. | `sm.long_ratio >= 50`, `sm.wallet_count >= 3`, `ta.4h.rsi <= 68` |
+| **OR groups inside AND** | Stricter confirmations — only **1 of N** needs to pass. Allows flexibility. | `OR(ta.4h.adx >= 15, ta.1h.adx >= 15, ta.4h.supertrend == buy)` |
+| **Max AND depth** | Top-level AND should have **2-4 items** (including OR groups). Never 5+ flat AND. | `AND(easy_sm, easy_ta, OR(strict_a, strict_b, strict_c))` |
+| **Exit conditions** | Use **AND** — require **2+ reversal confirmations** to exit. SL/TP on exchange is the primary exit. | `AND(sm.short_ratio >= 56, ta.4h.supertrend == sell)` |
+| **⚠️ Exit OR = premature exit** | OR exit triggers on any single indicator → position closed on noise. E.g., `macd_hist < 0` alone exits ALL longs in bearish market. | ❌ `OR(macd<0, rsi≥70)` — too trigger-happy |
+| **⚠️ Entry/Exit consistency** | Exit must NOT conflict with entry paths. If entry allows LONG via Path B (no supertrend_1h=buy), exit must NOT use supertrend_1h=sell alone. | ❌ Entry via 4h trend → Exit on 1h supertrend=sell |
+| **Strict in AND = dead agent** | 5 strict AND conditions: 0.3^5 ≈ 0.2% chance of triggering. Agent never trades. | ❌ `AND(sm≥60, wallets≥5, adx≥22, rsi≤50, macd>0)` |
+| **Easy in OR = always triggers** | OR of easy conditions means agent triggers on noise. | ❌ `OR(rsi≤70, sm≥40)` — passes 95%+ of the time |
+| **value_field** | Compare two indicator fields: `{"field": "ta.1h.ema_9", "compare": ">", "value_field": "ta.1h.ema_21"}` | EMA cross, DI cross, price vs MA |
+
+**Recommended threshold ranges for AND vs OR:**
+
+| Metric | In AND (easy, pass ~70%) | In OR (strict, pass ~30%) | In EXIT AND |
+|--------|--------------------------|---------------------------|-------------|
+| `sm.long_ratio` / `sm.short_ratio` | ≥50 | ≥55–58 | ≥55–56 (reversal) |
+| `sm.wallet_count` | ≥3 | ≥5 | — |
+| `ta.{tf}.adx` | ≥12 | ≥18 | — |
+| `ta.{tf}.rsi` (anti-overbought) | ≤68 | ≤60 | ≥65 (exit long) / ≤35 (exit short) |
+| `ta.{tf}.supertrend_advice` | OK in AND (binary) | OK in OR (alternative) | OK in exit AND (trend reversal) |
+| `ta.{tf}.macd_hist` direction | Better in OR (flips often) | ✅ good OR candidate | Only in exit AND with RSI confirm |
+
+> **Note:** SM `long_ratio` averages 44-46% in neutral markets but can reach 55-65% during directional moves. Use ≥50 in AND groups (passes ~40-50% of the time), combined with TA confirmation for quality entries.
+
+**Pattern template:**
+```
+entry.long = AND(
+  sm.long_ratio >= 50,           // SM filter (min 50%)
+  sm.wallet_count >= 3,          // easy wallet filter
+  OR(                            // at least 1 stricter confirmation
+    ta.4h.supertrend == buy,     // trend direction
+    ta.1h.adx >= 15,             // trend strength
+    sm.long_ratio >= 55          // strong SM override
+  )
+)
+exit.long = AND(                 // require 2 confirmations to exit
+  sm.short_ratio >= 55,          // SM reversed
+  ta.4h.supertrend == sell       // trend confirmed reversal
+)
+// SL/TP on exchange is the PRIMARY exit mechanism
+// trigger_conditions exit is SUPPLEMENTARY — only for strong reversals
+```
 
 **Common strategy patterns (AI should recognize and compose):**
 
 | Strategy pattern | Entry conditions to generate |
 |-----------------|------------------------------|
-| **Momentum / trend following** | SM bullish (long_ratio≥55) AND RSI not overbought (≤65) AND OI rising (oi_change_4h>1) AND ADX≥20 |
-| **Mean reversion / bottom catching** | RSI oversold (≤30) AND funding negative (shorts crowded) AND short liquidations happening |
-| **SM divergence / whale following** | sm.long_ratio≥65 AND sm.wallet_count≥5 AND sm.4h.wallet_count≥3 AND OI flat (≤2%) |
-| **Contrarian / fade the crowd** | Long ratio crowded (≥65%) AND funding extreme (≥0.05) → SHORT. Short ratio crowded (≥65%) AND funding extreme (≤-0.05) → LONG |
-| **Breakout** | SuperTrend=buy AND ADX≥18 AND OI rising (oi_change_4h>1) AND volume rising |
-| **Scalping / quick trades** | sm.long_ratio≥50 AND sm.1h.wallet_count≥1 AND RSI 30-70 AND MACD histogram aligns with direction |
+| **Momentum / trend following** | Entry: AND(sm.long_ratio≥50, sm.wallet_count≥3, OR(ADX≥15, SuperTrend=buy)) + RSI not overbought (≤68). Exit: AND(sm.short_ratio≥55, ta.4h.supertrend==sell) |
+| **Mean reversion / bottom catching** | Entry: AND(RSI oversold ≤30, OR(funding negative, short liquidations, sm.long_ratio≥55)). Exit: AND(ta.1h.rsi≥65, sm.short_ratio≥55) |
+| **SM divergence / whale following** | Entry: AND(sm.long_ratio≥50, sm.wallet_count≥3, OR(supertrend=buy, ta.4h.rsi≤65, OI flat)). Exit: AND(sm.short_ratio≥55, ta.4h.supertrend==sell) |
+| **Contrarian / fade the crowd** | Entry: AND(market.long_ratio≥60, OR(funding≥0.03, sm.short_ratio≥55)) → SHORT. Exit: AND(market.short_ratio≥55, ta.4h.rsi≤35) |
+| **Breakout** | Entry: AND(SuperTrend=buy, OR(ADX≥15 on 4h, ADX≥15 on 1h), OR(OI rising, MACD>0)). Exit: AND(ta.4h.supertrend==sell, ta.1h.rsi≥65) |
+| **Scalping / quick trades** | Entry: AND(RSI 35-65, OR(MACD 1h>0, SuperTrend=buy, ta.4h.adx≥15)). Exit: AND(ta.1h.supertrend==sell, ta.1h.rsi≥65) |
 
 **After collecting user intent, build trigger_conditions JSON:**
 
 trigger_conditions schema (for AI to generate — NOT shown to user):
 ```
-{entry: {long: {op:"and"|"or", conditions:[{field,compare,value}]}, short:{...}},
- exit: {close_long: {op:"and"|"or", conditions:[...]}, close_short:{...}}}
+{entry: {long: {op:"and"|"or", conditions:[...]}, short:{...}},
+ exit: {long: {op:"and", conditions:[...]}, short:{...}}}
+// Exit keys: "long" or "close_long" (both work) = exit conditions for LONG positions
+// Exit MUST use "and" — require 2+ reversal confirmations. SL/TP on exchange is primary exit.
+
+Condition types:
+  Leaf:  {field, compare, value}              // compare field vs constant
+  Cross: {field, compare, value_field}        // compare field vs another field (e.g. EMA cross)
+  Group: {op:"and"|"or", conditions:[...]}    // nested group (OR inside AND)
 ```
 
 Available fields:
@@ -1174,44 +1248,73 @@ Available fields:
 > **Note:** `sm.long_ratio` and `sm.short_ratio` are percentages (0-100), NOT decimals. E.g., 65% long consensus → `sm.long_ratio >= 65` (not 0.65). Direction detection uses ratios: "SM is bullish" = `sm.long_ratio >= 60`, "SM flipped SHORT" = `sm.short_ratio >= 60`.
 
 **Example: user says "I want to buy when smart money is strong and RSI is not overbought, exit when SM flips direction"**
-→ AI generates:
+→ AI generates (AND=easy filters + OR=strict confirmations, AND exit):
 ```json
 {"entry":{"long":{"op":"and","conditions":[
-  {"field":"sm.long_ratio","compare":">=","value":65},
+  {"field":"sm.long_ratio","compare":">=","value":50},
   {"field":"sm.wallet_count","compare":">=","value":3},
-  {"field":"ta.4h.rsi","compare":"<=","value":65}
+  {"field":"ta.4h.rsi","compare":"<=","value":68},
+  {"op":"or","conditions":[
+    {"field":"sm.long_ratio","compare":">=","value":55},
+    {"field":"ta.4h.supertrend_advice","compare":"==","value":"buy"},
+    {"field":"ta.1h.supertrend_advice","compare":"==","value":"buy"}
+  ]}
 ]}},
-"exit":{"close_long":{"op":"or","conditions":[
-  {"field":"sm.short_ratio","compare":">=","value":60},
-  {"field":"sm.long_ratio","compare":"<=","value":40}
+"exit":{"long":{"op":"and","conditions":[
+  {"field":"sm.short_ratio","compare":">=","value":55},
+  {"field":"ta.4h.supertrend_advice","compare":"==","value":"sell"}
 ]}}}
 ```
 
 **Example: user says "Contrarian — buy when everyone is fearful, sell when everyone is greedy"**
-→ AI generates:
+→ AI generates (AND=easy crowd detection + OR=strict confirmation, AND exit):
 ```json
 {"entry":{"long":{"op":"and","conditions":[
-  {"field":"market.short_ratio","compare":">=","value":65},
-  {"field":"market.funding_current","compare":"<=","value":-0.03},
-  {"field":"ta.4h.rsi","compare":"<=","value":35}
+  {"field":"market.short_ratio","compare":">=","value":60},
+  {"op":"or","conditions":[
+    {"field":"market.funding_current","compare":"<=","value":-0.02},
+    {"field":"ta.4h.rsi","compare":"<=","value":35},
+    {"field":"sm.long_ratio","compare":">=","value":55}
+  ]}
 ]},
 "short":{"op":"and","conditions":[
-  {"field":"market.long_ratio","compare":">=","value":65},
-  {"field":"market.funding_current","compare":">=","value":0.03},
-  {"field":"ta.4h.rsi","compare":">=","value":65}
+  {"field":"market.long_ratio","compare":">=","value":60},
+  {"op":"or","conditions":[
+    {"field":"market.funding_current","compare":">=","value":0.02},
+    {"field":"ta.4h.rsi","compare":">=","value":65},
+    {"field":"sm.short_ratio","compare":">=","value":55}
+  ]}
 ]}},
-"exit":{"close_long":{"op":"or","conditions":[
-  {"field":"market.long_ratio","compare":">=","value":55},
-  {"field":"ta.4h.rsi","compare":">=","value":60}
+"exit":{"long":{"op":"and","conditions":[
+  {"field":"market.long_ratio","compare":">=","value":58},
+  {"field":"ta.4h.rsi","compare":">=","value":65}
 ]},
-"close_short":{"op":"or","conditions":[
-  {"field":"market.short_ratio","compare":">=","value":55},
-  {"field":"ta.4h.rsi","compare":"<=","value":40}
+"short":{"op":"and","conditions":[
+  {"field":"market.short_ratio","compare":">=","value":58},
+  {"field":"ta.4h.rsi","compare":"<=","value":35}
+]}}}
+```
+
+**Example: user says "EMA cross with SM confirmation"**
+→ AI generates (uses `value_field` for cross-field comparison, AND exit):
+```json
+{"entry":{"long":{"op":"and","conditions":[
+  {"field":"sm.long_ratio","compare":">=","value":50},
+  {"field":"ta.4h.supertrend_advice","compare":"==","value":"buy"},
+  {"op":"or","conditions":[
+    {"field":"ta.1h.ema_9","compare":">","value_field":"ta.1h.ema_21"},
+    {"field":"ta.1h.adx","compare":">=","value":15},
+    {"field":"ta.1h.supertrend_advice","compare":"==","value":"buy"}
+  ]}
+]}},
+"exit":{"long":{"op":"and","conditions":[
+  {"field":"sm.short_ratio","compare":">=","value":55},
+  {"field":"ta.4h.supertrend_advice","compare":"==","value":"sell"}
 ]}}}
 ```
 
 After generating, present a **plain-language summary** to user for confirmation:
-> "Agent will enter LONG when: SM long ratio ≥65% with ≥3 wallets AND RSI not overbought (≤65 on 4h). Exit when: SM short ratio ≥60% (SM flipped) OR SM long ratio drops ≤40%. OK?"
+> "Agent will enter LONG when: SM long ratio ≥50% with ≥3 wallets AND RSI not overbought (≤68 on 4h) AND at least one of: SM ≥55%, 4h SuperTrend=buy, or 1h SuperTrend=buy. Exit trigger: SM short ratio ≥55% AND 4h SuperTrend flips to sell. Primary exit is SL/TP on exchange. OK?"
 
 ---
 
@@ -1221,12 +1324,12 @@ Use `agent-create` command. Build the call from collected answers.
 
 **Example — Momentum BTC trader, moderate risk, SM+TA combined signals:**
 ```
-agent-create --name "BTC Momentum" --type momentum_hunter --assets BTC,ETH --leverage 5 --risk-per-trade 1 --max-daily-loss 3 --risk-reward 1:2 --min-confidence 0.8 --min-consensus 0.7 --prompt-config '{"trading_strategy":"Momentum trading following SM consensus with RSI and taker ratio confirmation on BTC and ETH","custom_rules":"Entry LONG: SM long_ratio >=55, wallet_count >=3, RSI <=65, taker_ratio >0.51. Entry SHORT: SM short_ratio >=55, RSI >=35, taker_ratio <0.49. Exit on SM flip or RSI extremes.","risk_management":"Max 5 positions, 1% risk per trade, 3% max daily loss, 5x leverage"}'
+agent-create --name "BTC Momentum" --type momentum_hunter --assets BTC,ETH --leverage 5 --risk-per-trade 1 --max-daily-loss 3 --risk-reward 1:2 --min-confidence 0.8 --min-consensus 0.7 --prompt-config '{"trading_strategy":"Momentum trading following SM consensus with RSI and taker ratio confirmation on BTC and ETH","custom_rules":"Entry LONG: SM long_ratio >=50 with TA confirmation (SuperTrend/ADX), wallet_count >=3, RSI <=65. Entry SHORT: SM short_ratio >=50 with TA confirmation, RSI >=35. Exit requires 2+ reversal signals (SM flip AND SuperTrend reversal). SL/TP on exchange is primary exit.","risk_management":"Max 5 positions, 1% risk per trade, 3% max daily loss, 5x leverage"}'
 ```
 
 **Example — Advanced with custom trigger_conditions:**
 ```
-agent-create --name "SM Divergence Hunter" --type precision_master --assets BTC,ETH,SOL --trigger-conditions '{"entry":{"long":{"op":"and","conditions":[{"field":"sm.long_ratio","compare":">=","value":70},{"field":"sm.wallet_count","compare":">=","value":3},{"field":"ta.4h.rsi","compare":"<=","value":60}]},"short":{"op":"and","conditions":[{"field":"sm.short_ratio","compare":">=","value":70},{"field":"sm.wallet_count","compare":">=","value":3},{"field":"ta.4h.rsi","compare":">=","value":40}]}}}' --leverage 5 --prompt-config '{"trading_strategy":"Precision entries on strong SM divergence with TA confirmation","custom_rules":"Entry requires SM ratio >=70 with >=3 wallets AND RSI not extreme. Exit on SM direction reversal.","risk_management":"Tight SL 0.5%, TP 1%, max 10x leverage"}'
+agent-create --name "SM Divergence Hunter" --type precision_master --assets BTC,ETH,SOL --trigger-conditions '{"entry":{"long":{"op":"and","conditions":[{"field":"sm.long_ratio","compare":">=","value":50},{"field":"sm.wallet_count","compare":">=","value":3},{"field":"ta.4h.rsi","compare":"<=","value":60},{"op":"or","conditions":[{"field":"sm.long_ratio","compare":">=","value":55},{"field":"ta.4h.supertrend_advice","compare":"==","value":"buy"}]}]},"short":{"op":"and","conditions":[{"field":"sm.short_ratio","compare":">=","value":50},{"field":"sm.wallet_count","compare":">=","value":3},{"field":"ta.4h.rsi","compare":">=","value":40},{"op":"or","conditions":[{"field":"sm.short_ratio","compare":">=","value":55},{"field":"ta.4h.supertrend_advice","compare":"==","value":"sell"}]}]}},"exit":{"long":{"op":"and","conditions":[{"field":"sm.short_ratio","compare":">=","value":56},{"field":"ta.4h.supertrend_advice","compare":"==","value":"sell"}]},"short":{"op":"and","conditions":[{"field":"sm.long_ratio","compare":">=","value":56},{"field":"ta.4h.supertrend_advice","compare":"==","value":"buy"}]}}}' --leverage 5 --prompt-config '{"trading_strategy":"Precision entries on strong SM divergence with TA confirmation","custom_rules":"Entry requires SM ratio >=50 with TA confirmation + >=3 wallets AND RSI not extreme. Exit requires 2 confirmations: SM reversal AND SuperTrend flip. SL/TP on exchange is primary exit.","risk_management":"Tight SL 0.5%, TP 1%, max 10x leverage"}'
 ```
 
 > **Note:** `--prompt-config` with `trading_strategy` and `custom_rules` is required. Without it, deploy will fail. AI should auto-generate this from Q4 answers.
@@ -1279,13 +1382,16 @@ When user wants to check positions or trade manually:
 **Check positions:**
 `agent-positions <agent_id>` — Present each position: "BTC LONG — $500 at $95,432 entry — PnL: +$23.45 — 5x leverage"
 
-**Open a position:**
+**Open a position (executes immediately on Hyperliquid):**
 `agent-open <agent_id> --coin BTC --direction LONG --size 100 --leverage 5 --confirm`
 
-**Close a position:**
+**Close a position (executes immediately on Hyperliquid):**
 `agent-close <agent_id> --coin BTC --confirm`
 
-**Check order status:**
+**Update SL/TP (executes immediately on Hyperliquid):**
+`agent-update-sl-tp <agent_id> --coin BTC --stop-loss 94000 --take-profit 100000`
+
+**Check order history:**
 `agent-orders <agent_id>`
 
 ### Market Overview
@@ -1405,6 +1511,8 @@ The agent runs the same analysis cycle (SM + TA + Market → LLM decision) but i
 
 `strength_thresholds` and `timeframe_weights` are **auto-generated** from `agent_type` when creating an agent. Override with `agent-update` if user wants custom values.
 
+> **⚠️ Important:** When `trigger_conditions` are configured on an agent, the strength threshold check is **completely bypassed**. This is because `trigger_conditions` already validate signal quality with specific SM/TA/Market checks — the default strength threshold would block signals when SM is near 50/50 (neutral market). **Only agents WITHOUT trigger_conditions use the strength thresholds below.**
+
 ### What they control
 
 - **min_strength_buy**: How strong smart money signal must be to OPEN a position (higher = pickier, fewer trades)
@@ -1430,7 +1538,7 @@ Adjust +/-5 from defaults:
 
 ### Validation rules
 
-1. All values **>= 55** (hard minimum)
+1. All values **>= 55** (hard minimum) — only relevant for agents WITHOUT trigger_conditions
 2. **OTHERS >= max(BTC, ETH, SOL)**  altcoins are more volatile, need stronger signals
 3. Typical ordering: BTC <= ETH <= SOL <= OTHERS for buy thresholds
 4. Set `OTHERS = max(BTC, ETH, SOL) + 0-5 buffer`

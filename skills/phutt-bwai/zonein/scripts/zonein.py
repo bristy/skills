@@ -46,6 +46,7 @@ Commands:
   agent-deposit <id>— Get deposit address (USDC on Arbitrum)
   agent-open <id>  — Open a position (manual order)
   agent-close <id> — Close a position
+  agent-update-sl-tp <id> — Update stop-loss / take-profit for open position
   agent-orders <id>— Manual order history
   agent-withdraw <id>— Withdraw funds to your wallet
   agent-backtest <id>— Run backtest on agent (streaming)
@@ -542,6 +543,24 @@ def cmd_agent_close(args):
         "direction": "LONG",
     }
     data = api_post(f"/agents/{args.agent_id}/orders", body)
+    _output(data)
+
+
+def cmd_agent_update_sl_tp(args):
+    """Update stop-loss and/or take-profit for an existing position."""
+    parts = []
+    if args.stop_loss is not None:
+        parts.append(f"SL=${args.stop_loss}")
+    if args.take_profit is not None:
+        parts.append(f"TP=${args.take_profit}")
+    desc = f"Update {args.coin} {', '.join(parts)}"
+    _require_confirm(args, desc)
+    body = {"coin": args.coin}
+    if args.stop_loss is not None:
+        body["stop_loss"] = args.stop_loss
+    if args.take_profit is not None:
+        body["take_profit"] = args.take_profit
+    data = api_post(f"/agents/{args.agent_id}/update-sl-tp", body)
     _output(data)
 
 
@@ -1067,6 +1086,15 @@ def main():
     p.add_argument("--coin", type=str, required=True, help="BTC, ETH, SOL, HYPE")
     p.add_argument("--confirm", action="store_true", help=CONFIRM_HELP)
     p.set_defaults(func=cmd_agent_close)
+
+    # --- Agent Update SL/TP ---
+    p = sub.add_parser("agent-update-sl-tp", help="Update stop-loss / take-profit for open position")
+    p.add_argument("agent_id", type=str)
+    p.add_argument("--coin", type=str, required=True, help="BTC, ETH, SOL, HYPE")
+    p.add_argument("--stop-loss", type=float, default=None, help="New stop-loss price")
+    p.add_argument("--take-profit", type=float, default=None, help="New take-profit price")
+    p.add_argument("--confirm", action="store_true", help=CONFIRM_HELP)
+    p.set_defaults(func=cmd_agent_update_sl_tp)
 
     # --- Agent Orders ---
     p = sub.add_parser("agent-orders", help="Manual order history")
