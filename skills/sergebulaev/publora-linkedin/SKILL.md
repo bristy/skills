@@ -2,136 +2,194 @@
 name: publora-linkedin
 description: >
   Post or schedule content to LinkedIn using the Publora API. Use this skill
-  when the user wants to publish, schedule, or draft a LinkedIn post via Publora.
+  when the user wants to publish or schedule LinkedIn posts, retrieve analytics
+  (impressions, reactions, followers), manage reactions, post comments, or
+  @mention people/organizations via Publora.
 ---
 
 # Publora — LinkedIn
 
-Post and schedule LinkedIn content via the Publora API.
+LinkedIn platform skill for the Publora API. For auth, core scheduling, media upload, and workspace/webhook docs, see the `publora` core skill.
 
-> **Prerequisite:** Install the `publora` core skill for auth setup and getting platform IDs.
+**Base URL:** `https://api.publora.com/api/v1`  
+**Header:** `x-publora-key: sk_YOUR_KEY`  
+**Platform ID format:** `linkedin-{profileId}`
 
-## Platform ID Format
+## Platform Limits (API)
 
-`linkedin-{profileId}` — get your exact ID from `GET /api/v1/platform-connections`.
+> ⚠️ API limits differ from native app. Design against these.
 
-## Character Limit
+| Property | API Limit | Native App |
+|----------|-----------|-----------|
+| Text | **3,000 characters** | 3,000 |
+| Images | Up to 20 × 5 MB, JPEG/PNG/GIF | Same |
+| Video | 30 min / **500 MB** | 15 min / 5 GB |
+| Video format | MP4 only | MP4, MOV |
+| Organic carousels | ❌ Not via API | ✅ |
+| Mixed media | ❌ No | ✅ |
+| Rate limit | ~200 calls/hr | — |
 
-**3,000 characters strict.** The API returns an error if exceeded — it does NOT truncate or thread automatically. Count carefully.
+First 210 characters visible before "see more".
 
-## Supported Content
+**Common errors:**
+- `MEDIA_ASSET_PROCESSING_FAILED` — file too large or unsupported format
+- `Error 429` — rate limit exceeded
 
-| Type | Supported | Notes |
-|------|-----------|-------|
-| Text only | ✅ | Up to 3,000 chars |
-| Single image | ✅ | JPEG/PNG; WebP auto-converted to JPEG |
-| Multiple images | ✅ | Becomes carousel/album |
-| Video | ✅ | MP4 |
-| Rich text formatting | ❌ | Plain text only; use Unicode for emphasis (𝗯𝗼𝗹𝗱, 𝘪𝘵𝘢𝘭𝘪𝘤) |
-
-## Post to LinkedIn Immediately
+## Post a Text Update
 
 ```javascript
 await fetch('https://api.publora.com/api/v1/create-post', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
   body: JSON.stringify({
-    content: 'Excited to share our latest update! 🚀\n\nWe just launched a new feature that cuts onboarding time by 40%. Here is what we learned building it...',
+    content: 'Excited to announce our latest product update! #buildinpublic',
     platforms: ['linkedin-ABC123']
   })
 });
 ```
 
-## Schedule a LinkedIn Post
+## @Mentioning People and Organizations
+
+Use the following syntax inside `content`:
+
+```
+@{urn:li:person:MEMBER_ID|Display Name}       # person
+@{urn:li:organization:ORG_ID|Company Name}    # company
+```
+
+The display name must **exactly match** the LinkedIn profile name (case-sensitive).
 
 ```javascript
-await fetch('https://api.publora.com/api/v1/create-post', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
-  body: JSON.stringify({
-    content: 'Monday thought: consistency beats perfection every time. 💡\n\n#leadership #startup #growth',
-    platforms: ['linkedin-ABC123'],
-    scheduledTime: '2026-03-16T09:00:00.000Z'
-  })
-});
-// Response: { postGroupId: "pg_abc123", scheduledTime: "..." }
+body: JSON.stringify({
+  content: 'Great collaboration with @{urn:li:organization:107107343|Creative Content Crafts Inc}!',
+  platforms: ['linkedin-ABC123']
+})
 ```
 
-## Post with Images (Carousel/Album)
+## Schedule a Post
 
-Multiple images → LinkedIn carousel/album. Use the 3-step upload workflow, calling `get-upload-url` once per image with the same `postGroupId`.
-
-```python
-import requests
-
-HEADERS = { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' }
-
-# Step 1: Create post
-post = requests.post('https://api.publora.com/api/v1/create-post', headers=HEADERS, json={
-    'content': 'Our team at the conference — great connections made today! #networking',
-    'platforms': ['linkedin-ABC123'],
-    'scheduledTime': '2026-03-16T09:00:00.000Z'
-}).json()
-post_group_id = post['postGroupId']
-
-# Step 2+3: Upload each image (repeat for N images — all use same postGroupId)
-for file_path in ['photo1.jpg', 'photo2.jpg', 'photo3.jpg']:
-    upload = requests.post('https://api.publora.com/api/v1/get-upload-url', headers=HEADERS, json={
-        'fileName': file_path, 'contentType': 'image/jpeg',
-        'type': 'image', 'postGroupId': post_group_id
-    }).json()
-    with open(file_path, 'rb') as f:
-        requests.put(upload['uploadUrl'], headers={'Content-Type': 'image/jpeg'}, data=f)
-```
-
-**WebP note:** WebP images are automatically converted to JPEG by Publora.
-
-## Hashtags
-
-Hashtags work normally and become clickable on LinkedIn. Place them at the end of the post. Recommended: 3–5 relevant hashtags.
-
-```
-Great milestone reached today. Grateful for an amazing team. 🙌
-
-#startup #buildinpublic #product #teamwork
+```javascript
+body: JSON.stringify({
+  content: 'Your LinkedIn update here',
+  platforms: ['linkedin-ABC123'],
+  scheduledTime: '2026-03-20T09:00:00.000Z'
+})
 ```
 
 ## Analytics
 
-Retrieve post analytics via:
+### Post Statistics
 
+```javascript
+const res = await fetch('https://api.publora.com/api/v1/linkedin-post-statistics', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7123456789',   // or urn:li:ugcPost:xxx
+    platformId: 'linkedin-ABC123',
+    queryTypes: 'ALL'   // IMPRESSION | MEMBERS_REACHED | RESHARE | REACTION | COMMENT
+  })
+});
 ```
-GET /api/v1/post-analytics?postId={postId}&platform=linkedin-{profileId}
+
+### Account Statistics
+
+```javascript
+await fetch('https://api.publora.com/api/v1/linkedin-account-statistics', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
+  body: JSON.stringify({ platformId: 'linkedin-ABC123' })
+});
 ```
 
-**Returns:**
-- `impressions` — total views
-- `membersReached` — unique LinkedIn members reached
-- `reshares` — number of reshares
-- `reactions` — reaction counts by type
-- `comments` — total comments
+### Follower Count & Growth
 
-**Note:** Analytics data may take up to **24 hours** to populate after posting.
+```javascript
+await fetch('https://api.publora.com/api/v1/linkedin-followers', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
+  body: JSON.stringify({ platformId: 'linkedin-ABC123' })
+});
+```
 
-### Reaction Types
+### Profile Summary (combined overview)
 
-LinkedIn supports 6 reaction types:
+```javascript
+await fetch('https://api.publora.com/api/v1/linkedin-profile-summary', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
+  body: JSON.stringify({ platformId: 'linkedin-ABC123' })
+});
+```
 
-| Reaction | Meaning |
-|----------|---------|
-| `LIKE` | 👍 Like |
-| `PRAISE` | 👏 Celebrate |
-| `EMPATHY` | 💜 Support |
-| `INTEREST` | 🤔 Curious |
-| `APPRECIATION` | 🙏 Love |
-| `ENTERTAINMENT` | 😄 Funny |
+> Analytics may take up to 24h to fully populate after posting.
 
-## Tips for LinkedIn
+## Reactions
 
-- **3,000 chars = room to write** — LinkedIn rewards long-form storytelling and thought leadership
-- **No markdown** — `**bold**` renders as literal asterisks; use Unicode characters for visual emphasis if needed
-- **Hashtags** become clickable — use them
-- **Line breaks matter** — LinkedIn shows ~3 lines before "see more" — hook early
-- **Best times:** Tuesday–Thursday, 8–10 AM or 12 PM in your audience's timezone
-- **Best for:** professional content, career milestones, industry insights, team updates
-- **Scheduling works** — use `scheduledTime` (ISO 8601 UTC, at least 2 min in the future)
+Supported types: `LIKE`, `PRAISE`, `EMPATHY`, `INTEREST`, `APPRECIATION`, `ENTERTAINMENT`
+
+### Create Reaction
+
+```javascript
+await fetch('https://api.publora.com/api/v1/linkedin-reactions', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
+  body: JSON.stringify({
+    postedId: 'urn:li:ugcPost:7429953213384187904',
+    reactionType: 'INTEREST',
+    platformId: 'linkedin-ABC123'
+  })
+});
+```
+
+### Delete Reaction
+
+```javascript
+await fetch('https://api.publora.com/api/v1/linkedin-reactions', {
+  method: 'DELETE',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
+  body: JSON.stringify({
+    postedId: 'urn:li:ugcPost:7429953213384187904',
+    platformId: 'linkedin-ABC123'
+  })
+});
+```
+
+## Comments
+
+### Create Comment
+
+```javascript
+await fetch('https://api.publora.com/api/v1/linkedin-comments', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7434685316856377344',
+    message: 'Great post! Thanks for sharing.',  // max 1,250 characters
+    platformId: 'linkedin-ABC123',
+    // parentComment: 'urn:li:comment:(...)' ← for nested replies
+  })
+});
+```
+
+### Delete Comment
+
+```javascript
+await fetch('https://api.publora.com/api/v1/linkedin-comments', {
+  method: 'DELETE',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': 'sk_YOUR_KEY' },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7434685316856377344',
+    commentId: 'urn:li:comment:(urn:li:activity:xxx,7434695495614312448)',
+    platformId: 'linkedin-ABC123'
+  })
+});
+```
+
+## Platform Quirks
+
+- **No bold/italic via API** — LinkedIn API does not support rich text formatting
+- **URN format**: Posts created via Publora → use `postedId` from `/get-post`. External posts: find `urn:li:share:xxx` or `urn:li:ugcPost:xxx`
+- **WebP images** auto-converted to JPEG
+- **Hashtags** work as plain text but become clickable
+- **No organic carousels** via API — only multi-image grid layout
