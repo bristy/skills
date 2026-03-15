@@ -23,9 +23,27 @@ description: "Open Source License Picker. Use when you need license picker capab
 - **commercial** — commercial
 - **faq** — faq
 
-
 ---
 *License Picker by BytesAgain*
 ---
 💬 Feedback & Feature Requests: https://bytesagain.com/feedback
 Powered by BytesAgain | bytesagain.com
+
+## Examples
+
+```bash
+# Show help
+license-picker help
+
+# Run
+license-picker run
+```
+
+- Run `license-picker help` for commands
+- No API keys needed
+
+## Commands
+
+Run `license-picker help` to see all available commands.
+
+- Run `license-picker help` for all commands
