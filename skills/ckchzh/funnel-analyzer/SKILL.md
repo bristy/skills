@@ -37,3 +37,18 @@ description: "漏斗分析工具。创建转化漏斗、诊断流失环节、行
 ---
 💬 Feedback & Feature Requests: https://bytesagain.com/feedback
 Powered by BytesAgain | bytesagain.com
+
+
+## Examples
+
+```bash
+# Show help
+funnel-analyzer help
+
+# Run
+funnel-analyzer run
+```
+
+## Commands
+
+Run `funnel-analyzer help` to see all available commands.
