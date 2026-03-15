@@ -3,11 +3,16 @@
   "slug": "openclaw-watch",
   "displayName": "OpenClaw Watch",
   "latest": {
-    "version": "5.1.1",
-    "publishedAt": 1773555164721,
-    "commit": "https://github.com/openclaw/skills/commit/c512eb1c38ef6748c7d0959fc6aae1329fb83a11"
+    "version": "6.0.0",
+    "publishedAt": 1773556636054,
+    "commit": null
   },
   "history": [
+    {
+      "version": "5.1.1",
+      "publishedAt": 1773555164721,
+      "commit": "https://github.com/openclaw/skills/commit/c512eb1c38ef6748c7d0959fc6aae1329fb83a11"
+    },
     {
       "version": "5.0.0",
       "publishedAt": 1773553635565,
