@@ -1,100 +1,87 @@
-# SKILL.md - China Shopping
+---
+name: china-shopping
+description: Recommend suitable Chinese shopping platforms for a user-provided product type, product name, or shopping need. Use when the user asks where to buy something in China, which Chinese e-commerce platform fits a product category, where to shop for electronics, clothing, groceries, beauty products, or similar items, or asks questions like "买这个去哪", "推荐购物网站", "哪里买比较合适", or "中国购物推荐".
+metadata:
+  openclaw:
+    requires:
+      bins: ["python3"]
+---
 
-## Overview
+# China Shopping
 
-**China Shopping** is an OpenClaw skill that recommends the best Chinese shopping websites based on product categories. This v1.0.1 version provides straightforward recommendations for common product types like electronics, clothing, groceries, and more.
+Recommend suitable Chinese shopping platforms based on product category and shopping intent.
 
-## Security Updates (v1.0.1)
+This is a lightweight Python-backed skill. It uses a local Python script plus bundled JSON data to map product names to shopping categories and recommend suitable Chinese e-commerce platforms.
 
-- Fixed potential command injection vulnerabilities in shell scripts
-- Added input validation and sanitization for product names
-- Used `--arg` parameter in jq queries to safely pass variables
-- Added length limits and dangerous character filtering
+It does **not** perform live browsing, real-time price checks, or seller verification. For live page inspection, real-time pricing, or store-level comparison, switch to browser-based workflows instead of pretending this skill does live retrieval.
 
-## Description
+## Runtime requirement
 
-When users input a product name (e.g., "手机", "衣服"), the skill recommends the most suitable Chinese e-commerce platforms for purchasing that product, helping users find the best shopping destinations quickly.
+Require:
+- `python3`
 
-## Trigger Phrases & Usage
+Do not require:
+- `jq`
+- shell helper scripts
+- install scripts
+- writable config or log paths
+- credentials or API keys
 
-### Trigger Phrases
-- "china-shopping"
-- "中国购物"
-- "推荐购物网站"
-- "买[产品]去哪"
-- "哪里买[产品]"
+## Files used by this skill
+- `china-shopping.py` — local CLI implementation
+- `data/categories.json` — category and platform recommendation data
+- `data/product_mapping.json` — product keyword mapping
+- `data/general_fallback.json` — fallback recommendations
 
-### Command Usage
-```bash
-# Basic recommendation
-china-shopping recommend "手机"
+Read these references as needed:
+- `references/category-guide.md` for category-to-platform guidance
+- `references/output-patterns.md` for answer structure
 
-# Alternative syntax
-china-shopping 推荐 "衣服"
+## Workflow
 
-# Show all categories
-china-shopping categories
+1. Identify the product category or shopping intent.
+   - Accept a product type, shopping need, or product name.
+   - If the request is too broad, ask one short clarifying question.
 
-# Help
-china-shopping help
-```
+2. Use the local Python implementation when execution is appropriate.
+   - Run `python3 china-shopping.py recommend "<product>"` for the default recommendation flow.
+   - Use `python3 china-shopping.py categories` when the user wants to inspect supported categories.
 
-### In Chat Context
-- "帮我推荐买手机的网站"
-- "买衣服应该去哪个网站？"
-- "中国购物推荐：笔记本电脑"
+3. Explain the recommendation.
+   - Say why the recommended platforms fit.
+   - Mention meaningful trade-offs when useful.
 
-## Installation & Dependencies
+4. Add practical guidance.
+   - Suggest what the user should check next, such as official stores, seller reputation, user reviews, authenticity, or delivery terms.
 
-This skill requires no external dependencies. It's a pure CLI tool with a simple data file.
+## Output
 
-### Files
-- `china-shopping` (executable script)
-- `categories.json` (product-category mapping)
-- `recommendations.json` (category-website recommendations)
+Use this structure unless the user asks for something else:
 
-### Permissions
-- Read access to data files
-- Write access to logs (optional)
+### Recommended Platforms
+List the most suitable 2-4 platforms.
 
-## How It Works
+### Why
+Explain why each platform fits the product or need.
 
-1. **Input Parsing**: Takes a product name as input
-2. **Category Mapping**: Maps product to predefined categories (electronics, clothing, groceries, etc.)
-3. **Recommendation Lookup**: Returns recommended websites for that category
-4. **Output Formatting**: Presents results in a user-friendly format
+### Best Choice
+State which platform is the strongest default recommendation.
 
-## Example Output
+### Caveats
+Mention important cautions, such as seller quality differences, authenticity risk, or category-specific trade-offs.
 
-```
-$ china-shopping recommend "手机"
-📱 手机 (Electronics) 推荐购物网站：
-1. 京东 (JD.com) - 正品保障，物流快
-2. 天猫 (Tmall.com) - 品牌官方旗舰店
-3. 苏宁易购 (Suning.com) - 家电数码专业
-4. 小米商城 (Mi.com) - 小米生态链产品
+### Final Advice
+Give a practical buying suggestion in plain language.
 
-💡 提示：购买电子产品建议选择官方旗舰店或自营平台，注意查看用户评价和售后服务。
-```
+## Quality bar
 
-## Configuration
+Do:
+- recommend platforms by category fit
+- explain trade-offs clearly
+- mention official stores or trusted sellers when relevant
+- stay honest about not doing real-time price retrieval
 
-No configuration required for basic usage.
-
-## Advanced Features (Future)
-
-- Price comparison across platforms
-- User preference learning
-- Seasonal/realtime recommendations
-- Coupon/price alert integration
-
-## Notes
-
-- This is v1.0.0 simple version
-- Recommendations are based on general market consensus
-- Actual shopping experience may vary
-- Always verify seller reputation before purchase
-
-## Author & License
-
-OpenClaw Skill - MIT License
+Do not:
+- pretend to check live listings or prices
+- claim a platform is cheapest without real-time evidence
+- suggest weak-fit platforms just because they are famous
