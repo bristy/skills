@@ -1,11 +1,17 @@
 {
   "owner": "henryzhuhr",
   "slug": "kimi-websearch",
-  "displayName": "Kimi Web Search",
+  "displayName": "Kimi Websearch",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773211002683,
-    "commit": "https://github.com/openclaw/skills/commit/c2e32159fbece82acc0e43dec6488bb421333d29"
+    "version": "1.0.6",
+    "publishedAt": 1773566176511,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773211002683,
+      "commit": "https://github.com/openclaw/skills/commit/c2e32159fbece82acc0e43dec6488bb421333d29"
+    }
+  ]
 }

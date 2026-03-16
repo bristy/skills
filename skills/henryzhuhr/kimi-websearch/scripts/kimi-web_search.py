@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 import os
 from typing import Any, Optional
@@ -8,7 +9,14 @@ from openai.types.chat.chat_completion import Choice
 
 BASE_URL = "https://api.moonshot.cn/v1"
 MODEL_NAME = "kimi-k2-turbo-preview"
-DEFAULT_SYSTEM_PROMPT = "你是 Kimi。"
+DEFAULT_SYSTEM_PROMPT = f"现在的时间是:{datetime.datetime.now().isoformat()}"
+
+"""
+Kimi 月之暗面 支持多种环境变量来配置 API Key，以适配不同的使用场景和用户习惯，支持：
+    - KIMI_API_KEY：通用的 API Key 环境变量，适用于大多数用户和场景。
+    - MOONSHOT_API_KEY：Moonshot 官方推荐的 API Key 环境变量，
+"""
+KIMI_SUPPORTED_ENVS = ["KIMI_API_KEY", "MOONSHOT_API_KEY"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -28,29 +36,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-# search 工具的具体实现，这里我们只需要返回参数即可
-def search_impl(arguments: dict[str, Any]) -> Any:
-    """
-    在使用 Moonshot AI 提供的 search 工具的场合，只需要原封不动返回 arguments 即可，
-    不需要额外的处理逻辑。
-
-    但如果你想使用其他模型，并保留联网搜索的功能，那你只需要修改这里的实现（例如调用搜索
-    和获取网页内容等），函数签名不变，依然是 work 的。
-
-    这最大程度保证了兼容性，允许你在不同的模型间切换，并且不需要对代码有破坏性的修改。
-    """
-    return arguments
-
-
 def get_api_key() -> str:
-    """
-    Kimi 月之暗面 支持多种环境变量来配置 API Key，以适配不同的使用场景和用户习惯，支持：
-        - KIMI_API_KEY：通用的 API Key 环境变量，适用于大多数用户和场景。
-        - MOONSHOT_API_KEY：Moonshot 官方推荐的 API Key 环境变量，
-    """
-    support_env_vars = ["KIMI_API_KEY", "MOONSHOT_API_KEY"]
+
     api_key: Optional[str] = None
-    for env_var in support_env_vars:
+    for env_var in KIMI_SUPPORTED_ENVS:
         api_key = os.environ.get(env_var)
         if api_key:
             break
@@ -58,7 +47,7 @@ def get_api_key() -> str:
         raise ValueError(
             f"API key not found."
             f"请登录 `https://platform.moonshot.cn/console/api-keys` 获取 API Key，并将其设置为环境变量。"
-            f"Please set one of the following environment variables: {', '.join(support_env_vars)}"
+            f"Please set one of the following environment variables: {', '.join(KIMI_SUPPORTED_ENVS)}"
         )
     return api_key
 
@@ -128,7 +117,7 @@ def main() -> None:
                     tool_call.function.arguments
                 )  # <-- arguments 是序列化后的 JSON Object，我们需要使用 json.loads 反序列化一下
                 if tool_call_name == "$web_search":
-                    tool_result = search_impl(tool_call_arguments)
+                    tool_result = tool_call_arguments
                 else:
                     tool_result = (
                         f"Error: unable to find tool by name '{tool_call_name}'"
