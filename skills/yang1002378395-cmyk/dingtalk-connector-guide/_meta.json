@@ -3,11 +3,16 @@
   "slug": "dingtalk-connector-guide",
   "displayName": "Dingtalk Connector Guide",
   "latest": {
-    "version": "1.0.30",
-    "publishedAt": 1773629605180,
-    "commit": "https://github.com/openclaw/skills/commit/7d760bf009ee79fef07ad780ddcb258186992eba"
+    "version": "1.0.39",
+    "publishedAt": 1773631417754,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.30",
+      "publishedAt": 1773629605180,
+      "commit": "https://github.com/openclaw/skills/commit/7d760bf009ee79fef07ad780ddcb258186992eba"
+    },
     {
       "version": "1.1.0",
       "publishedAt": 1773492531287,
