@@ -1,7 +1,9 @@
 ---
+version: "2.0.0"
 name: Inventory Manager
 description: "Inventory Manager. Use when you need inventory manager capabilities. Triggers on: inventory manager."
   库存管理。库存盘点、补货策略、ABC分析、安全库存、周转率、预警系统。Inventory management helper. 库存、进销存。
+author: BytesAgain
 ---
 # Inventory Manager
 
@@ -24,13 +26,11 @@ description: "Inventory Manager. Use when you need inventory manager capabilitie
 | `turnover` | turnover |
 | `alert` | alert |
 
-
 ---
 *Inventory Manager by BytesAgain*
 ---
 💬 Feedback & Feature Requests: https://bytesagain.com/feedback
 Powered by BytesAgain | bytesagain.com
-
 
 ## Examples
 
@@ -42,26 +42,15 @@ inventory-manager help
 inventory-manager run
 ```
 
-## How It Works
-
-Reads input, processes with built-in logic, outputs results.
-
-## Tips
-
 - Run `inventory-manager help` for commands
 - No API keys needed
-- Works offline
-
-
-## How It Works
-
-Reads input, processes with built-in logic, outputs structured results.
-
-## Tips
 
 - Run `inventory-manager help` for all commands
-
 
 ## Commands
 
 Run `inventory-manager help` to see all available commands.
+
+## Configuration
+
+Set `INVENTORY_MANAGER_DIR` to change data directory. Default: `~/.local/share/inventory-manager/`
