@@ -3,11 +3,16 @@
   "slug": "email-template",
   "displayName": "Email Template",
   "latest": {
-    "version": "2.3.0",
-    "publishedAt": 1773447575065,
-    "commit": "https://github.com/openclaw/skills/commit/be31653601b6622f5492fe94ebf98966ff53ff57"
+    "version": "2.3.3",
+    "publishedAt": 1773665859453,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.0",
+      "publishedAt": 1773447575065,
+      "commit": "https://github.com/openclaw/skills/commit/be31653601b6622f5492fe94ebf98966ff53ff57"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773421246658,
