@@ -1,14 +1,16 @@
 ---
 name: intelligent-triage-symptom-analysis
 description: Intelligent Triage and Symptom Analysis Skill. Supports 650+ symptoms across 11 body systems. Based on ESI and Manchester Triage System with 5-level triage classification. Features NLP-driven symptom extraction, 3000+ disease database, red flag warning mechanism (≥95% accuracy for life-threatening conditions), and machine learning-assisted differential diagnosis.
-version: 1.0.2
+version: 1.1.1
 ---
 
 # Intelligent Triage and Symptom Analysis
 
-> **Version**: 1.0.2  
+> **Version**: 1.1.0  
 > **Category**: Healthcare / Medical  
-> **Billing**: SkillPay (1 token per call, ~0.001 USDT)
+> **Billing**: SkillPay (1 token per call, ~0.001 USDT)  
+> **Free Trial**: 10 free calls per user  
+> **Demo Mode**: ✅ Available (no API key required)
 
 AI-powered medical triage assistance for healthcare providers, telemedicine platforms, and patients. Provides accurate preliminary symptom assessment and urgency recommendations.
 
@@ -20,8 +22,47 @@ AI-powered medical triage assistance for healthcare providers, telemedicine plat
 4. **NLP Analysis** - Natural language symptom extraction
 5. **Differential Diagnosis** - ML-assisted condition ranking
 6. **SkillPay Billing** - 1 token per analysis (~0.001 USDT)
+7. **Free Trial** - 10 free calls for every new user
+8. **Demo Mode** - Try without API key, returns simulated triage data
+9. **Symptom History** - Track patient symptom history over time
+10. **Multi-language Support** - Chinese and English output
+
+## Demo Mode
+
+Try the skill without any API key:
+
+```bash
+python scripts/triage.py --demo --symptoms "胸痛、呼吸困难"
+```
+
+Demo mode returns realistic simulated triage assessments to demonstrate the output format.
+
+## Free Trial
+
+Each user gets **10 free calls** before billing begins. During the trial:
+- No payment required
+- Full feature access
+- Trial status returned in API response
+
+```python
+{
+    "success": True,
+    "trial_mode": True,      # Currently in free trial
+    "trial_remaining": 8,    # 8 free calls left
+    "balance": None,         # No balance needed in trial
+    "analysis": {...}
+}
+```
+
+After 10 free calls, normal billing applies.
 
 ## Quick Start
+
+### Demo Mode (No API Key):
+
+```bash
+python scripts/triage.py --demo --symptoms "胸痛、呼吸困难、持续30分钟"
+```
 
 ### Analyze symptoms:
 
@@ -30,8 +71,8 @@ from scripts.triage import analyze_symptoms
 import os
 
 # Set environment variables
-os.environ["SKILL_BILLING_API_KEY"] = "your-api-key"
-os.environ["SKILL_ID"] = "your-skill-id"
+os.environ["SKILLPAY_API_KEY"] = "your-api-key"
+os.environ["SKILLPAY_SKILL_ID"] = "your-skill-id"
 
 # Analyze patient symptoms
 result = analyze_symptoms(
@@ -44,37 +85,68 @@ result = analyze_symptoms(
 
 # Check result
 if result["success"]:
-    print("分诊等级:", result["triage"]["level"])
-    print("紧急程度:", result["triage"]["urgency"])
-    print("建议措施:", result["recommendations"])
+    print("分诊等级:", result["analysis"]["triage"]["level"])
+    print("紧急程度:", result["analysis"]["triage"]["urgency"])
+    print("建议措施:", result["analysis"]["recommendations"])
 else:
     print("错误:", result["error"])
     if "paymentUrl" in result:
         print("充值链接:", result["paymentUrl"])
 ```
 
-### API Usage:
+### View Symptom History:
 
 ```bash
-# Set environment variables
-export SKILL_BILLING_API_KEY="your-api-key"
-export SKILL_ID="your-skill-id"
-
-# Run analysis
-python scripts/triage.py \
-  --symptoms "胸痛，呼吸困难" \
-  --age 65 \
-  --gender male \
-  --user-id "user_123"
+python scripts/triage.py --history --user-id "user_123"
 ```
+
+### With Vital Signs:
+
+```bash
+python scripts/triage.py --symptoms "胸痛" --age 65 --vital-signs '{"bp":"160/95","hr":110}' --user-id "user_123"
+```
+
+### Language Selection:
+
+```bash
+# Chinese output (default)
+python scripts/triage.py --symptoms "头痛、发热" --age 35 --language zh --user-id "user_123"
+
+# English output
+python scripts/triage.py --symptoms "headache, fever" --age 35 --language en --user-id "user_123"
+```
+
+## Environment Variables
+
+This skill requires the following environment variables:
+
+### Required Variables (After Trial)
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `SKILLPAY_API_KEY` | Your SkillPay API key for billing | After trial | `skp_abc123...` |
+| `SKILLPAY_SKILL_ID` | Your Skill ID from SkillPay dashboard | After trial | `skill_def456...` |
+
+### Optional Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TRIAGE_DATA_RETENTION_DAYS` | Days to retain triage history | `90` |
+| `ENABLE_SYMPTOM_HISTORY` | Enable symptom history tracking | `true` |
+
+See `.env.example` for a complete list of environment variables.
 
 ## Configuration
 
+The skill uses SkillPay billing integration:
 - Provider: skillpay.me
 - Pricing: 1 token per call (~0.001 USDT)
+- Chain: BNB Chain
+- Free Trial: 10 calls per user
+- Demo Mode: Available without API key
+- API Key: Set via `SKILLPAY_API_KEY` environment variable
+- Skill ID: Set via `SKILLPAY_SKILL_ID` environment variable
 - Minimum deposit: 8 USDT
-- API Key: `SKILL_BILLING_API_KEY` environment variable
-- Skill ID: `SKILL_ID` environment variable
 
 ## Triage Levels
 
@@ -130,50 +202,19 @@ Fever, recurrent infections, allergic reactions, autoimmune symptoms
 ### 11. Psychiatric Symptoms
 Anxiety, depression, suicidal ideation, hallucinations, behavioral changes
 
-## Technical Architecture
+## Symptom History
 
-### AI and Machine Learning Models
-- **NLP Symptom Extraction**: Advanced entity recognition for clinical terms
-- **Severity Classification**: ML-based urgency assessment
-- **Context Understanding**: Temporal, spatial, and causal relationship analysis
-- **Multi-Language Support**: Language-agnostic symptom analysis
-- **Medical Terminology**: SNOMED-CT, ICD-11 normalization
+The skill can track patient symptom history for longitudinal care:
 
-### Predictive Analytics
-- **Disease Probability**: ML models estimating likelihood of conditions
-- **Deterioration Risk**: Predictive models for patient condition worsening
-- **Outcome Prediction**: Prognostic indicators for clinical scenarios
-- **Resource Needs**: Estimated admission likelihood and requirements
-- **Readmission Risk**: Prediction of potential return visits
+```python
+# Symptom history is automatically saved for each analysis
+# To retrieve history:
+from scripts.triage import SymptomHistoryManager
 
-### Specialized Triage Scenarios
-- **Pediatric Triage**: Age-specific considerations (infants, children, adolescents)
-- **Geriatric Triage**: Elderly-specific presentations and comorbidities
-- **Pregnancy-Related**: Obstetric and gynecological protocols
-- **Mental Health**: Psychiatric symptom assessment and crisis triage
-- **Infectious Disease**: Contagious disease screening and public health
-- **Occupational Health**: Work-related injury and exposure
-- **Sports Medicine**: Athletic injury evaluation
-
-## Advanced Features
-
-### Clinical Decision Support
-- **Deterioration Risk Assessment**: Predictive models for patient condition worsening
-- **Prescription Integration**: E-prescribing and pharmacy connectivity support
-- **Outcome Prediction**: Prognostic indicators for clinical scenarios
-- **Readmission Risk**: Prediction of potential return visits
-
-### Emergency Medical Services (EMS) Integration
-- **Dispatch Integration**: Real-time triage for emergency call centers
-- **Field Triage Support**: Mobile-optimized assessments for paramedics
-- **Hospital Notification**: Pre-arrival patient information sharing
-- **Transport Decision Support**: Appropriate facility selection guidance
-
-### Public Health Integration
-- **Disease Surveillance**: Early detection of disease outbreaks
-- **Epidemic Tracking**: Geographic distribution of symptom patterns
-- **Alert System**: Public health notifications and guidance
-- **Reporting**: Automated public health reporting compliance
+history_manager = SymptomHistoryManager("user_123")
+history = history_manager.load_history()
+recent_symptoms = history_manager.get_recent_symptoms(days=30)
+```
 
 ## Safety and Quality
 
@@ -184,91 +225,7 @@ Anxiety, depression, suicidal ideation, hallucinations, behavioral changes
 - **Human-in-the-Loop**: Provider review requirements for high-stakes decisions
 - **Continuous Monitoring**: Post-assessment outcome tracking
 
-### Quality Assurance
-- **Expert Review Process**: Regular clinical guideline updates and validation
-- **Outcome Analysis**: Tracking accuracy and safety metrics
-- **Audit Trails**: Complete documentation of assessment decisions
-- **Bias Detection**: Regular testing for demographic or geographic biases
-- **Adverse Event Reporting**: Systematic capture and analysis of errors
-
-## Compliance and Standards
-
-### Regulatory Compliance
-- **HIPAA Compliance**: Complete protection of protected health information
-- **GDPR Compliance**: Data protection for European users
-- **FDA Regulations**: Medical device classification and compliance
-- **ISO Standards**: Quality management system adherence (ISO 13485)
-- **Clinical Validation**: Evidence-based performance benchmarks
-
-### Clinical Standards
-- **Evidence-Based Practice**: Recommendations based on peer-reviewed research
-- **Professional Guidelines**: Alignment with major medical society guidelines
-- **International Standards**: Compliance with WHO and international protocols
-- **Regular Updates**: Quarterly clinical knowledge base updates
-
-## Data and Privacy
-
-### Data Security
-- **Encryption**: AES-256 for data at rest and TLS 1.3 for data in transit
-- **Access Controls**: Multi-factor authentication and role-based permissions
-- **Data Masking**: Automatic de-identification for research and analytics
-- **Secure Storage**: Compliance with healthcare data storage requirements
-- **Audit Logging**: Complete access and modification tracking
-
-### Privacy Protection
-- **Informed Consent**: Clear user consent processes for data usage
-- **Data Minimization**: Collection of only necessary information
-- **Right to Deletion**: Complete data removal upon request
-- **Transparent Policies**: Clear privacy policy and data usage explanations
-
-## Performance Metrics
-
-### Clinical Performance
-- **Triage Accuracy**: ≥ 90% correct urgency classification
-- **Red Flag Detection**: ≥ 95% sensitivity for life-threatening conditions
-- **Differential Ranking**: ≥ 80% top-3 diagnosis accuracy
-- **Predictive Validity**: ≥ 85% correlation with actual clinical outcomes
-
-### Operational Metrics
-- **Assessment Completion Rate**: ≥ 95%
-- **Average Assessment Time**: ≤ 3 minutes
-- **System Response Time**: ≤ 2 seconds
-- **User Satisfaction**: ≥ 4.5/5 star rating
-
-## Use Cases
-
-### Emergency Departments
-- Patient Triage: Rapid assessment upon arrival
-- Capacity Management: Optimizing patient flow
-- Clinical Decision Support: Supporting provider assessment
-- Quality Improvement: Tracking triage accuracy
-
-### Telemedicine Platforms
-- Pre-Visit Screening: Collecting symptom information
-- Visit Triage: Determining appropriate care level
-- After-Hours Support: Providing guidance when providers unavailable
-- Follow-Up Monitoring: Post-visit symptom tracking
-
-### Primary Care Practices
-- Appointment Triage: Prioritizing same-day appointments
-- Nurse Triage: Supporting telephone triage services
-- Patient Portals: Self-assessment tools for patients
-- Chronic Disease Management: Monitoring symptom changes
-
-### Public Health Agencies
-- Disease Surveillance: Early detection of health threats
-- Outbreak Response: Rapid triage during emergencies
-- Health Education: Public guidance during epidemics
-- Resource Planning: Anticipating healthcare resource needs
-
-## References
-
-- Triage methodology: [references/triage-systems.md](references/triage-systems.md)
-- Billing API: [references/skillpay-billing.md](references/skillpay-billing.md)
-- Disease database: [references/disease-database.md](references/disease-database.md)
-- Clinical specifications: [references/clinical-specs.md](references/clinical-specs.md)
-
-## Disclaimer
+### Disclaimer
 
 This tool is for preliminary assessment only and does not replace professional medical diagnosis. Always consult qualified healthcare providers for medical decisions.
 
@@ -278,3 +235,24 @@ This tool is for preliminary assessment only and does not replace professional m
 - Dependent on Input Quality: Accuracy depends on quality and completeness of information
 - Age-Specific Accuracy: Variable performance across different age groups
 - Rare Conditions: Limited accuracy for very rare or novel conditions
+
+## References
+
+- Triage methodology: [references/triage-systems.md](references/triage-systems.md)
+- Billing API: [references/skillpay-billing.md](references/skillpay-billing.md)
+- Disease database: [references/disease-database.md](references/disease-database.md)
+- Clinical specifications: [references/clinical-specs.md](references/clinical-specs.md)
+
+## Changelog
+
+### v1.1.0
+- Added demo mode (no API key required)
+- Added symptom history tracking
+- Added multi-language support (zh/en)
+- Unified environment variable naming to `SKILLPAY_API_KEY` and `SKILLPAY_SKILL_ID`
+- Fixed version inconsistency
+
+### v1.0.3
+- Initial stable release
+- SkillPay billing integration
+- Free trial support
