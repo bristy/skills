@@ -9,9 +9,10 @@ description: |
   「加标签」「删标签」「删笔记」
   「查知识库」「建知识库」「把笔记加到知识库」「从知识库移除」
   「知识库里订阅了哪些博主」「博主发了什么内容」「直播总结」「直播原文」
+  「搜一下」「找找我哪些笔记提到了 XX」「在我的 XX 知识库搜一下 XX」
 
-  支持：纯文本笔记、链接笔记（自动抓取网页内容并生成摘要）、图片笔记（OCR识别）、知识库管理（含博主订阅列表、直播总结）。
-metadata: {"openclaw": {"requires": {"env": ["GETNOTE_API_KEY", "GETNOTE_CLIENT_ID"]}, "optionalEnv": ["GETNOTE_OWNER_ID"], "primaryEnv": "GETNOTE_API_KEY", "baseUrl": "https://openapi.biji.com", "homepage": "https://biji.com"}}
+  支持：纯文本笔记、链接笔记（自动抓取网页内容并生成摘要）、图片笔记（OCR识别）、知识库管理（含博主订阅列表、直播总结）、语义搜索召回（全局或指定知识库范围）。
+metadata: {"openclaw": {"requires": {}, "optionalEnv": ["GETNOTE_CLIENT_ID", "GETNOTE_OWNER_ID"], "primaryEnv": "GETNOTE_API_KEY", "baseUrl": "https://openapi.biji.com", "homepage": "https://biji.com"}}
 ---
 
 # Get笔记 API
@@ -52,6 +53,25 @@ https://openapi.biji.com
 
 ---
 
+### 🔢 笔记 ID 处理规则（重要！）
+
+笔记 ID（`id`、`note_id`、`next_cursor` 等）是 **64 位整数（int64）**，超出 JavaScript `Number.MAX_SAFE_INTEGER`（2^53-1）范围，直接用 `JSON.parse` 会**静默丢失精度**，导致 ID 错误，后续操作（加入知识库、删除等）会报「笔记不存在」。
+
+**正确做法**：
+- **始终把 ID 当字符串处理**，不要做数值运算
+- 代码中使用 `JSON.parse` 时，**先把响应文本中的 ID 数字替换为字符串**：
+  ```javascript
+  // 替换顶层数字型 ID 字段为字符串（在 JSON.parse 之前）
+  const safe = text.replace(/"(id|note_id|next_cursor|parent_id|follow_id|live_id)"\s*:\s*(\d+)/g, '"$1":"$2"');
+  const data = JSON.parse(safe);
+  ```
+- Python / Go 等语言原生支持大整数，无此问题
+- **发请求时**：`note_id` 字段传字符串或数字均可，服务端兼容两种格式
+
+**验证方法**：取到 ID 后，检查 `String(id).length >= 16`，若满足说明是 int64，必须用字符串保存。
+
+---
+
 ### 🔒 安全规则
 
 - 笔记数据属于用户隐私，不在群聊中主动展示笔记内容
@@ -82,6 +102,8 @@ https://openapi.biji.com
 | note.image.upload | 获取上传图片签名 |
 | topic.blogger.read | 读取知识库订阅博主列表和博主内容 |
 | topic.live.read | 读取知识库已完成直播列表和直播详情 |
+| note.recall.read | 语义召回笔记（全局） |
+| note.topic.recall.read | 语义召回知识库内容 |
 
 ---
 
@@ -109,6 +131,8 @@ Base URL: `https://openapi.biji.com`
 | 「博主内容原文/详情」 | GET /open/api/v1/resource/knowledge/blogger/content/detail | 需要 post_id，含原文 |
 | 「有哪些已完成直播」 | GET /open/api/v1/resource/knowledge/lives | 按 topic_id 查 |
 | 「直播总结/直播原文」 | GET /open/api/v1/resource/knowledge/live/detail | 需要 live_id |
+| 「搜一下」「找找笔记里提到 XX 的」 | POST /open/api/v1/resource/recall | 全局语义召回，见「笔记召回」章节 |
+| 「在 XX 知识库搜 XX」 | POST /open/api/v1/resource/recall/knowledge | 知识库语义召回，见「知识库召回」章节 |
 
 ---
 
@@ -126,6 +150,8 @@ GET /open/api/v1/resource/note/list?since_id=0
 返回：notes[], has_more, next_cursor, total（每次固定 20 条）
 
 > ⚠️ **响应 JSON 可能包含未转义的控制字符**（笔记 content 中的原始换行符），建议用支持容错解析的 JSON 库处理，或在解析前对 content 字段做预处理。
+
+> ⚠️ **`id`、`next_cursor`、`parent_id` 均为 int64**，JavaScript 环境必须在 `JSON.parse` 前做字符串化处理（见「笔记 ID 处理规则」）。**务必用字符串保存这些值**，不要做数值运算，后续调详情、加知识库等操作直接透传字符串即可。
 
 **笔记类型 note_type**：
 - `plain_text` - 纯文本
@@ -199,7 +225,7 @@ Content-Type: application/json
 - note_id: 成功时返回笔记 ID
 - error_msg: 失败时返回错误信息
 
-> ⚠️ **note_id 是 64 位整数**，在 JavaScript 中直接用 `JSON.parse` 会丢失精度。建议在服务端语言（Python、Go 等）中处理，或使用支持大整数的 JSON 库。
+> ⚠️ **note_id 是 int64**，JavaScript 环境须按「笔记 ID 处理规则」做字符串化，拿到后直接当字符串透传。
 
 **建议 10-30 秒间隔轮询，直到 success 或 failed**。
 
@@ -304,6 +330,115 @@ curl -X POST "$host" \
   -F "Content-Type=$oss_content_type" \
   -F "file=@/path/to/image.jpg"
 ```
+
+---
+
+## 笔记召回（全局语义搜索）
+
+> 适用场景：「搜一下」「找找我哪些笔记提到了 XX」
+
+**所需 scope**: `note.recall.read`
+
+```
+POST /open/api/v1/resource/recall
+Content-Type: application/json
+```
+
+请求体：
+```json
+{
+  "query": "搜索关键词",
+  "top_k": 3
+}
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| query | string, 必填 | 搜索关键词或语义描述 |
+| top_k | int, 可选 | 返回数量，默认 **3**，最大 **10** |
+
+返回结构（结果已按相关度**从高到低**排序）：
+
+```json
+{
+  "results": [
+    {
+      "note_id": "1896830231705320746",
+      "note_type": "NOTE",
+      "title": "笔记标题",
+      "content": "笔记内容片段",
+      "created_at": "2025-12-24 15:20:15"
+    }
+  ]
+}
+```
+
+---
+
+## 知识库召回（指定知识库语义搜索）
+
+> 适用场景：「在我的 XX 知识库搜一下 XX」
+
+**所需 scope**: `note.topic.recall.read`
+
+```
+POST /open/api/v1/resource/recall/knowledge
+Content-Type: application/json
+```
+
+请求体：
+```json
+{
+  "topic_id": "知识库 alias id",
+  "query": "搜索关键词",
+  "top_k": 3
+}
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| topic_id | string, 必填 | 知识库 ID（alias id，来自 /knowledge/list 的 topic_id_alias） |
+| query | string, 必填 | 搜索关键词或语义描述 |
+| top_k | int, 可选 | 返回数量，默认 **3**，最大 **10** |
+
+返回结构同笔记召回。
+
+---
+
+## 召回结果说明
+
+| 字段 | 说明 |
+|------|------|
+| note_id | 笔记 ID（string）；**仅 `NOTE` 类型有值**，其余类型均为空 |
+| note_type | 内容类型，见下表 |
+| title | 笔记/文档标题 |
+| content | 相关内容片段 |
+| created_at | 创建/发布时间（YYYY-MM-DD HH:MM:SS）|
+| page_no | `FILE` 类型时表示文件页码，其余类型省略 |
+
+**note_type 类型**：
+
+| note_type | 说明 | note_id |
+|-----------|------|---------|
+| NOTE | 笔记（含知识库笔记） | ✅ 有值 |
+| FILE | 知识库文件 | ❌ 无值 |
+| BLOGGER | 博主内容 | ❌ 无值 |
+| LIVE | 直播 | ❌ 无值 |
+| URL | 全网内容 | ❌ 无值 |
+| DEDAO | 得到内容 | ❌ 无值 |
+
+### 后续操作
+
+- **`NOTE` 类型**：可调 `GET /open/api/v1/resource/note/detail?id={note_id}` 获取笔记全文
+- **其余类型**：无 `note_id`，只能展示召回的内容片段（`content`）；`FILE` 类型可额外展示页码（`page_no`）
+
+### 示例对话
+
+> 用户：「找找我哪些笔记提到了大模型 API」
+> → `POST /recall` `{ "query": "大模型 API", "top_k": 3 }`
+
+> 用户：「在我的 AI 学习知识库里搜一下 RAG」
+> → 先调 `/knowledge/list` 找到 `topic_id_alias`，再 `POST /recall/knowledge` `{ "topic_id": "xxx", "query": "RAG", "top_k": 3 }`
 
 ---
 
