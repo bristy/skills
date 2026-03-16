@@ -3,7 +3,8 @@ name: a-share-daily-report
 description: >
   生成专业级 A股早报/晚报，包含大盘指数行情、市场情绪、K线走势图、
   行业/概念板块排行、个股涨跌榜、主题新闻追踪、综合分析，
-  输出 Markdown + PNG 图表 + PDF。数据源为东方财富公开 API。
+  输出 Markdown + PNG 图表 + PDF。数据源为东方财富公开 API、
+  同花顺公开板块页及海外公开行情接口。
   Use when asked to create daily A-share reports, market analysis,
   或当用户提到 A股/大盘/股市/行情/晚报/早报.
 ---
@@ -51,22 +52,26 @@ python3 scripts/generate_report.py --no-charts
 
 - **Python 3.10+**（标准库：urllib, json, re, argparse, pathlib, datetime）
 - **matplotlib**（可选，用于生成图表；通过 `--no-charts` 跳过）
+- **akshare**（历史行业板块、海外期货等历史数据）
 
 ```bash
-pip install matplotlib
+pip install matplotlib akshare
 ```
 
 ## Data Sources
 
-所有数据均来自 **东方财富公开 Push API**（无需认证）：
+实时模式主要来自 **东方财富公开 Push API**；历史模式会混合同花顺和海外公开行情源：
 
 | 数据 | API |
 | :--- | :--- |
 | 指数行情 | `push2.eastmoney.com/api/qt/ulist.np/get` |
+| 指数历史 | `push2his.eastmoney.com/api/qt/stock/kline/get` |
 | 行业/概念板块 | `push2.eastmoney.com/api/qt/clist/get` |
+| 历史行业板块 | 同花顺板块指数公开页（经 `akshare` 抓取） |
 | 个股排行 | `push2.eastmoney.com/api/qt/clist/get` |
 | 市场宽度 | `push2.eastmoney.com/api/qt/clist/get` (全A股) |
 | K 线数据 | `push2his.eastmoney.com/api/qt/stock/kline/get` |
+| 全球资产历史 | 东方财富美元指数 / 海外期货历史 / Yahoo 备用 |
 | 新闻 | `finance.eastmoney.com` (HTML 抓取) |
 
 ## Workflow
@@ -77,11 +82,14 @@ scripts/generate_report.py --mode evening --outdir <dir>
 ```
 
 ### 2) 写入飞书文档
-- 早报：`feishu_doc.write` 覆盖写入
-- 晚报：`feishu_doc.append` 追加到同一文档
+- 脚本内置飞书同步：默认读取 `workspace/.env` 中的 `FEISHU_APP_ID` / `FEISHU_APP_SECRET`
+- 每个自然日只保留一份日报文档：早报先创建，晚报再覆盖更新为“早报+晚报”合并版
+- 目标目录可用 `FEISHU_FOLDER_TOKEN` 指定；接收用户可用 `FEISHU_NOTIFY_OPEN_ID` 指定
+- 需要只生成本地文件时，运行 `scripts/generate_report.py --skip-feishu`
 
 ### 3) 发送 PDF + 图表
-- `message` 发送 PDF 和 PNG 图表附件
+- 文档内会附带本次 PDF，并插入本地生成的 PNG 图表
+- 同步完成后，会向 `FEISHU_NOTIFY_OPEN_ID` 对应用户发送文档链接
 
 ## Notes
 

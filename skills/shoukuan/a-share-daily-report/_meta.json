@@ -3,9 +3,15 @@
   "slug": "a-share-daily-report",
   "displayName": "A Share Daily Report",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772805613241,
-    "commit": "https://github.com/openclaw/skills/commit/19343e28bf5de2e9c76eedd7776398d9e3b2a3bb"
+    "version": "1.0.1",
+    "publishedAt": 1773545865493,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772805613241,
+      "commit": "https://github.com/openclaw/skills/commit/19343e28bf5de2e9c76eedd7776398d9e3b2a3bb"
+    }
+  ]
 }
