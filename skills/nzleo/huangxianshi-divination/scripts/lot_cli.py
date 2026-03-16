@@ -5,15 +5,21 @@ import os
 import random
 import sys
 import time
-import urllib.request
 
-BASE_URL = os.getenv('HXS_BASE_URL', 'https://hxs-admin.wegoau.com').rstrip('/')
-USERNAME = os.getenv('HXS_USERNAME', 'admin')
-PASSWORD = os.getenv('HXS_PASSWORD', 'admin123456')
-
+# 签数据已内置在同目录的 signs_data.py 中
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
-CACHE_PATH = os.path.join(DATA_DIR, 'signs_cache.json')
 LAST_DRAW_PATH = os.path.join(DATA_DIR, 'last_draw.json')
+
+# 导入内置签数据
+try:
+    from signs_data import SIGNS
+except ImportError:
+    # 兼容旧版本：从JSON读取
+    CACHE_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'signs_cache.json')
+    with open(CACHE_PATH, 'r', encoding='utf-8') as f:
+        SIGNS = json.load(f).get('signs', [])
 
 ASPECT_MAP = {
     '流年': 'yearly', '全年': 'yearly', 'yearly': 'yearly',
@@ -38,38 +44,19 @@ ASPECT_CN = {
 DRAW_FRAMES = ['🪄 正在净手焚香……', '🎋 签筒摇动中……', '🧧 灵签已落，请接签。']
 
 
-def _post_json(url, payload):
-    req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'}, method='POST')
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        return json.loads(resp.read().decode('utf-8'))
-
-
-def _get_json(url, token):
-    req = urllib.request.Request(url, headers={'Authorization': f'Bearer {token}'}, method='GET')
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        return json.loads(resp.read().decode('utf-8'))
-
-
 def fetch_signs(force=False):
-    if (not force) and os.path.exists(CACHE_PATH):
-        with open(CACHE_PATH, 'r', encoding='utf-8') as f:
-            cache = json.load(f)
-        if time.time() - cache.get('ts', 0) < 3600 and cache.get('signs'):
-            return cache['signs']
-
-    login = _post_json(f'{BASE_URL}/api/auth/login', {'username': USERNAME, 'password': PASSWORD})
-    signs = _get_json(f'{BASE_URL}/api/signs', login['token'])
-    os.makedirs(DATA_DIR, exist_ok=True)
-    with open(CACHE_PATH, 'w', encoding='utf-8') as f:
-        json.dump({'ts': time.time(), 'signs': signs}, f, ensure_ascii=False)
-    return signs
+    """从内置数据读取签"""
+    return SIGNS
 
 
 def format_poem(sign):
-    poem = sign.get('poem') or {}
-    lines = [poem.get('first', ''), poem.get('second', ''), poem.get('third', ''), poem.get('fourth', '')]
-    lines = [x.strip() for x in lines if str(x).strip()]
-    return '\n'.join(lines) if lines else (sign.get('fullPoem') or '')
+    # poem 现在直接是字符串
+    poem = sign.get('poem', '')
+    if isinstance(poem, dict):
+        lines = [poem.get('first', ''), poem.get('second', ''), poem.get('third', ''), poem.get('fourth', '')]
+        lines = [x.strip() for x in lines if str(x).strip()]
+        return '\n'.join(lines) if lines else ''
+    return str(poem) if poem else ''
 
 
 def save_last_draw(sign):
@@ -93,12 +80,12 @@ def find_sign_by_no(signs, no):
 
 
 def render_draw_card(sign):
-    story = ((sign.get('explanation') or {}).get('story') or '').strip() or '（暂无典故）'
+    story = sign.get('story', '') or '（暂无典故）'
     return (
         '━━━━━━━━━━\n'
         '🎴 黄仙师灵签\n'
         f'⚖️ 吉凶：{sign.get("grade", "")}\n'
-        f'🔢 签号：{sign.get("number", "")}\n'
+        f'🔢 签号：{sign.get("no", "")}\n'
         f'🏷️ 签题：{sign.get("title", "")}\n'
         '📝 签诗：\n'
         f'{format_poem(sign)}\n\n'
@@ -113,19 +100,15 @@ def render_explain_card(sign, aspect, content, all_mode=False):
     head = (
         '━━━━━━━━━━\n'
         '🧾 解签结果\n'
-        f'🔢 签号：{sign.get("number")}\n'
+        f'🔢 签号：{sign.get("no")}\n'
         f'🏷️ 签题：{sign.get("title", "")}\n'
         f'⚖️ 吉凶：{sign.get("grade", "")}\n'
     )
     if all_mode:
-        inter = sign.get('interpretations') or {}
-        story = (sign.get('explanation') or {}).get('story', '')
+        story = sign.get('story', '')
         lines = [head, '📚 全部解签：']
         if story:
             lines.append(f'\n【典故】\n{story}')
-        for k in ['yearly','career','wealth','self','family','relationship','moving','reputation','health','friendship']:
-            if inter.get(k):
-                lines.append(f'\n【{ASPECT_CN.get(k,k)}】\n{inter[k]}')
         lines.append('\n━━━━━━━━━━')
         return '\n'.join(lines)
     return head + f'🧭 方向：{ASPECT_CN.get(aspect, aspect)}\n\n{content}\n━━━━━━━━━━'

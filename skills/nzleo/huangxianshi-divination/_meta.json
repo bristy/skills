@@ -1,11 +1,17 @@
 {
   "owner": "nzleo",
   "slug": "huangxianshi-divination",
-  "displayName": "黄仙师灵签",
+  "displayName": "Huangxianshi Divination",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1772791120175,
-    "commit": "https://github.com/openclaw/skills/commit/f113c8fa44e1e57eaf7747a1d843cccba499ae01"
+    "version": "1.0.3",
+    "publishedAt": 1773557644864,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772791120175,
+      "commit": "https://github.com/openclaw/skills/commit/f113c8fa44e1e57eaf7747a1d843cccba499ae01"
+    }
+  ]
 }
