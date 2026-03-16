@@ -1,15 +1,49 @@
 ---
 name: formal-methods
 description: Formal verification with Lean 4, Coq, and Z3 SMT solver
+metadata:
+  openclaw:
+    emoji: 🔬
+    tags: [formal-verification, lean4, coq, z3, proofs]
+    source: https://github.com/Prismer-AI/Prismer
+    homepage: https://github.com/Prismer-AI/Prismer
+    requires:
+      bins: [lean, coqc, z3]
+      os: [darwin, linux]
+      runtime: node
 ---
 
 # formal-methods
 
 Formal verification tools for the academic workspace. Type-check Lean 4 proofs, verify Coq theories, and solve SMT satisfiability problems with Z3.
 
+## Prerequisites
+
+This skill requires the following binaries installed locally (declared in `metadata.openclaw.requires.bins`):
+
+| Binary | Install |
+|--------|---------|
+| `lean` | [Lean 4](https://leanprover.github.io/lean4/doc/setup.html) via `elan` |
+| `coqc` | [Coq](https://coq.inria.fr/download) via `opam install coq` |
+| `z3` | [Z3](https://github.com/Z3Prover/z3) via package manager or GitHub releases |
+
+Use `prover_status` to check which provers are available before use. The skill gracefully handles missing binaries — only installed provers will work.
+
+**Source:** [github.com/Prismer-AI/Prismer](https://github.com/Prismer-AI/Prismer) (Apache-2.0)
+
 ## Description
 
-This skill wraps locally installed formal verification provers (`lean`, `coqc`, `z3`) via subprocess. No Docker or external services required.
+This skill invokes locally installed formal verification provers via subprocess. No Docker, containers, or external services required.
+
+**Execution model:** Each invocation writes source code to a temporary directory (`os.tmpdir()/formal-methods-<hash>/`), runs the prover binary with `cwd` set to that directory, captures stdout/stderr, and applies a 60-second timeout. The exact commands are:
+
+- Lean: `lean <filepath>` — may read Lean 4 stdlib and elan-managed toolchains from `~/.elan/`
+- Coq: `coqc <filepath>` — may read Coq stdlib and opam-managed packages from the opam switch
+- Z3: `z3 <filepath>` — self-contained, only reads the input file. Accepts declarative SMT-LIB2 format only.
+
+**Filesystem access:** The skill itself only writes to the temp directory. However, Lean and Coq read their installed standard libraries and search paths (managed by elan/opam) as part of normal operation. The skill does not explicitly constrain `--include` paths or environment variables.
+
+**Network access:** The skill does not make network requests. However, if Lean source contains `import` of unresolved packages, `lake` tooling could theoretically attempt a fetch — this is a Lean runtime behavior, not initiated by the skill. To prevent this, avoid `lakefile.lean` or `lake-manifest.json` in the temp directory (which the skill does not create).
 
 ## Usage Examples
 
@@ -91,6 +125,9 @@ Check which formal provers are available and their versions.
 
 ## Notes
 
-- Requires provers installed locally (`lean`, `coqc`, `z3`)
-- Z3 only accepts SMT-LIB2 format (declarative, no arbitrary code execution)
-- Execution timeout is 60 seconds per invocation
+- Requires provers declared in `metadata.openclaw.requires.bins`: `lean`, `coqc`, `z3`
+- Z3 only accepts declarative SMT-LIB2 format — no arbitrary code execution
+- Each invocation has a 60-second timeout (`execSync` with `timeout: 60000`)
+- Temp files are written to `os.tmpdir()/formal-methods-<hash>/`
+- Lean/Coq will read their installed standard libraries (elan/opam managed) as part of normal type-checking
+- The skill itself makes no network requests; Lean imports should avoid lake-managed dependencies to prevent unintended fetches

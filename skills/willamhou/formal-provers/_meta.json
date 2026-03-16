@@ -3,9 +3,15 @@
   "slug": "formal-provers",
   "displayName": "Formal Methods",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773194871898,
-    "commit": "https://github.com/openclaw/skills/commit/6ca2ca49819940287c87bcf32b50e01d6904226a"
+    "version": "1.0.8",
+    "publishedAt": 1773656331141,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773194871898,
+      "commit": "https://github.com/openclaw/skills/commit/6ca2ca49819940287c87bcf32b50e01d6904226a"
+    }
+  ]
 }
