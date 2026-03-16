@@ -1,6 +1,6 @@
 ---
 name: deepseek-api-guide
-version: 1.0.14
+version: 1.0.23
 description: DeepSeek API 完整指南 - 注册、配置、省钱技巧。适合：想用便宜 AI 的用户。
 metadata:
   openclaw:

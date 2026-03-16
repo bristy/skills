@@ -3,11 +3,16 @@
   "slug": "deepseek-api-guide",
   "displayName": "Deepseek Api Guide",
   "latest": {
-    "version": "1.0.14",
-    "publishedAt": 1773611515839,
-    "commit": "https://github.com/openclaw/skills/commit/a89353520e2c5f8a54a6e61273a91d331665943b"
+    "version": "1.0.39",
+    "publishedAt": 1773631378642,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.14",
+      "publishedAt": 1773611515839,
+      "commit": "https://github.com/openclaw/skills/commit/a89353520e2c5f8a54a6e61273a91d331665943b"
+    },
     {
       "version": "1.0.8",
       "publishedAt": 1773611147992,
