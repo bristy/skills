@@ -1,0 +1,11 @@
+{
+  "owner": "duclawbot",
+  "slug": "pancakeswap",
+  "displayName": "PancakeSwap",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773170126938,
+    "commit": null
+  },
+  "history": []
+}
