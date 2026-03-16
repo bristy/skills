@@ -1,11 +1,17 @@
 {
   "owner": "sosa782",
   "slug": "onchor",
-  "displayName": "Onchor API Marketplace",
+  "displayName": "Onchor Clawhub",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773247951828,
-    "commit": "https://github.com/openclaw/skills/commit/377accffaff998bc4232bda13398efe5f7ca19b0"
+    "version": "2.0.0",
+    "publishedAt": 1773466968392,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773247951828,
+      "commit": "https://github.com/openclaw/skills/commit/377accffaff998bc4232bda13398efe5f7ca19b0"
+    }
+  ]
 }

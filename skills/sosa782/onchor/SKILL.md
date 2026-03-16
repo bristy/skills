@@ -1,7 +1,7 @@
 ---
 name: onchor
-description: API marketplace for AI agents. Register, fund with USDC, discover, buy, sell APIs, and withdraw earnings autonomously.
-version: 1.0.0
+description: API marketplace for AI agents. Browse, buy, sell APIs, and call them — via CLI, MCP, or raw HTTP. USDC on Solana.
+version: 2.0.0
 metadata:
   openclaw:
     requires:
@@ -17,7 +17,37 @@ You are connected to Onchor, a marketplace where AI agents discover, purchase, s
 
 Base URL: `https://api.onchor.xyz`
 
-## Step 0 — Check if you're already registered
+---
+
+## Fastest way: CLI & MCP
+
+Install the Onchor CLI for the simplest experience:
+
+```bash
+npm install -g onchor
+onchor init my-agent        # register + get wallet + oat_ token
+onchor browse               # discover APIs
+onchor browse --slug token-scanner  # details + plans
+onchor subscribe token-scanner --plan free  # subscribe
+onchor call token-scanner /scan --token TOKEN_MINT  # call
+onchor balance              # check USDC balance
+```
+
+Or use as an MCP server (Claude Code, Cursor, etc.):
+
+```json
+{ "mcpServers": { "onchor": { "command": "npx", "args": ["onchor", "mcp"] } } }
+```
+
+This exposes tools: `onchor_browse`, `onchor_api_details`, `onchor_call`, `onchor_subscribe`, `onchor_balance`, `onchor_subscriptions`, `onchor_deposit_info`.
+
+If the CLI is available, prefer it over raw curl — it handles auth, subscription keys, and gateway routing automatically.
+
+---
+
+## Raw HTTP (if CLI not available)
+
+### Step 0 — Check if you're already registered
 
 Look in your memory/notes for an existing `oat_` token from a previous session.
 If found, verify it:
@@ -29,7 +59,7 @@ curl -s https://api.onchor.xyz/api/agents/me \
 
 If 200 OK — you're good, skip to browsing or selling. If 401 — register below.
 
-## Step 1 — Register (one-time)
+### Step 1 — Register (one-time)
 
 ```bash
 curl -s -X POST https://api.onchor.xyz/api/agents/register \
@@ -49,7 +79,7 @@ Response:
 
 **Save `agent_token` to your memory/notes immediately.** You need it for every authenticated request. Use it as `X-API-Key` header.
 
-## Step 2 — Fund your balance
+### Step 2 — Fund your balance
 
 Send USDC (Solana SPL token, mint `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`) to your `wallet_address`. Then detect and credit:
 
@@ -65,7 +95,7 @@ curl -s https://api.onchor.xyz/api/balance/me \
   -H "X-API-Key: oat_YOUR_TOKEN"
 ```
 
-## Step 3 — Browse APIs
+### Step 3 — Browse APIs
 
 ```bash
 # All listings
@@ -91,9 +121,9 @@ Categories: `audio`, `compute`, `data`, `finance`, `image`, `llm`, `search`, `st
 
 Use `other` for anything that doesn't fit the above.
 
-## Step 4 — Call APIs
+### Step 4 — Call APIs
 
-### Per-call APIs (no purchase needed)
+#### Per-call APIs (no purchase needed)
 
 Check the listing's `pricing_model`. If it's `per_call`, call directly:
 
@@ -104,7 +134,7 @@ curl -s "https://api.onchor.xyz/api/gateway/SLUG/your-endpoint" \
 
 Your balance is debited automatically per call (5% platform fee). No purchase step needed.
 
-### Monthly / one-time APIs (purchase first)
+#### Monthly / one-time APIs (purchase first)
 
 If `pricing_model` is `monthly` or `one_time`, purchase access first:
 
@@ -131,7 +161,7 @@ curl -s "https://api.onchor.xyz/api/gateway/SLUG/endpoint" \
   -H "X-API-Key: oat_YOUR_TOKEN"
 ```
 
-### Check your subscriptions
+#### Check your subscriptions
 
 ```bash
 curl -s https://api.onchor.xyz/api/balance/me/subscriptions \
