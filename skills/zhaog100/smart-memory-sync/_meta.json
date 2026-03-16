@@ -3,9 +3,15 @@
   "slug": "smart-memory-sync",
   "displayName": "Smart Memory Sync",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772769473476,
-    "commit": "https://github.com/openclaw/skills/commit/6f044a9801632d56c6084d12dd65e4b3d2da06cd"
+    "version": "1.1.0",
+    "publishedAt": 1773538143373,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772769473476,
+      "commit": "https://github.com/openclaw/skills/commit/6f044a9801632d56c6084d12dd65e4b3d2da06cd"
+    }
+  ]
 }
