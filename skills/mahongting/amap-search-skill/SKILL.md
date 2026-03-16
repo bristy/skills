@@ -3,10 +3,10 @@ AIGC:
     ContentProducer: Minimax Agent AI
     ContentPropagator: Minimax Agent AI
     Label: AIGC
-    ProduceID: feed4fae68589f69f38372c3d4f0b3ae
-    PropagateID: feed4fae68589f69f38372c3d4f0b3ae
-    ReservedCode1: 304402204e10cf6ac376a6366dd85af995e4f352dea9e9660fe2dd435264582bd350ebfe022040332d40373eeed74035038ee7ad2b16f2bde9f3844e5f1a7c693e333db6497a
-    ReservedCode2: 30460221009ab8b771380c9c61ac878e1e141c3dbc5a57cb56fb1650c23175184bbfca9e87022100b5fe35ba255227286a74b4e786172bdaab9aed5fdf61fb30390f039c4bde3e42
+    ProduceID: 419f142dffc2786f70c781514aae295d
+    PropagateID: 419f142dffc2786f70c781514aae295d
+    ReservedCode1: 3045022100f0a82fe3f70a96ea776cd6f5eb99567be33ce61f08fa12f0e0a9bfb962f853b50220795b188df61cf38c33d2c6326e01946a47ab16c9efc3c5e8195794683bef4a72
+    ReservedCode2: 30460221009b63253a328bf0551118bab8d26be628665ca7933d06e030f81d5bb83dc879a2022100aab0156baa6ad550357ea8aee375d5211026970299e2fcc89a93df76a1673d21
 description: 高德地图全功能工具 - 集成POI搜索、路径规划、天气查询、公交查询、实时路况等。/Gaode Map All-in-One - POI search, route planning, weather, bus, traffic.
 icon: "\U0001F5FA️"
 name: amap-search
@@ -44,15 +44,24 @@ version: 2.0.0
 
 > 💡 **免费额度**：每个 Key 每天 2000 次调用，个人使用足够
 
-### 第二步：使用工具
+### 第二步：配置 API Key（推荐使用环境变量）
 
+**方式一：设置环境变量（推荐）**
 ```bash
-# 进入脚本目录
-cd skills/amap-search/scripts
+# 在终端中设置环境变量
+export AMAP_API_KEY="你的API_KEY"
 
-# 运行命令
+# 或在 ~/.bashrc 中永久添加
+echo 'export AMAP_API_KEY="你的API_KEY"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**方式二：命令行参数**
+```bash
 python3 gaode_map.py <命令> --key 你的API_KEY [参数]
 ```
+
+> ⚠️ **优先级**：环境变量 > 命令行参数。建议使用环境变量，避免每次输入。
 
 ---
 
@@ -126,6 +135,21 @@ Found 21 results:
    Address: 锦江区春熙路南段8号
    Location: 104.085123,30.657891
    Phone: 028-86612345
+```
+
+#### 周边搜索（带距离）
+```bash
+# 搜索附近POI并显示每个结果到起点的实际驾驶距离
+python3 gaode_map.py poi --location "104.069,30.229" --radius 2000 --keyword "酒店" --with-distance
+```
+
+**输出示例**：
+```
+Found 10 results:
+
+1. 乐游酒店 | 地址：视高街道xxx | 距离：313米
+2. 橙苇公寓 | 地址：xxx | 距离：853米
+...
 ```
 
 ---
@@ -260,6 +284,7 @@ A: 驾车(driving)、步行(walking)、公交(transit)三种方式。
 
 ## 📝 更新日志
 
+- **v2.1.0**: 新增 `--with-distance` 参数，POI搜索时显示每个结果的距离
 - **v2.0.0**: 新增路径规划、天气查询、实时路况、输入提示功能
 - **v1.0.0**: 初始版本，包含 IP定位、地理编码、POI搜索
 
