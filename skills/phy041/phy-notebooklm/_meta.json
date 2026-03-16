@@ -1,0 +1,11 @@
+{
+  "owner": "phy041",
+  "slug": "phy-notebooklm",
+  "displayName": "NotebookLM Query",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773550787651,
+    "commit": null
+  },
+  "history": []
+}
