@@ -1,7 +1,24 @@
 ---
 name: douyin-video-analyzer
 description: 深度拆解抖音视频，自动生成包含数据、结构、视觉、文案的完整分析报告。
-version: 3.7.2
+version: 3.7.4
+metadata:
+  {
+    "openclaw":
+      {
+        "requires":
+          { "bins": ["ffmpeg", "yt-dlp", "node"], "env": ["ZHIPU_API_KEY"] },
+        "install":
+          [
+            {
+              "id": "playwright-deps",
+              "label": "安装 Playwright 依赖",
+              "kind": "exec",
+              "command": "npx playwright install --with-deps chromium",
+            },
+          ],
+      },
+  }
 ---
 
 # 抖音视频深度拆解分析器 (Pro版)

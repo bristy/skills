@@ -3,11 +3,16 @@
   "slug": "douyin-video-analyzer",
   "displayName": "Douyin Video Analyzer",
   "latest": {
-    "version": "3.7.2",
-    "publishedAt": 1773287682149,
-    "commit": "https://github.com/openclaw/skills/commit/75e3da62848f52c457fd072c0b0cf2ae4312339c"
+    "version": "3.7.4",
+    "publishedAt": 1773363653801,
+    "commit": null
   },
   "history": [
+    {
+      "version": "3.7.2",
+      "publishedAt": 1773287682149,
+      "commit": "https://github.com/openclaw/skills/commit/75e3da62848f52c457fd072c0b0cf2ae4312339c"
+    },
     {
       "version": "3.2.1",
       "publishedAt": 1773251802172,
