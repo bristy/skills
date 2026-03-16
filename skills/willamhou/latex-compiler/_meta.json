@@ -1,13 +1,18 @@
 {
   "owner": "willamhou",
   "slug": "latex-compiler",
-  "displayName": "Latex Compiler",
+  "displayName": "LaTeX Compiler",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773646268744,
-    "commit": "https://github.com/openclaw/skills/commit/b06b660e34c0e1b2756fa20922e0a65be30a1f39"
+    "version": "1.0.6",
+    "publishedAt": 1773656370483,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773646268744,
+      "commit": "https://github.com/openclaw/skills/commit/b06b660e34c0e1b2756fa20922e0a65be30a1f39"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773194899358,
