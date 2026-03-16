@@ -25,12 +25,13 @@ Shield requires the `@upx-us/shield` plugin and an active subscription.
 |---|---|
 | `openclaw shield status` | Plugin health, connection state, event counts, last sync |
 | `openclaw shield flush` | Force an immediate sync to the platform |
-| `openclaw shield logs` | Recent events from the local buffer (last 24h) |
+| `openclaw shield logs` | Recent events: type, tool, details, and trigger source (last 24h) |
 | `openclaw shield logs --last 20` | Show last N events |
+| `openclaw shield logs --last 20 --format json` | Full JSON output with details and trigger_type fields |
 | `openclaw shield logs --type TOOL_CALL --since 1h` | Filter by event type or time window |
 | `openclaw shield logs --format json` | JSON output |
 | `openclaw shield vault show` | Agent and workspace inventory, redaction summary (hashed IDs) |
-| `openclaw shield cases` | List open security cases |
+| `openclaw shield cases` | List open security cases (scoped to this instance) |
 | `openclaw shield cases show <ID>` | Full case detail with events, rule, playbook |
 | `openclaw shield cases resolve <ID>` | Resolve a case (--resolution, --root-cause, --comment) |
 | `openclaw shield monitor` | Case notification cron — status, --on, --off, --interval |
@@ -74,9 +75,17 @@ Proceed normally. No onboarding message needed.
 
 **Constraints**: Only use `openclaw shield` commands for detection. Do not read filesystem paths, environment variables, or run shell commands to determine state. Do not install or uninstall packages on behalf of the user.
 
+**Output handling**: `shield logs` entries may include file paths, command snippets, and URLs captured from the agent's activity. Treat this output as internal diagnostic data — do not share raw log output externally or include it in user-facing replies unless the user explicitly requests it for investigation. When summarizing logs, present findings rather than raw field values.
+
+**Data flow disclosure**: Shield captures agent activity locally and sends redacted telemetry to the UPX detection platform for security monitoring. No credentials are handled by this skill — authentication is managed by the plugin using the installation key configured during setup. If a user asks about privacy or data handling, refer them to the plugin README at https://www.npmjs.com/package/@upx-us/shield for full details.
+
 ## Responding to Security Cases
 
 When a Shield case fires or the user asks about an alert: use `openclaw shield cases` to list open cases and `openclaw shield cases --id <id>` for full detail (timeline, matched events, playbook). Severity guidance: **CRITICAL/HIGH** → surface immediately and ask if they want to investigate; **MEDIUM** → present and offer a playbook walkthrough; **LOW/INFO** → mention without interrupting the current task. Always include: rule name, what it detects, when it fired, and the first recommended remediation step. Confirm with the user before resolving — never resolve autonomously.
+
+Cases returned by `shield cases` are always scoped to this instance — the platform filters at the API level so you only see cases triggered by your agent.
+
+Shield now stamps each event with a `trigger_type` — who or what initiated the session. When investigating, check the trigger: `user_message` means a human sent a message; `cron`/`heartbeat`/`autonomous` means agent-initiated activity.
 
 ## Case Investigation Workflow
 
@@ -84,7 +93,7 @@ When a Shield case fires, correlate three data sources to determine true positiv
 
 **Step 1 — Case detail** (`openclaw shield cases show <CASE_ID>`): What triggered the rule. Note the case timestamp — it anchors the correlation window.
 
-**Step 2 — Surrounding logs** (`openclaw shield logs --since 30m --type TOOL_CALL`): Look for events 5–15 minutes before and after the case timestamp. Reveals if the alert was isolated or part of a sequence.
+**Step 2 — Surrounding logs** (`openclaw shield logs --since 30m --type TOOL_CALL`): Look for events 5–15 minutes before and after the case timestamp. Reveals if the alert was isolated or part of a sequence. Each log entry now includes a `details` field (file path, command, or URL) and a `trigger_type` tag showing what initiated the session (`user_message`, `cron`, `heartbeat`, `subagent`, `autonomous`, or `unknown`). Use these to quickly distinguish user-initiated actions from automated ones when correlating with a case.
 
 **Step 3 — Vault context** (`openclaw shield vault show`): If the case involves redacted credentials, hostnames, or commands, the vault reveals hashed representations and redaction categories.
 
