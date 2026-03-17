@@ -1,0 +1,11 @@
+{
+  "owner": "jolestar",
+  "slug": "blockscout-openapi-skill",
+  "displayName": "Blockscout OpenAPI Skill",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773707607499,
+    "commit": null
+  },
+  "history": []
+}
