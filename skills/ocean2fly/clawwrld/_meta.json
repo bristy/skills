@@ -3,9 +3,15 @@
   "slug": "clawwrld",
   "displayName": "ClawWorld",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773501958989,
-    "commit": "https://github.com/openclaw/skills/commit/f3b2d4dcecb0e4b84481337dad26eb1910c4f748"
+    "version": "1.0.3",
+    "publishedAt": 1773547215142,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773501958989,
+      "commit": "https://github.com/openclaw/skills/commit/f3b2d4dcecb0e4b84481337dad26eb1910c4f748"
+    }
+  ]
 }
