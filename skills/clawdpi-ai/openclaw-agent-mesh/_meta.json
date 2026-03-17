@@ -1,0 +1,11 @@
+{
+  "owner": "clawdpi-ai",
+  "slug": "openclaw-agent-mesh",
+  "displayName": "OpenClaw Agent Mesh",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773339233071,
+    "commit": null
+  },
+  "history": []
+}
