@@ -1,0 +1,11 @@
+{
+  "owner": "sirenday",
+  "slug": "git-deploy",
+  "displayName": "Git Deploy",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773665856046,
+    "commit": null
+  },
+  "history": []
+}
