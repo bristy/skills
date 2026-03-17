@@ -3,9 +3,15 @@
   "slug": "horoscope",
   "displayName": "Horoscope",
   "latest": {
-    "version": "2.3.0",
-    "publishedAt": 1773446895460,
-    "commit": "https://github.com/openclaw/skills/commit/095ecd2d90fcc58940c9dff967a8f7919560e31f"
+    "version": "2.3.5",
+    "publishedAt": 1773666182605,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.3.0",
+      "publishedAt": 1773446895460,
+      "commit": "https://github.com/openclaw/skills/commit/095ecd2d90fcc58940c9dff967a8f7919560e31f"
+    }
+  ]
 }
