@@ -1,0 +1,151 @@
+# OpenClaw Ghost Pay
+
+This package bridges OpenClaw agents to Ghost Protocol's existing stack:
+
+- Discovery + pricing via read-only MCP (`/api/mcp/read-only`)
+- Paid gate requests via x402-compatible `payment-signature` envelopes
+- GhostWire quote + guarded job-create + job-status flows for escrow-mode workflows
+
+Express mode is fully executable here. Wire mode execution is available through guarded GhostWire APIs (`/api/wire/jobs`) and runs through GhostWire operator reconciliation.
+
+## ClawHub publish path
+
+If you want a real ClawHub bundle with helper scripts included, publish the folder root:
+
+```bash
+clawhub publish ./integrations/openclaw-ghost-pay --slug openclaw-ghost-pay --name "Ghost Protocol OpenClaw Pay" --version 1.2.2 --tags latest,agents,eip712,ghostprotocol,ghostwire,mcp,openclaw,payments,x402
+```
+
+Do not rely on a web-form-only publish if it only captures `SKILL.md`; the installable bundle needs the helper scripts under `bin/`.
+
+## Contents
+
+- `openclaw.plugin.json` - plugin descriptor with local skill path
+- `skills/openclaw-ghost-pay/SKILL.md` - skill instructions for OpenClaw
+- `bin/get-payment-requirements.mjs` - MCP-based payment requirement lookup
+- `bin/pay-gate-x402.mjs` - EIP-712 signer + x402 header wrapper for gate calls
+- `bin/get-wire-quote.mjs` - MCP wrapper for GhostWire quote creation
+- `bin/create-wire-job-from-quote.mjs` - guarded GhostWire job creation from an issued quote
+- `bin/get-wire-job-status.mjs` - MCP wrapper for GhostWire job status polling
+
+## Usage
+
+From repo root:
+
+```bash
+node integrations/openclaw-ghost-pay/bin/get-payment-requirements.mjs --service agent-18755
+```
+
+```bash
+node integrations/openclaw-ghost-pay/bin/pay-gate-x402.mjs --service agent-18755 --method POST --body-json "{\"prompt\":\"hello\"}" --dry-run true
+```
+
+```bash
+node integrations/openclaw-ghost-pay/bin/pay-gate-x402.mjs --service agent-18755 --method POST --body-json "{\"prompt\":\"hello\"}"
+```
+
+```bash
+node integrations/openclaw-ghost-pay/bin/get-wire-quote.mjs --provider 0x... --evaluator 0x... --principal-amount 1000000
+```
+
+```bash
+node integrations/openclaw-ghost-pay/bin/create-wire-job-from-quote.mjs --quote-id wq_... --client 0x... --provider 0x... --evaluator 0x... --spec-hash 0x...
+```
+
+```bash
+node integrations/openclaw-ghost-pay/bin/get-wire-job-status.mjs --job-id wj_...
+```
+
+## Environment
+
+- `GHOST_SIGNER_PRIVATE_KEY` (required for paid call)
+- `GHOST_OPENCLAW_BASE_URL` (default: `https://ghostprotocol.cc`)
+- `GHOST_OPENCLAW_CHAIN_ID` (default: `8453`)
+- `GHOST_OPENCLAW_SERVICE_SLUG` (optional fallback service)
+- `GHOST_OPENCLAW_TIMEOUT_MS` (default: `15000`)
+- `GHOSTWIRE_PROVIDER_ADDRESS` (optional default for `get-wire-quote`)
+- `GHOSTWIRE_EVALUATOR_ADDRESS` (optional default for `get-wire-quote`)
+- `GHOSTWIRE_PRINCIPAL_AMOUNT` (optional default for `get-wire-quote`)
+- `GHOSTWIRE_EXEC_SECRET` (required for `create-wire-job-from-quote`)
+- `GHOSTWIRE_CLIENT_ADDRESS` (optional default for wire create)
+- `GHOSTWIRE_SPEC_HASH` (optional default for wire create, required by API)
+- `GHOSTWIRE_METADATA_URI` (optional)
+- `GHOSTWIRE_WEBHOOK_URL` + `GHOSTWIRE_WEBHOOK_SECRET` (optional pair)
+
+## OpenClaw Registration
+
+Point OpenClaw/ClawHub at this package path and enable the skill entry. Example shape (adapt to your runtime config schema):
+
+```json
+{
+  "plugins": {
+    "ghost-protocol-openclaw": {
+      "path": "./integrations/openclaw-ghost-pay",
+      "enabled": true,
+      "skills": {
+        "entries": {
+          "openclaw-ghost-pay": {
+            "enabled": true,
+            "env": {
+              "GHOST_OPENCLAW_BASE_URL": "https://ghostprotocol.cc",
+              "GHOST_OPENCLAW_CHAIN_ID": "8453"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Keep `GHOST_SIGNER_PRIVATE_KEY` in runtime secret storage, not in config files.
+
+## Install Docs
+
+- [INSTALL.md](./INSTALL.md)
+- [QUICKSTART.md](./QUICKSTART.md)
+
+## OpenClaw Registry Submission Payload
+
+Use this copy when submitting `openclaw-ghost-pay` to directories.
+
+- Display Name: Ghost Protocol OpenClaw Pay
+- Slug: openclaw-ghost-pay
+- Version: 1.2.2
+- Short Description: Discover Ghost payment requirements, execute GhostGate Express payments, and run GhostWire quote/create/status flows with execution controls.
+- Long Description: Ghost Protocol gives OpenClaw agents a low-latency payment path for paywalled APIs. Agents can discover payment requirements, sign EIP-712 GhostGate access envelopes, and execute Hosted GhostWire quote/create/status flows from a single skill bundle. The ClawHub bundle includes the helper scripts it references and requires a trusted server-side signer key.
+
+Verified production benchmark:
+
+- p50 Latency: 210.5ms
+- Success Rate: 100% (under 10x concurrency load)
+- Replay Protection: 409 rejection on replay attempts.
+
+## Performance & Benchmarks
+GhostGate processes cryptographic signatures and debits off-chain in milliseconds.
+
+**Latest Production Benchmark (March 9, 2026):**
+* **Target:** `https://ghostprotocol.cc`
+* **Load:** 250 iterations, 10 concurrency
+* **Success Rate:** 100%
+* **p50 Latency:** 210.5ms
+* **p95 Latency:** 402.4ms
+
+<details>
+<summary>View Raw Benchmark Artifact (JSON)</summary>
+
+```json
+{
+  "scenario": "gate",
+  "total": 250,
+  "successes": 250,
+  "failures": 0,
+  "successRate": 100,
+  "latencyMs": {
+    "avg": 271.89,
+    "p50": 210.5,
+    "p95": 402.43
+  }
+}
+```
+</details>

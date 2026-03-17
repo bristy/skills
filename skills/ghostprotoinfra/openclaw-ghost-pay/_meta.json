@@ -1,0 +1,11 @@
+{
+  "owner": "ghostprotoinfra",
+  "slug": "openclaw-ghost-pay",
+  "displayName": "Ghost Protocol OpenClaw Pay",
+  "latest": {
+    "version": "1.2.2",
+    "publishedAt": 1773535278566,
+    "commit": null
+  },
+  "history": []
+}
