@@ -426,6 +426,27 @@ def escape_meta(text: str) -> str:
         text = text.replace(char, replacement)
     return text
 
+
+def strip_section_number(title: str) -> str:
+    """剔除节标题里的原始章节编号前缀，避免 LaTeX 自动编号与原文编号叠加。
+
+    例：
+        '3.1信托行业...'      → '信托行业...'
+        '4.2.1运营体系搭建'   → '运营体系搭建'
+        '3.2.1运营类模式'     → '运营类模式'
+        '4.5.2.1公司层面优化' → '公司层面优化'
+        '图4.2 W信托...'      → '图4.2 W信托...'  （图题不处理）
+        'W信托基本情况'       → 'W信托基本情况'    （无前缀，不变）
+    """
+    if not title:
+        return title
+    # 匹配形如 "3." / "3.1" / "3.1.1" / "3.1.1.1" 开头的编号（仅数字+点）
+    # 后面必须跟非数字字符（汉字、字母等），避免把"3.14..."这类误删
+    m = re.match(r'^(\d+(?:\.\d+)*)\s*(?=[^\d\s.])', title)
+    if m:
+        return title[m.end():]
+    return title
+
 # ── BibTeX 生成 ─────────────────────────────────────────────────────────────
 
 def _make_bib_key(ref_text: str, idx: int, used_keys: set) -> str:
@@ -813,7 +834,7 @@ def render_content_items(items: list, cite_mapping: dict = None, ay_lookup: dict
         if t == 'section':
             lvl = item.get('level', 2)
             cmd = CMD_MAP.get(lvl, 'paragraph')
-            title = escape_meta(item.get('title', ''))
+            title = escape_meta(strip_section_number(item.get('title', '')))
             lines.append(f'\n\\{cmd}{{{title}}}\n')
         elif t == 'text':
             content = item.get('content', '').strip()
@@ -831,13 +852,46 @@ def render_content_items(items: list, cite_mapping: dict = None, ay_lookup: dict
     return '\n'.join(lines)
 
 def render_table(item: dict) -> str:
-    """把表格数据渲染为 thuthesis 标准三线表（booktabs + tabularx，无竖线）"""
+    """把表格数据渲染为 thuthesis 标准三线表（booktabs + tabularx，无竖线）
+
+    列宽策略：
+    - 分析各列最大内容长度（字符数），按比例分配 tabularx X 列宽
+    - 短列（序号、日期等）用 l（左对齐固定宽）；长列用 X（自动拉伸）
+    - 至少有一列为 X（tabularx 要求）
+    """
     rows = item.get('rows', [])
     if not rows:
         return ''
     caption = escape_latex(item.get('caption', '').strip())
     ncols = max(len(r) for r in rows)
-    col_spec = f'*{{{ncols}}}{{X}}'  # 自动均分列宽
+
+    # 计算每列最大内容长度
+    col_max_lens = []
+    for ci in range(ncols):
+        max_len = 0
+        for row in rows:
+            if ci < len(row):
+                cell_text = str(row[ci])
+                # 汉字算2个字符宽度
+                char_width = sum(2 if '\u4e00' <= c <= '\u9fff' else 1 for c in cell_text)
+                max_len = max(max_len, char_width)
+        col_max_lens.append(max(max_len, 1))
+
+    # 判断哪些列用固定宽（l），哪些用 X（自动拉伸）
+    # 规则：列最大宽度 <= 12 字符等效 → 固定宽；其余用 X
+    SHORT_THRESHOLD = 12
+    x_count = sum(1 for l in col_max_lens if l > SHORT_THRESHOLD)
+    if x_count == 0:
+        # 全是短列，最长那列改为 X
+        x_count = 1
+        max_idx = col_max_lens.index(max(col_max_lens))
+        col_specs = ['l'] * ncols
+        col_specs[max_idx] = 'X'
+    else:
+        col_specs = ['X' if l > SHORT_THRESHOLD else 'l' for l in col_max_lens]
+
+    col_spec = ' '.join(col_specs)
+
     lines = ['']
     if caption:
         lines += [
@@ -1013,7 +1067,7 @@ def render_project(json_path: str, output_dir: str):
                 blocks.append({
                     'type': 'heading',
                     'level': item.get('level', 2),
-                    'title': escape_meta(item.get('title', '')),
+                    'title': escape_meta(strip_section_number(item.get('title', ''))),
                 })
             elif t == 'text':
                 content = item.get('content', '').strip()
@@ -1026,11 +1080,16 @@ def render_project(json_path: str, output_dir: str):
             elif t == 'figure':
                 embed = item.get('embed', '')
                 caption = item.get('caption', '')
-                # 从 data['figures'] 里找文件名
-                fig_info = data.get('figures', {}).get(embed, {})
-                fig_filename = fig_info.get('filename', '')
-                if not caption:
-                    caption = fig_info.get('caption', '')
+                # ★ 优先从 item 自身的 path 字段获取文件名（parse_docx 新格式）
+                # 兼容旧格式：从 data['figures'] 字典中查找
+                fig_filename = ''
+                if item.get('path'):
+                    fig_filename = Path(item['path']).name  # 去掉 'figures/' 前缀
+                else:
+                    fig_info = data.get('figures', {}).get(embed, {})
+                    fig_filename = fig_info.get('filename', '')
+                    if not caption:
+                        caption = fig_info.get('caption', '')
                 if fig_filename:
                     # 跳过 SVG（依赖 inkscape，可能不可用），只处理 PNG/JPG/PDF
                     ext = Path(fig_filename).suffix.lower()
@@ -1059,10 +1118,19 @@ def render_project(json_path: str, output_dir: str):
                     'caption': escape_meta(caption),
                 })
         tmpl = env.get_template('chapter.tex.j2')
+        # 从章编号提取章序号，用于设置 LaTeX counter（保留原文章号）
+        # number 字段可能是 "第3章"、"3"、"" 等形式
+        raw_num = chap.get('number', '')
+        chap_counter = None
+        m_num = re.search(r'(\d+)', raw_num)
+        if m_num:
+            n = int(m_num.group(1))
+            chap_counter = n - 1  # \setcounter{chapter}{N-1} 使下一个 \chapter 编为第N章
         chapter_obj = {
             'level': 1,
             'title': title,
-            'number': chap.get('number', ''),
+            'number': raw_num,
+            'chap_counter': chap_counter,
             'content': blocks,
         }
         tex = tmpl.render(chapter=chapter_obj)

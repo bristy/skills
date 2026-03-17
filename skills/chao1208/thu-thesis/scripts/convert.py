@@ -1,8 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-convert.py - 一键 Word → 清华 MBA thuthesis PDF 转换器
-用法: python3 convert.py <input.docx> [output_dir]
+convert.py - 清华 MBA 论文 Word → PDF 转换器
+
+新三层架构（AI-native 流程）：
+  Step 1: extract_raw.py  → raw_xxx.json（纯机械提取，无 LLM）
+  Step 2: AI（Claude）    → struct_xxx.json（阅读骨架，理解章节结构）
+  Step 3: build_parsed.py → parsed_xxx.json（纯 Python 组装）
+  Step 4: render.py       → LaTeX 项目
+  Step 5: xelatex + bibtex → thesis.pdf
+  Step 6: evaluate.py     → evaluation_report.md
+
+用法：
+  # 第一步：机械提取，输出骨架供 AI 阅读
+  python3 convert.py extract <input.docx> [output_dir]
+
+  # 第三步（AI 生成 struct.json 后）：完成转换
+  python3 convert.py build <raw_json> <struct_json> [latex_dir]
+
+  # 或一步调用（需要已有 struct.json）：
+  python3 convert.py build raw_xxx.json struct_xxx.json ./my-thesis
+
+AI（Claude）负责：
+  - 读取 extract 输出的骨架
+  - 生成 struct_xxx.json（章节划分、段落 idx 映射）
+  - 调用 build 命令完成剩余步骤
 """
 
 import sys
@@ -12,18 +34,15 @@ import subprocess
 from pathlib import Path
 
 
+# ── 自动补全未引用文献 ──────────────────────────────────────────────────────────
+
 def _auto_cite_missing(latex_dir: Path):
-    """
-    检测 refs.bib 中未被正文引用的文献，用关键词匹配在章节 .tex 中自动插入 \\cite{key}。
-    策略：从文献 title/author 提取关键词 → 在正文段落中搜索 → 在匹配句末插入。
-    """
+    """检测 refs.bib 中未被正文引用的文献，关键词匹配补 \\cite；无匹配用 \\nocite 兜底。"""
     bib_file = latex_dir / 'ref' / 'refs.bib'
     if not bib_file.exists():
         return
 
     bib_text = bib_file.read_text(encoding='utf-8')
-
-    # 解析所有 BibTeX 条目：key → {title, author, year}
     entries = {}
     for m in re.finditer(r'@\w+\{(\w+),(.*?)^\}', bib_text, re.MULTILINE | re.DOTALL):
         key = m.group(1)
@@ -40,7 +59,6 @@ def _auto_cite_missing(latex_dir: Path):
     if not entries:
         return
 
-    # 收集正文中已有的 \cite{} 引用
     chap_files = sorted(latex_dir.glob('data/chap*.tex'))
     cited_keys = set()
     for cf in chap_files:
@@ -55,80 +73,59 @@ def _auto_cite_missing(latex_dir: Path):
 
     print(f'   发现 {len(missing)} 条未引用文献，进行关键词匹配...')
 
-    def _extract_keywords(key: str) -> list:
-        """从文献 title/author 提取中英文关键词（3字以上）"""
+    def _extract_keywords(key):
         e = entries[key]
         text = e['title'] + ' ' + e['author']
-        # 中文：提取连续3个以上汉字的片段
         zh_words = re.findall(r'[\u4e00-\u9fff]{3,}', text)
-        # 英文：提取4字母以上的单词（排除常见虚词）
         stopwords = {'with', 'from', 'that', 'this', 'their', 'have', 'been', 'into',
                      'drug', 'price', 'pricing', 'china', 'market', 'company', 'strategy'}
         en_words = [w.lower() for w in re.findall(r'[a-zA-Z]{4,}', text)
                     if w.lower() not in stopwords]
         return zh_words[:3] + en_words[:3]
 
-    # 对每条缺失文献，在章节中找匹配句子
-    inserted = {}  # key → (file, old_text, new_text)
-    used_sentences = set()  # 避免同一句子被多个文献重复匹配
-
+    inserted = {}
+    used_sentences = set()
     for key in missing:
         keywords = _extract_keywords(key)
         if not keywords:
             continue
         best_match = None
         best_score = 0
-
         for cf in chap_files:
             content = cf.read_text(encoding='utf-8')
-            # 找所有中文句子（以。结尾）或段落
-            # 匹配正文段落行（非注释、非命令行）
             for line_m in re.finditer(r'^([^%\\][^\n]{10,}[。！？])', content, re.MULTILINE):
                 line = line_m.group(1)
                 if line in used_sentences:
                     continue
-                # 计算关键词命中分
                 score = sum(1 for kw in keywords if kw.lower() in line.lower())
                 if score > best_score:
                     best_score = score
                     best_match = (cf, line)
-
         if best_match and best_score > 0:
             cf, matched_line = best_match
-            # 在句末最后一个句号前插入 \cite{key}
-            # 处理该句子可能已经有其他 \cite{} 的情况
             last_punct = max(matched_line.rfind('。'), matched_line.rfind('！'), matched_line.rfind('？'))
             if last_punct < 0:
                 continue
-            # 检查是否已有 \cite{} 紧邻这个句号
             prefix = matched_line[:last_punct]
             suffix = matched_line[last_punct:]
             existing_cite_m = re.search(r'\\cite\{([^}]+)\}$', prefix)
             if existing_cite_m:
-                # 合并到已有 \cite{} 中
                 old_cite = existing_cite_m.group(0)
                 new_cite = old_cite.replace('}', f',{key}}}')
                 new_line = prefix[:existing_cite_m.start()] + new_cite + suffix
             else:
                 new_line = prefix + f'\\cite{{{key}}}' + suffix
-
             inserted[key] = (cf, matched_line, new_line)
             used_sentences.add(matched_line)
 
-    # 执行替换
     success = 0
     for key, (cf, old_text, new_text) in inserted.items():
         content = cf.read_text(encoding='utf-8')
         if old_text in content:
             cf.write_text(content.replace(old_text, new_text, 1), encoding='utf-8')
-            e = entries[key]
-            print(f'   ✓ {key}: 插入 → {cf.name} (匹配: {old_text[:40]}...)')
+            print(f'   ✓ {key}: 插入 → {cf.name}')
             success += 1
-        else:
-            print(f'   ⚠️  {key}: 匹配句子在文件中找不到，跳过')
 
-    # 仍未处理的（关键词无匹配）→ 用 \nocite{key} 追加到 thesis.tex
-    # \nocite{} 是 LaTeX 标准命令：强制 bibtex 输出该条目，不需要正文 \cite{}
     still_missing = [k for k in missing if k not in inserted]
     if still_missing:
         print(f'   {len(still_missing)} 条无关键词匹配，用 \\nocite 强制输出...')
@@ -136,97 +133,36 @@ def _auto_cite_missing(latex_dir: Path):
         if thesis_tex.exists():
             content = thesis_tex.read_text(encoding='utf-8')
             nocite_lines = '\n'.join(f'\\nocite{{{k}}}' for k in still_missing)
-            # 插入到 \bibliographystyle 命令之前
             marker = '\\bibliographystyle{'
             if marker in content:
                 content = content.replace(marker, nocite_lines + '\n' + marker, 1)
                 thesis_tex.write_text(content, encoding='utf-8')
-                for k in still_missing:
-                    print(f'      → \\nocite{{{k}}} 已写入 thesis.tex')
 
     print(f'   完成：{success + len(still_missing)}/{len(missing)} 条文献已补全引用')
 
 
-def run(cmd, cwd=None, check=True):
-    print(f'▶ {cmd}')
-    result = subprocess.run(cmd, shell=True, cwd=cwd)
-    if check and result.returncode != 0:
-        print(f'❌ 命令失败 (exit {result.returncode})')
-        sys.exit(result.returncode)
-    return result.returncode
+# ── 编译 PDF ──────────────────────────────────────────────────────────────────
 
-def main():
-    if len(sys.argv) < 2:
-        print('用法: python3 convert.py <input.docx> [output_dir]')
-        print('示例: python3 convert.py 我的论文.docx ./output')
-        sys.exit(1)
-
-    docx_path = Path(sys.argv[1]).resolve()
-    if not docx_path.exists():
-        print(f'❌ 找不到文件: {docx_path}')
-        sys.exit(1)
-
-    # 输出目录默认为 ./output/<论文名>
-    if len(sys.argv) >= 3:
-        base_out = Path(sys.argv[2]).resolve()
-    else:
-        base_out = Path('output') / docx_path.stem
-
-    scripts_dir = Path(__file__).parent
-    project_root = scripts_dir.parent
-
-    json_dir = project_root / 'output'
-    latex_dir = base_out
-
-    print(f'\n{"="*60}')
-    print(f'📄 输入: {docx_path.name}')
-    print(f'📁 输出: {latex_dir}')
-    print(f'{"="*60}\n')
-
-    # ── Step 1: 解析 Word ───────────────────────────────────────
-    print('【Step 1/3】解析 Word 文档...')
-    run(f'python3 "{scripts_dir}/parse_docx.py" "{docx_path}" "{json_dir}"')
-
-    # 找到生成的 JSON 文件
-    json_files = sorted(json_dir.glob('parsed_*.json'), key=lambda f: f.stat().st_mtime, reverse=True)
-    if not json_files:
-        print('❌ 未找到解析输出的 JSON 文件')
-        sys.exit(1)
-    json_path = json_files[0]
-    print(f'   → JSON: {json_path.name}')
-
-    # ── Step 2: 渲染 LaTeX 项目 ─────────────────────────────────
-    print('\n【Step 2/3】渲染 LaTeX 项目...')
-    run(f'python3 "{scripts_dir}/render.py" "{json_path}" "{latex_dir}"')
-
-    # ── Step 2.5: 自动补全未引用文献的 \cite{} ─────────────────────
-    # BibTeX 只输出被 \cite{} 引用过的条目。
-    # 如果 refs.bib 里有文献但正文没有 \cite{}，PDF 参考文献列表会缺条目。
-    # 自动检测并在正文中语义匹配插入。
-    print('\n【Step 2.5/3】检测未引用文献并自动补全 \\cite{}...')
-    _auto_cite_missing(latex_dir)
-
-    # ── Step 3: 编译 PDF ─────────────────────────────────────────
-    print('\n【Step 3/3】编译 PDF...')
-    # xelatex 查找顺序：
-    #   1. 环境变量 XELATEX_PATH（指定完整路径）
-    #   2. 常见 macOS TeX Live 路径 /Library/TeX/texbin
-    #   3. PATH 中的 xelatex（Linux/其他）
+def compile_pdf(latex_dir: Path) -> Path:
+    """运行 xelatex + bibtex 完整编译流程，返回 PDF 路径。"""
     _tex_bin = os.environ.get('XELATEX_PATH', '')
     if _tex_bin:
         extra_path = str(Path(_tex_bin).parent)
     elif Path('/Library/TeX/texbin/xelatex').exists():
         extra_path = '/Library/TeX/texbin'
+    elif Path('/usr/local/texlive/2025basic/bin/universal-darwin/xelatex').exists():
+        extra_path = '/usr/local/texlive/2025basic/bin/universal-darwin'
     else:
         extra_path = ''
-    export_path = (extra_path + ':' + os.environ.get('PATH', '')) if extra_path else os.environ.get('PATH', '')
-    env = os.environ.copy()
-    env['PATH'] = export_path
 
-    def xelatex(cwd, label=''):
+    env = os.environ.copy()
+    if extra_path:
+        env['PATH'] = extra_path + ':' + env.get('PATH', '')
+
+    def xelatex():
         result = subprocess.run(
             'xelatex -interaction=nonstopmode thesis.tex',
-            shell=True, cwd=cwd, env=env,
+            shell=True, cwd=latex_dir, env=env,
             capture_output=True, text=True
         )
         for line in result.stdout.split('\n'):
@@ -235,81 +171,214 @@ def main():
                     print(f'   {line}')
         return result.returncode
 
-    def toc_hash(cwd):
-        """读取 .toc 文件内容的 hash，用于检测目录是否稳定"""
+    def toc_hash():
         import hashlib
-        toc = Path(cwd) / 'thesis.toc'
+        toc = latex_dir / 'thesis.toc'
         return hashlib.md5(toc.read_bytes()).hexdigest() if toc.exists() else ''
 
-    # BibTeX 编译流程: xelatex → bibtex → xelatex → xelatex → (xelatex)
-    # 第1次：生成 .aux 文件（含 \citation 记录）
     print('   第 1 次编译（生成 .aux）...')
-    xelatex(latex_dir)
-    h1 = toc_hash(latex_dir)
+    xelatex()
 
-    # 运行 bibtex 生成 .bbl 文件
-    bibtex_bin = str(Path(env['PATH'].split(':')[0]) / 'bibtex') if extra_path else 'bibtex'
-    if not Path(bibtex_bin).exists():
-        bibtex_bin = 'bibtex'
     print('   运行 bibtex...')
-    result = subprocess.run(
-        f'bibtex thesis',
-        shell=True, cwd=latex_dir, env=env,
-        capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        print(f'   ⚠️  bibtex 警告（可能是部分引用未找到）:')
-        for line in result.stdout.splitlines()[-5:]:
-            print(f'      {line}')
+    subprocess.run('bibtex thesis', shell=True, cwd=latex_dir, env=env,
+                   capture_output=True, text=True)
 
-    # 第2次：把参考文献 .bbl 写入
     print('   第 2 次编译（写入参考文献）...')
-    xelatex(latex_dir)
-    h2 = toc_hash(latex_dir)
+    xelatex()
+    h2 = toc_hash()
 
-    # 第3次：修正目录/交叉引用
     print('   第 3 次编译（稳定目录）...')
-    xelatex(latex_dir)
-    h3 = toc_hash(latex_dir)
+    xelatex()
+    h3 = toc_hash()
 
-    # 若 toc 还不稳定，补第4次
     if h3 != h2:
         print('   第 4 次编译（目录稳定中）...')
-        xelatex(latex_dir)
+        xelatex()
 
-    pdf_path = latex_dir / 'thesis.pdf'
-    if pdf_path.exists():
-        size_kb = pdf_path.stat().st_size // 1024
-        print(f'\n{"="*60}')
-        print(f'✅ 完成！PDF 已生成:')
-        print(f'   {pdf_path}  ({size_kb} KB)')
+    return latex_dir / 'thesis.pdf'
 
-        # 同时把 PDF 复制到 Word 原文件同目录，文件名与 Word 相同
-        import shutil
-        word_pdf = docx_path.with_suffix('.pdf')
-        shutil.copy2(pdf_path, word_pdf)
-        print(f'   → 已复制到: {word_pdf}')
-        print(f'{"="*60}\n')
 
-        # ── Step 4: 评测 ──────────────────────────────────────────
-        print('\n【Step 4/4】运行 Rubric 评测...')
-        evaluate_script = Path(__file__).parent / 'evaluate.py'
-        if evaluate_script.exists():
-            # 直接传入本次转换生成的 json_path（避免并行时用错文件）
-            subprocess.run(
-                [sys.executable, str(evaluate_script), str(json_path), str(latex_dir)],
-                capture_output=False, text=True
-            )
-        else:
-            print('   ⚠️  evaluate.py 不存在，跳过评测')
+# ── 子命令：extract ────────────────────────────────────────────────────────────
 
-        # 打开 PDF（macOS open；Linux/Windows 跳过）
-        import platform
-        if platform.system() == 'Darwin':
-            subprocess.run(['open', str(word_pdf)], check=False)
-    else:
+def cmd_extract(args):
+    """
+    Step 1: Word → raw_xxx.json（机械提取）
+    输出骨架文本供 AI 阅读，生成 struct.json 后调用 build。
+    """
+    if not args:
+        print('用法: python3 convert.py extract <input.docx> [output_dir]')
+        sys.exit(1)
+
+    docx_path = Path(args[0]).resolve()
+    if not docx_path.exists():
+        print(f'❌ 找不到文件: {docx_path}')
+        sys.exit(1)
+
+    scripts_dir = Path(__file__).parent
+    project_root = scripts_dir.parent
+    output_dir = Path(args[1]).resolve() if len(args) >= 2 else project_root / 'output'
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f'\n{"="*60}')
+    print(f'📄 输入: {docx_path.name}')
+    print(f'📁 输出: {output_dir}')
+    print(f'{"="*60}\n')
+
+    print('【Step 1】机械提取 Word 文档...')
+    result = subprocess.run(
+        [sys.executable, str(scripts_dir / 'extract_raw.py'), str(docx_path), str(output_dir)],
+        capture_output=False
+    )
+    if result.returncode != 0:
+        print('❌ extract_raw.py 失败')
+        sys.exit(1)
+
+    # 找输出的 raw json
+    raw_files = sorted(output_dir.glob('raw_*.json'), key=lambda f: f.stat().st_mtime, reverse=True)
+    if not raw_files:
+        print('❌ 未找到 raw_*.json 输出')
+        sys.exit(1)
+    raw_path = raw_files[0]
+
+    # 打印骨架供 AI 阅读
+    print(f'\n{"="*60}')
+    print(f'✅ 提取完成: {raw_path.name}')
+    print(f'{"="*60}')
+    print('\n📋 文档骨架（供 AI 阅读，生成 struct.json）：\n')
+
+    import json
+    raw = json.loads(raw_path.read_text(encoding='utf-8'))
+    paras = raw.get('paragraphs', [])
+    skip_styles = {'toc 1', 'toc 2', 'toc 3', 'toc1', 'toc2', 'toc3', 'toc'}
+    for p in paras:
+        style = p.get('style', '').strip().lower()
+        if style in skip_styles:
+            continue
+        text = p.get('text', '').strip()
+        if not text:
+            continue
+        print(f"{p['idx']:04d} [{p.get('style', ''):18s}] {text[:70]}")
+
+    print(f'\n{"="*60}')
+    print(f'📝 下一步：AI 读取上方骨架，生成 struct.json，然后运行：')
+    print(f'   python3 convert.py build {raw_path} <struct.json> [output_latex_dir]')
+    print(f'{"="*60}\n')
+
+
+# ── 子命令：build ─────────────────────────────────────────────────────────────
+
+def cmd_build(args):
+    """
+    Step 3-6: raw_json + struct_json → parsed_json → LaTeX → PDF → 评测
+    """
+    if len(args) < 2:
+        print('用法: python3 convert.py build <raw_json> <struct_json> [latex_dir]')
+        sys.exit(1)
+
+    raw_path = Path(args[0]).resolve()
+    struct_path = Path(args[1]).resolve()
+    if not raw_path.exists():
+        print(f'❌ 找不到: {raw_path}')
+        sys.exit(1)
+    if not struct_path.exists():
+        print(f'❌ 找不到: {struct_path}')
+        sys.exit(1)
+
+    scripts_dir = Path(__file__).parent
+    project_root = scripts_dir.parent
+    output_dir = project_root / 'output'
+
+    # latex_dir 默认用 struct 文件名推断
+    stem = raw_path.stem.removeprefix('raw_')
+    latex_dir = Path(args[2]).resolve() if len(args) >= 3 else Path(f'./{stem}-thesis')
+
+    print(f'\n{"="*60}')
+    print(f'📄 raw:    {raw_path.name}')
+    print(f'📄 struct: {struct_path.name}')
+    print(f'📁 输出:   {latex_dir}')
+    print(f'{"="*60}\n')
+
+    # Step 3: build_parsed
+    print('【Step 3】组装 parsed JSON...')
+    result = subprocess.run(
+        [sys.executable, str(scripts_dir / 'build_parsed.py'),
+         str(raw_path), str(struct_path), str(output_dir)],
+        capture_output=False
+    )
+    if result.returncode != 0:
+        print('❌ build_parsed.py 失败')
+        sys.exit(1)
+
+    parsed_files = sorted(output_dir.glob('parsed_*.json'),
+                          key=lambda f: f.stat().st_mtime, reverse=True)
+    if not parsed_files:
+        print('❌ 未找到 parsed_*.json')
+        sys.exit(1)
+    parsed_path = parsed_files[0]
+    print(f'   → {parsed_path.name}')
+
+    # Step 4: render
+    print('\n【Step 4】渲染 LaTeX 项目...')
+    result = subprocess.run(
+        [sys.executable, str(scripts_dir / 'render.py'), str(parsed_path), str(latex_dir)],
+        capture_output=False
+    )
+    if result.returncode != 0:
+        print('❌ render.py 失败')
+        sys.exit(1)
+
+    # Step 4.5: 自动补全未引用文献
+    print('\n【Step 4.5】检测未引用文献并自动补全 \\cite{}...')
+    _auto_cite_missing(latex_dir)
+
+    # Step 5: 编译 PDF
+    print('\n【Step 5】编译 PDF...')
+    pdf_path = compile_pdf(latex_dir)
+
+    if not pdf_path.exists():
         print(f'\n❌ PDF 未生成，请检查 {latex_dir}/thesis.log')
         sys.exit(1)
+
+    size_kb = pdf_path.stat().st_size // 1024
+    print(f'\n{"="*60}')
+    print(f'✅ 完成！PDF 已生成: {pdf_path}  ({size_kb} KB)')
+    print(f'{"="*60}\n')
+
+    # Step 6: 评测
+    print('【Step 6】运行 Rubric 评测...')
+    evaluate_script = scripts_dir / 'evaluate.py'
+    if evaluate_script.exists():
+        subprocess.run(
+            [sys.executable, str(evaluate_script), str(parsed_path), str(latex_dir)],
+            capture_output=False
+        )
+    else:
+        print('   ⚠️  evaluate.py 不存在，跳过评测')
+
+    import platform
+    if platform.system() == 'Darwin':
+        subprocess.run(['open', str(pdf_path)], check=False)
+
+
+# ── 入口 ──────────────────────────────────────────────────────────────────────
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+
+    subcmd = sys.argv[1]
+    rest = sys.argv[2:]
+
+    if subcmd == 'extract':
+        cmd_extract(rest)
+    elif subcmd == 'build':
+        cmd_build(rest)
+    else:
+        print(f'❌ 未知子命令: {subcmd}')
+        print('可用命令: extract | build')
+        sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

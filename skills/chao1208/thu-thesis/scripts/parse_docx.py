@@ -109,6 +109,160 @@ def clean_spaced_chinese(text: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────
+# Word 图表对象（chart XML）→ matplotlib PNG 导出
+# ─────────────────────────────────────────────────────────────
+def _extract_charts_as_images(z, rid_to_chart: dict, figures_dir, rid_to_filename: dict):
+    """
+    将 Word 内嵌 chart XML 对象用 matplotlib 重绘并保存为 PNG。
+    rid_to_chart: {rId: 'chartN.xml'} 映射
+    渲染后更新 rid_to_filename: {rId: 'chartN.png'} 供后续 figure 块使用
+    """
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import matplotlib.ticker as mticker
+        import numpy as np
+        import xml.etree.ElementTree as ET
+    except ImportError:
+        print("⚠️  matplotlib 未安装，跳过图表渲染（pip install matplotlib）")
+        return
+
+    C_NS = 'http://schemas.openxmlformats.org/drawingml/2006/chart'
+    A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+
+    def _get_text(elem, ns_map):
+        """从 c:tx 或 a:t 提取文字"""
+        if elem is None:
+            return ''
+        for t in elem.iter(f'{{{A_NS}}}t'):
+            return t.text or ''
+        for t in elem.iter(f'{{{C_NS}}}v'):
+            return t.text or ''
+        return ''
+
+    def _get_num_vals(ser, tag):
+        """提取数值序列"""
+        ns = f'{{{C_NS}}}'
+        seq = ser.find(f'{ns}{tag}')
+        if seq is None:
+            return []
+        vals = []
+        for v in seq.iter(f'{ns}v'):
+            try:
+                vals.append(float(v.text))
+            except (TypeError, ValueError):
+                vals.append(0.0)
+        return vals
+
+    def _get_str_vals(ser, tag):
+        ns = f'{{{C_NS}}}'
+        seq = ser.find(f'{ns}{tag}')
+        if seq is None:
+            return []
+        return [v.text or '' for v in seq.iter(f'{ns}v')]
+
+    all_files = z.namelist()
+    for rid, chart_fname in rid_to_chart.items():
+        chart_path = f'word/charts/{chart_fname}'
+        if chart_path not in all_files:
+            continue
+        try:
+            chart_xml = z.read(chart_path)
+            root = ET.fromstring(chart_xml)
+
+            ns = f'{{{C_NS}}}'
+            plot_area = root.find(f'.//{ns}plotArea')
+            if plot_area is None:
+                continue
+
+            # 找图表类型和系列
+            chart_types = ['barChart', 'lineChart', 'pieChart', 'scatterChart',
+                           'areaChart', 'doughnutChart', 'radarChart']
+            fig, ax = plt.subplots(figsize=(8, 5))
+            plotted = False
+
+            for ct in chart_types:
+                chart_elem = plot_area.find(f'{ns}{ct}')
+                if chart_elem is None:
+                    continue
+
+                series_list = chart_elem.findall(f'{ns}ser')
+                if not series_list:
+                    continue
+
+                # 从第一个 ser 取 categories
+                cats = []
+                for ser in series_list:
+                    cats = _get_str_vals(ser, 'cat') or _get_str_vals(ser, 'xVal')
+                    if cats:
+                        break
+                x = np.arange(len(cats)) if cats else None
+
+                if ct in ('barChart', 'lineChart', 'areaChart'):
+                    bar_dir = chart_elem.findtext(f'{ns}barDir') or 'col'
+                    for si, ser in enumerate(series_list):
+                        vals = _get_num_vals(ser, 'val') or _get_num_vals(ser, 'yVal')
+                        if not vals:
+                            continue
+                        label_elem = ser.find(f'{ns}tx')
+                        label = _get_text(label_elem, {}) or f'系列{si+1}'
+                        xi = x if x is not None else np.arange(len(vals))
+                        n_ser = len(series_list)
+                        width = 0.7 / max(n_ser, 1)
+
+                        if ct == 'lineChart':
+                            ax.plot(xi, vals[:len(xi)], marker='o', label=label)
+                        elif ct == 'barChart' and bar_dir == 'bar':
+                            ax.barh(xi + si * width, vals[:len(xi)], width, label=label)
+                        else:
+                            ax.bar(xi + si * width, vals[:len(xi)], width, label=label)
+                        plotted = True
+
+                    if cats and x is not None:
+                        if chart_elem.findtext(f'{ns}barDir') == 'bar':
+                            ax.set_yticks(x + width * (len(series_list)-1)/2)
+                            ax.set_yticklabels(cats, fontproperties='Heiti SC' if plt.rcParams.get('font.family') else None)
+                        else:
+                            ax.set_xticks(x + width * (len(series_list)-1)/2)
+                            ax.set_xticklabels(cats, rotation=30, ha='right')
+
+                elif ct == 'pieChart' or ct == 'doughnutChart':
+                    ser = series_list[0]
+                    vals = _get_num_vals(ser, 'val')
+                    labels = _get_str_vals(ser, 'cat')
+                    if vals:
+                        ax.pie(vals, labels=labels or None, autopct='%1.1f%%')
+                        plotted = True
+
+                if plotted:
+                    break
+
+            if plotted:
+                # 设置中文字体（macOS）
+                try:
+                    plt.rcParams['font.family'] = ['Heiti SC', 'STHeiti', 'SimHei', 'sans-serif']
+                    plt.rcParams['axes.unicode_minus'] = False
+                except Exception:
+                    pass
+                if len(series_list) > 1:
+                    ax.legend(loc='best', fontsize=8)
+                ax.grid(True, alpha=0.3)
+                plt.tight_layout()
+                out_name = chart_fname.replace('.xml', '.png')
+                out_path = figures_dir / out_name
+                fig.savefig(str(out_path), dpi=150, bbox_inches='tight')
+                plt.close(fig)
+                rid_to_filename[rid] = out_name
+            else:
+                plt.close(fig)
+
+        except Exception as e:
+            import traceback
+            print(f"\n  ⚠️  chart {chart_fname} 渲染失败: {e}")
+
+
+# ─────────────────────────────────────────────────────────────
 # 封面信息提取
 # ─────────────────────────────────────────────────────────────
 def _extract_cover_from_tables(doc) -> dict:
@@ -619,14 +773,21 @@ def parse_body(doc) -> dict:
     def new_section(level: int, heading_text: str) -> dict:
         """创建新的二/三级节对象（加入父章节的 content）"""
         # 分离编号和标题："1.1 研究背景" → ("1.1", "研究背景")
-        m = re.match(r'^(\d+(?:\.\d+)*)\s+(.+)$', heading_text.strip())
+        # 同时兼容无空格格式："3.1信托行业..." → ("3.1", "信托行业...")
+        m = re.match(r'^(\d+(?:\.\d+)*)\s*(.+)$', heading_text.strip())
         if m:
             number = m.group(1)
-            title = m.group(2).strip()
+            title_raw = m.group(2).strip()
+            # 按编号中点的数量推断实际层级（1.1→2级, 1.1.1→3级, 1.1.1.1→4级）
+            dot_count = number.count('.')
+            inferred_level = dot_count + 1   # 1个点→2级, 2个点→3级
+            inferred_level = max(2, min(4, inferred_level))  # 限制在 2-4 级
+            if inferred_level != level:
+                level = inferred_level
         else:
             number = ""
-            title = heading_text.strip()
-        return {"type": "section", "level": level, "number": number, "title": title}
+            title_raw = heading_text.strip()
+        return {"type": "section", "level": level, "number": number, "title": title_raw}
 
     special_text_buffers = {
         "acknowledgements": [],
@@ -648,23 +809,31 @@ def parse_body(doc) -> dict:
 
             # ── 检测图片段落 ──
             blip_elems = p._element.findall('.//' + qn('a:blip'))
-            if blip_elems and state == "chapter" and current_section_content is not None:
-                # 提取 rId（embed 属性）
+            # ★ 也检测 chart 对象（c:chart 元素，rId 在 r:id 属性）
+            C_CHART_NS = 'http://schemas.openxmlformats.org/drawingml/2006/chart'
+            chart_elems = p._element.findall(f'.//{{{C_CHART_NS}}}chart')
+
+            has_image = bool(blip_elems) or bool(chart_elems)
+            if has_image and state == "chapter" and current_section_content is not None:
                 embed_ids = []
+                # 普通嵌入图片
                 for blip in blip_elems:
                     embed = blip.get(qn('r:embed'), '')
                     if embed:
                         embed_ids.append(embed)
+                # chart 对象：r:id 属性
+                for ce in chart_elems:
+                    rid_attr = ce.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id', '')
+                    if rid_attr:
+                        embed_ids.append(rid_attr)
                 if embed_ids:
-                    # caption 从 _figure_captions 里查（由 parse_docx 在解析后填充）
-                    # 这里先放 embed，caption 在后期填充
                     for embed_id in embed_ids:
                         current_section_content.append({
                             'type': 'figure',
                             'embed': embed_id,
                             'caption': '',  # 后期由 parse_docx 填充
                         })
-                continue  # 图片段落不再当文本处理
+                continue  # 图片/图表段落不再当文本处理
 
             # Heading 1：判断是特殊章节还是正文章节
             if style == "Heading 1" and txt:
@@ -898,10 +1067,16 @@ def parse_docx(input_path: str, output_dir: str = "output") -> dict:
     # ── 提取图片文件及 caption 映射 ──
     print("正在提取图片...", end=" ", flush=True)
     figures_dir = Path(output_dir) / 'figures'
+    # ★ 清空旧文件，避免跨论文污染
+    if figures_dir.exists():
+        import shutil as _shutil_pre
+        _shutil_pre.rmtree(str(figures_dir))
     figures_dir.mkdir(parents=True, exist_ok=True)
 
     # 建立 rId → 图片文件名映射（从 document.xml.rels 中读取）
     rid_to_filename: dict[str, str] = {}
+    # chart rId → chart文件名 映射（chart对象单独处理）
+    rid_to_chart: dict[str, str] = {}
     extract_tmp = Path(tempfile.mkdtemp())
     try:
         with zipfile.ZipFile(str(input_path), 'r') as z:
@@ -919,6 +1094,9 @@ def parse_docx(input_path: str, output_dir: str = "output") -> dict:
                     if 'image' in rtype.lower() and target:
                         fname = Path(target).name
                         rid_to_filename[rid] = fname
+                    elif 'chart' in rtype.lower() and target:
+                        # chart 对象：记录 chart 文件名
+                        rid_to_chart[rid] = Path(target).name
 
             # 提取图片文件
             for name in z.namelist():
@@ -926,26 +1104,49 @@ def parse_docx(input_path: str, output_dir: str = "output") -> dict:
                     fname = Path(name).name
                     data_bytes = z.read(name)
                     (figures_dir / fname).write_bytes(data_bytes)
+
+            # ★ 提取 chart 对象：用 matplotlib 重绘
+            if rid_to_chart:
+                _extract_charts_as_images(z, rid_to_chart, figures_dir, rid_to_filename)
     finally:
         import shutil as _shutil
         _shutil.rmtree(str(extract_tmp), ignore_errors=True)
 
-    img_count = len(list(figures_dir.iterdir()))
-    print(f"完成（{img_count} 张图片 → {figures_dir}）")
+    img_count = len([f for f in figures_dir.iterdir() if f.suffix.lower() in ('.png','.jpg','.jpeg','.svg','.emf','.wmf')])
+    chart_count = len(rid_to_chart)
+    if img_count == 0 and chart_count == 0:
+        print(f"完成（无嵌入图片）")
+    elif chart_count > 0:
+        print(f"完成（{img_count} 张图片 + {chart_count} 个图表对象 → {figures_dir}）")
+    else:
+        print(f"完成（{img_count} 张图片 → {figures_dir}）")
 
-    # ── 建立图片 rId → {filename, caption} 映射 ──
-    # 遍历 doc.paragraphs，找含 a:blip 的段落，按规则提取 caption
+    # ── 建立图片/图表 rId → {filename, caption} 映射 ──
+    # 遍历 doc.paragraphs，找含 a:blip（图片）或 c:chart（图表对象）的段落
     figures_map: dict[str, dict] = {}
     all_paras = doc.paragraphs
     para_count = len(all_paras)
+    C_CHART_NS = 'http://schemas.openxmlformats.org/drawingml/2006/chart'
+    R_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+
     for idx, p in enumerate(all_paras):
         blip_elems = p._element.findall('.//' + qn('a:blip'))
-        if not blip_elems:
+        chart_elems = p._element.findall(f'.//{{{C_CHART_NS}}}chart')
+        if not blip_elems and not chart_elems:
             continue
+
+        # 收集所有 embed_ids（图片用 r:embed，图表用 r:id）
+        embed_ids = []
         for blip in blip_elems:
             embed = blip.get(qn('r:embed'), '')
-            if not embed:
-                continue
+            if embed:
+                embed_ids.append(embed)
+        for ce in chart_elems:
+            rid = ce.get(f'{{{R_NS}}}id', '')
+            if rid:
+                embed_ids.append(rid)
+
+        for embed in embed_ids:
             filename = rid_to_filename.get(embed, '')
             caption = ''
 
@@ -990,6 +1191,11 @@ def parse_docx(input_path: str, output_dir: str = "output") -> dict:
                 if embed in figures_map:
                     if not item.get('caption'):
                         item['caption'] = figures_map[embed].get('caption', '')
+                    # ★ 回填 path（render.py 需要 path 字段来生成 \includegraphics）
+                    if not item.get('path'):
+                        fname = figures_map[embed].get('filename', '')
+                        if fname:
+                            item['path'] = f'figures/{fname}'
 
     # ── 组装最终结果 ──
     result = {

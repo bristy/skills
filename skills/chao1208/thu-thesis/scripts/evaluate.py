@@ -206,6 +206,92 @@ def check_section_headings(data, latex_dir):
     return 'PASS', f'存在 {count} 个三级节标题（Heading 3）'
 
 
+def _strip_section_number(title: str) -> str:
+    """剔除标题前的章节编号前缀（与 render.py 保持一致）"""
+    if not title:
+        return title
+    import re
+    m = re.match(r'^(\d+(?:\.\d+)*)\s*(?=[^\d\s.])', title)
+    if m:
+        return title[m.end():]
+    return title
+
+
+def check_toc_structure(data, latex_dir):
+    """B5: 目录（TOC）与 JSON 解析结构一致性
+
+    检查两点：
+    1. JSON 解析到的章数与 LaTeX 目录中 chapter 行数一致
+    2. JSON 中 section 标题（剔除编号后）能在 .toc 文件中找到匹配项
+    """
+    import re as _re
+
+    toc_file = latex_dir / 'thesis.toc'
+    if not toc_file.exists():
+        return 'WARN', 'thesis.toc 不存在，请先编译生成 PDF'
+
+    toc_text = toc_file.read_text(encoding='utf-8', errors='ignore')
+
+    # 从 toc 中提取所有 chapter/section/subsection 标题
+    toc_chapters = _re.findall(r'\\contentsline\s*\{chapter\}\{\\numberline[^}]*\}(.*?)\{', toc_text)
+    # 清理 LaTeX 命令，提取纯文本（去掉 \numberline{...} 等）
+    def clean_toc_title(s):
+        s = _re.sub(r'\\[a-zA-Z]+(\{[^}]*\})?', '', s)
+        s = _re.sub(r'\s+', '', s)
+        return s.strip('{}% \t')
+
+    toc_chapter_texts = [clean_toc_title(t) for t in toc_chapters]
+
+    # JSON 章节
+    json_chapters = data.get('chapters', [])
+    # 过滤掉非正文章节（指导教师评语等）
+    _skip = re.compile(r'指导教师|学术评语|答辩|声明|致谢|简历|评阅')
+    real_chapters = [ch for ch in json_chapters if not _skip.search(ch.get('title', ''))]
+
+    issues = []
+
+    # 1. 章数对比（只比较正文章节）
+    toc_real = [t for t in toc_chapter_texts if t and not _skip.search(t)]
+    if len(real_chapters) != len(toc_real):
+        issues.append(f'章数不一致：JSON={len(real_chapters)}章 vs TOC={len(toc_real)}章')
+
+    # 2. 检查 section 标题是否含有残留原始编号（形如 "1.1 3.1信托..."）
+    double_num_count = 0
+    double_num_examples = []
+    toc_sections = _re.findall(r'\\contentsline\s*\{section\}\{\\numberline\{[^}]+\}([^}]+)\}', toc_text)
+    for s in toc_sections:
+        cleaned = s.strip()
+        # 如果节标题开头是数字+点，说明残留了原始编号
+        if _re.match(r'^\d+\.\d*', cleaned):
+            double_num_count += 1
+            if len(double_num_examples) < 3:
+                double_num_examples.append(cleaned[:30])
+
+    if double_num_count:
+        issues.append(f'{double_num_count}个section标题含残留原始编号（如：{"; ".join(double_num_examples)}）—— render后应重新编译')
+
+    # 3. 检查 subsection 过多扁平化（所有 subsection 都挂在同一 section 下）
+    # 通过统计每个 chapter 下的 section 数来判断
+    # 排除内容块极少的短章节（结论、绪论等可能确实没有子节）
+    section_counts = []
+    for ch in real_chapters:
+        content = ch.get('content', [])
+        content_blocks = sum(1 for item in content if item.get('type') in ('text', 'table', 'figure'))
+        sec_count = sum(1 for item in content
+                        if item.get('type') in ('section', 'heading') and item.get('level') == 2)
+        # 只检查内容丰富的章节（>5个内容块），短章节（结论等）排除
+        if content_blocks > 5:
+            section_counts.append((ch.get('title', '')[:15], sec_count))
+    flat_chapters = [(t, n) for t, n in section_counts if n <= 1]
+    if flat_chapters and len(flat_chapters) >= max(1, len(section_counts) // 2):
+        examples = ', '.join(f'"{t}"({n}个section)' for t, n in flat_chapters[:3])
+        issues.append(f'多个章节缺少 section 层级（可能层级扁平化）：{examples}')
+
+    if issues:
+        return 'WARN', '；'.join(issues)
+    return 'PASS', f'{len(real_chapters)}章结构与TOC一致，section编号无残留'
+
+
 def check_references(data, latex_dir):
     """C1: 参考文献列表不为空"""
     refs = data.get('references', [])
@@ -672,6 +758,7 @@ RUBRICS = [
     ('B2',  'B.内容-正文',  1, '章节.tex文件',       check_chapter_tex),
     ('B3',  'B.内容-正文',  1, '正文文字总量',       check_text_content),
     ('B4',  'B.内容-正文',  2, '节级标题存在',       check_section_headings),
+    ('B5',  'B.内容-正文',  2, '目录结构一致性',     check_toc_structure),
     ('C1',  'C.参考文献',   1, '参考文献列表',       check_references),
     ('C2',  'C.参考文献',   1, 'refs.bib 生成',      check_refs_bib),
     ('C3',  'C.参考文献',   1, 'BibTeX字段完整性',   check_refs_author_title),
