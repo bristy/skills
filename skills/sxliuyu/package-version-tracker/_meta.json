@@ -1,0 +1,11 @@
+{
+  "owner": "sxliuyu",
+  "slug": "package-version-tracker",
+  "displayName": "Package Version Tracker",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773660418399,
+    "commit": null
+  },
+  "history": []
+}
