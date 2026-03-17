@@ -6,18 +6,15 @@ This module is intentionally self-contained:
 - Runtime defaults are defined in-code (no environment reads).
 """
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import json
 import os
-import re
 import uuid
 from pathlib import Path
 from urllib import error as urllib_error
 from urllib import request as urllib_request
-from typing import Any
+from typing import Dict, Any, Optional
 
 # █████████████████████████████████████████████████████████████████████████
 # ██                                                                  ██
@@ -68,14 +65,40 @@ if not EM_API_KEY:
 """
     )
 
-DEFAULT_OUTPUT_DIR = Path("workspace") / "MX_FinSearch"
+DEFAULT_OUTPUT_DIR = Path.cwd() / "miaoxiang" / "MX_FinSearch"
+
+print('默认输出目录为：',DEFAULT_OUTPUT_DIR.absolute())
 TIMEOUT_SECONDS = 15
+# MCP 服务器地址
 MCP_URL = "https://ai-saas.eastmoney.com/proxy/b/mcp/tool/searchNews"
 
+def get_metadata(
+        query: str = "",
+        selectType: str = "",
+) -> dict:
+    """
+    生成 MCP 调用所需的 metadata 字典。
+    自动补充 callId，并将 EM_API_KEY 注入 userInfo。
+    返回值可直接作为请求体中的上下文字段使用。
+    """
 
+    return {
+        "query": query,
+        "selectType": selectType,
+        "toolContext": {
+            "callId": str(uuid.uuid4()),
+            "userInfo": {
+                "userId": EM_API_KEY,
+            },
+        },
+    }
 
-def _extract_content(raw: dict[str, Any]) -> str:
-    """Extract readable text from news API response payload."""
+def _extract_content(raw: Dict[str, Any]) -> str:
+    """
+    从新闻接口返回数据中提取可读文本内容。
+    优先读取常见文本字段，兼容 data/result 包裹结构。
+    当文本字段缺失时，回退为格式化后的 JSON 字符串。
+    """
     if not isinstance(raw, dict):
         return ""
 
@@ -97,19 +120,21 @@ def _extract_content(raw: dict[str, Any]) -> str:
     return json.dumps(raw, ensure_ascii=False, indent=2)
 
 
-def _load_optional_tool_context() -> dict[str, Any]:
+def _load_optional_tool_context() -> Dict[str, Any]:
     """
-    Build request context with safe defaults.
-
-    Note:
-    - No environment variables are read in this module.
-    - callId is generated for traceability.
+    构造请求所需的 toolContext 默认值。
+    目前仅生成可追踪的 callId 字段。
+    返回结果用于下游接口请求的上下文字段。
     """
     return {"callId": f"call_{uuid.uuid4().hex[:12]}"}
 
 
 def _extract_error_message(body: str) -> str:
-    """Return sanitized error details from response body."""
+    """
+    从错误响应体中提取可展示的错误信息。
+    优先读取 msg/message/error 字段，失败时截断原文。
+    用于统一构造上层异常提示内容。
+    """
     body = (body or "").strip()
     if not body:
         return ""
@@ -125,8 +150,12 @@ def _extract_error_message(body: str) -> str:
     return body[:200]
 
 
-def _http_call_search_news(query: str) -> dict[str, Any]:
-    """Call `searchNews` API and return parsed JSON payload."""
+def _http_call_search_news(query: str) -> Dict[str, Any]:
+    """
+    调用 searchNews 接口并返回解析后的 JSON 数据。
+    负责构建请求头、超时控制和 HTTP 异常处理。
+    若响应不是字典结构，会自动包装为 {"data": ...}。
+    """
     api_key = EM_API_KEY.strip()
     if not api_key:
         raise ValueError("EM_API_KEY is required.")
@@ -171,14 +200,13 @@ def _http_call_search_news(query: str) -> dict[str, Any]:
 
 async def query_financial_news(
     query: str,
-    output_dir: Path | None = None,
+    output_dir: Optional[Path] = None,
     save_to_file: bool = True,
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
-    Query time-sensitive financial information from MCP news search.
-
-    Returns:
-        dict with keys: query, content, output_path, raw, error(optional)
+    按自然语言查询金融资讯并整理统一结果结构。
+    内部异步执行 HTTP 请求，提取文本内容并按需落盘。
+    返回 query/content/raw/output_path，异常时附带 error。
     """
     query = (query or "").strip()
     if not query:
@@ -193,9 +221,10 @@ async def query_financial_news(
     out_dir = Path(output_dir or DEFAULT_OUTPUT_DIR)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    result: dict[str, Any] = {"query": query, "content": "", "output_path": None, "raw": None}
+    result: Dict[str, Any] = {"query": query, "content": "", "output_path": None, "raw": None}
     try:
-        raw = await asyncio.to_thread(_http_call_search_news, query)
+        loop = asyncio.get_event_loop()
+        raw = await loop.run_in_executor(None, _http_call_search_news, query)
     except Exception as exc:
         result["error"] = str(exc)
         return result
@@ -214,6 +243,11 @@ async def query_financial_news(
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
+    """
+    构建命令行参数解析器。
+    支持位置参数 query 与 --no-save 开关。
+    返回配置完成的 ArgumentParser 实例。
+    """
     parser = argparse.ArgumentParser(
         description="Query financial news/reports by natural language and optionally save output."
     )
@@ -223,6 +257,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 
 def run_cli() -> None:
+    """
+    CLI 入口函数。
+    解析命令行或标准输入中的查询文本并执行异步检索。
+    根据执行结果输出内容、保存路径或错误信息。
+    """
     parser = _build_arg_parser()
     args = parser.parse_args()
 
@@ -245,7 +284,12 @@ def run_cli() -> None:
             print(f"Saved: {result['output_path']}")
         print(result.get("content", ""))
 
-    asyncio.run(_main())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(_main())
+    finally:
+        loop.close()
 
 
 if __name__ == "__main__":

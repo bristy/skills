@@ -1,6 +1,6 @@
 ---
 name: MX_FinSearch
-description: 通过自然语言检索时效性金融资讯（新闻、公告、研报），提取正文并可保存为本地文本文件。调用前需配置 EM_API_KEY。
+description: 支持自然语言检索全网实时金融信息，依托东方财富专业数据库，含证监会指定公告、券商研报、权威财经新闻、交易所实时动态及官方政策等高质信源，覆盖全球市场标的，可用于热点捕捉、舆情监控、研报速览、公告精读及投资决策等场景，助力高效获取权威金融资讯，掌握全市场信息先机。
 metadata:
   {
     "openclaw": {
@@ -19,6 +19,13 @@ metadata:
 - **公司公告与事件跟踪**
 - **券商研报与市场解读**
 - **宏观事件对市场/板块影响分析**
+
+## 密钥来源与安全说明
+
+- 本技能仅使用一个环境变量：`EM_API_KEY`。
+- `EM_API_KEY` 由东方财富妙想服务（`https://ai.eastmoney.com/mxClaw`）签发，用于其接口鉴权。
+- 在提供密钥前，请先确认密钥来源、可用范围、有效期及是否支持重置/撤销。
+- 禁止在代码、提示词、日志或输出文件中硬编码/明文暴露密钥。
 
 ## 功能范围
 
@@ -44,26 +51,34 @@ metadata:
 
 ## 前提条件
 
-### 配置 API Key（必填）
-需用户自行从官网获取API Key进行配置
+### 1. 注册东方财富妙想账号
+
+访问 https://ai.eastmoney.com/mxClaw 注册账号并获取API_KEY。
+
+### 2. 配置 Token
+
+```bash
+# 添加到 ~/.zshrc
+export EM_API_KEY="your_api_key_here"
+```
+
+然后执行：
+```bash
+source ~/.zshrc
+```
 
 ## 快速开始
 
 ### 1. 命令行调用
 
 ```bash
-python3 -m scripts.get_data "寒武纪 688256 最新研报与公告"
+python3 -m {baseDir}/scripts/get_data.py "寒武纪 688256 最新研报与公告"
 ```
 
-或通过标准输入：
-
-```bash
-echo "A股 汇率风险 自然对冲 公司" | python3 -m scripts.get_data
-```
 
 **输出示例**
 ```text
-Saved: /path/to/.openclaw/workspace/financial_search/financial_search_A股_汇率风险_自然对冲_公司.txt
+Saved: /path/to/workspace/MX_FinSearch/financial_search_90bf169c.txt
 （随后输出资讯正文内容）
 ```
 
@@ -84,7 +99,7 @@ from scripts.get_data import query_financial_news
 async def main():
     result = await query_financial_news(
         query="新能源板块近期政策与龙头公司动态",
-        output_dir=Path(".openclaw/workspace/financial_search"),
+        output_dir=Path("workspace/financial_search"),
         save_to_file=True,
     )
     if "error" in result:
@@ -101,7 +116,7 @@ asyncio.run(main())
 
 | 文件 | 说明 |
 |---|---|
-| `financial_search_<查询摘要>.txt` | 资讯正文文本（从返回中提取） |
+| `financial_search_<ID>.txt` | 资讯正文文本（从返回中提取） |
 
 ## 返回字段说明
 
