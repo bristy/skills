@@ -3,9 +3,15 @@
   "slug": "unit-converter",
   "displayName": "Unit Converter",
   "latest": {
-    "version": "2.3.0",
-    "publishedAt": 1773446975086,
-    "commit": "https://github.com/openclaw/skills/commit/504d3b8779b616708ff36bdddf7b17f587002ab4"
+    "version": "2.3.5",
+    "publishedAt": 1773667203130,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.3.0",
+      "publishedAt": 1773446975086,
+      "commit": "https://github.com/openclaw/skills/commit/504d3b8779b616708ff36bdddf7b17f587002ab4"
+    }
+  ]
 }
