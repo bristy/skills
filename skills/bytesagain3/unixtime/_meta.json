@@ -3,11 +3,16 @@
   "slug": "unixtime",
   "displayName": "Unixtime",
   "latest": {
-    "version": "1.0.4",
-    "publishedAt": 1773614953882,
-    "commit": "https://github.com/openclaw/skills/commit/cd58f6725336a0697fd73f82591d4304c0ae80a4"
+    "version": "1.0.6",
+    "publishedAt": 1773664262985,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.4",
+      "publishedAt": 1773614953882,
+      "commit": "https://github.com/openclaw/skills/commit/cd58f6725336a0697fd73f82591d4304c0ae80a4"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1773579955006,

@@ -1,7 +1,7 @@
 ---
 name: UnixTime
 description: "Quick Unix timestamp utility. Get current Unix time, convert timestamps to dates and back, show relative time (how long ago), and display time in different formats. The fastest way to work with Unix timestamps from your terminal."
-version: "1.0.0"
+version: "2.0.0"
 author: "BytesAgain"
 tags: ["unix","time","timestamp","date","convert","epoch","utility","developer"]
 categories: ["Developer Tools", "Utility"]

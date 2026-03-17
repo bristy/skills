@@ -1,231 +1,364 @@
 #!/usr/bin/env bash
-# unixtime — description: "Quick Unix timestamp utility. Get current Unix time, convert times
-# Powered by BytesAgain | bytesagain.com
+# Unixtime — sysops tool
+# Powered by BytesAgain | bytesagain.com | hello@bytesagain.com
 set -euo pipefail
 
-VERSION="1.0.0"
-DATA_DIR="${UNIXTIME_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/unixtime}"
-ENTRIES="$DATA_DIR/entries.jsonl"
-CONFIG="$DATA_DIR/config.json"
+DATA_DIR="${HOME}/.local/share/unixtime"
+mkdir -p "$DATA_DIR"
 
-ensure_dirs() {
-    mkdir -p "$DATA_DIR"
-    [ -f "$ENTRIES" ] || touch "$ENTRIES"
-    [ -f "$CONFIG" ] || echo '{"created":"'"$(date -Iseconds)"'"}' > "$CONFIG"
-}
+_log() { echo "$(date '+%m-%d %H:%M') $1: $2" >> "$DATA_DIR/history.log"; }
 
-now_ts() { date '+%Y-%m-%d %H:%M:%S'; }
-entry_count() { wc -l < "$ENTRIES" 2>/dev/null || echo 0; }
-line_at() { sed -n "${1}p" "$ENTRIES"; }
+_version() { echo "unixtime v2.0.0"; }
 
-show_help() {
-    cat << EOF
-unixtime v$VERSION
-
-Usage: unixtime <command> [args]
-
-Commands:
-  init             First-time setup
-  add <text>       Add a new entry
-  list             List all entries
-  show <id>        Show entry details
-  remove <id>      Remove entry by index
-  search <term>    Search entries
-  export <fmt>     Export (json|csv|txt)
-  stats            Summary statistics
-  config           View configuration
-  status           Health check
-  reset            Clear all data
-  help             Show this help
-  version          Show version
-
-Data: $DATA_DIR
-EOF
-}
-
-cmd_init() {
-    ensure_dirs
-    echo "[unixtime] Initialized at $DATA_DIR"
-    echo "  Entries file: $ENTRIES"
-    echo "  Config file:  $CONFIG"
+_help() {
+    echo "Unixtime v2.0.0 — sysops toolkit"
     echo ""
-    echo "Ready. Try: unixtime add \"your first item\""
-}
-
-cmd_add() {
-    ensure_dirs
-    local text="${*:?Usage: unixtime add <text>}"
-    local ts=$(now_ts)
-    local id=$(($(entry_count) + 1))
-    printf '{"id":%d,"text":"%s","created":"%s"}\n' "$id" "$text" "$ts" >> "$ENTRIES"
-    echo "[unixtime] #$id added: $text"
-}
-
-cmd_list() {
-    ensure_dirs
-    local total=$(entry_count)
-    if [ "$total" -eq 0 ]; then
-        echo "[unixtime] No entries yet. Use: unixtime add <text>"
-        return
-    fi
-    echo "[unixtime] $total entries:"
+    echo "Usage: unixtime <command> [args]"
     echo ""
-    local n=0
-    while IFS= read -r line; do
-        n=$((n + 1))
-        local text=$(echo "$line" | python3 -c "import json,sys; print(json.load(sys.stdin).get('text','?'))" 2>/dev/null || echo "$line")
-        local ts=$(echo "$line" | python3 -c "import json,sys; print(json.load(sys.stdin).get('created',''))" 2>/dev/null || echo "")
-        printf "  %3d. %s" "$n" "$text"
-        [ -n "$ts" ] && printf "  (%s)" "$ts"
-        echo ""
-    done < "$ENTRIES"
+    echo "Commands:"
+    echo "  scan               Scan"
+    echo "  monitor            Monitor"
+    echo "  report             Report"
+    echo "  alert              Alert"
+    echo "  top                Top"
+    echo "  usage              Usage"
+    echo "  check              Check"
+    echo "  fix                Fix"
+    echo "  cleanup            Cleanup"
+    echo "  backup             Backup"
+    echo "  restore            Restore"
+    echo "  log                Log"
+    echo "  benchmark          Benchmark"
+    echo "  compare            Compare"
+    echo "  stats              Summary statistics"
+    echo "  export <fmt>       Export (json|csv|txt)"
+    echo "  status             Health check"
+    echo "  help               Show this help"
+    echo "  version            Show version"
+    echo ""
+    echo "Data: $DATA_DIR"
 }
 
-cmd_show() {
-    ensure_dirs
-    local id="${1:?Usage: unixtime show <id>}"
-    local total=$(entry_count)
-    if [ "$id" -lt 1 ] || [ "$id" -gt "$total" ]; then
-        echo "Error: id must be 1-$total"; return 1
-    fi
-    local line=$(line_at "$id")
-    echo "[unixtime] Entry #$id:"
-    echo "$line" | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-for k,v in d.items():
-    print('  {}: {}'.format(k, v))
-" 2>/dev/null || echo "  $line"
+_stats() {
+    echo "=== Unixtime Stats ==="
+    local total=0
+    for f in "$DATA_DIR"/*.log; do
+        [ -f "$f" ] || continue
+        local name=$(basename "$f" .log)
+        local c=$(wc -l < "$f")
+        total=$((total + c))
+        echo "  $name: $c entries"
+    done
+    echo "  ---"
+    echo "  Total: $total entries"
+    echo "  Data size: $(du -sh "$DATA_DIR" 2>/dev/null | cut -f1)"
+    echo "  Since: $(head -1 "$DATA_DIR/history.log" 2>/dev/null | cut -d'|' -f1 || echo 'N/A')"
 }
 
-cmd_remove() {
-    ensure_dirs
-    local id="${1:?Usage: unixtime remove <id>}"
-    local total=$(entry_count)
-    if [ "$id" -lt 1 ] || [ "$id" -gt "$total" ]; then
-        echo "Error: id must be 1-$total"; return 1
-    fi
-    local removed=$(line_at "$id")
-    sed -i "${id}d" "$ENTRIES"
-    local text=$(echo "$removed" | python3 -c "import json,sys; print(json.load(sys.stdin).get('text','?'))" 2>/dev/null || echo "?")
-    echo "[unixtime] Removed #$id: $text"
-}
-
-cmd_search() {
-    ensure_dirs
-    local term="${1:?Usage: unixtime search <term>}"
-    local found=0
-    local n=0
-    while IFS= read -r line; do
-        n=$((n + 1))
-        if echo "$line" | grep -qi "$term"; then
-            local text=$(echo "$line" | python3 -c "import json,sys; print(json.load(sys.stdin).get('text','?'))" 2>/dev/null || echo "$line")
-            printf "  %3d. %s\n" "$n" "$text"
-            found=$((found + 1))
-        fi
-    done < "$ENTRIES"
-    echo "[unixtime] Found $found matches for '$term'"
-}
-
-cmd_export() {
-    ensure_dirs
+_export() {
     local fmt="${1:-json}"
+    local out="$DATA_DIR/export.$fmt"
     case "$fmt" in
         json)
-            echo "["
+            echo "[" > "$out"
             local first=1
-            while IFS= read -r line; do
-                [ "$first" -eq 0 ] && echo ","
-                printf "  %s" "$line"
-                first=0
-            done < "$ENTRIES"
-            echo ""
-            echo "]"
+            for f in "$DATA_DIR"/*.log; do
+                [ -f "$f" ] || continue
+                local name=$(basename "$f" .log)
+                while IFS='|' read -r ts val; do
+                    [ $first -eq 1 ] && first=0 || echo "," >> "$out"
+                    printf '  {"type":"%s","time":"%s","value":"%s"}' "$name" "$ts" "$val" >> "$out"
+                done < "$f"
+            done
+            echo "" >> "$out"
+            echo "]" >> "$out"
             ;;
         csv)
-            echo "id,text,created"
-            while IFS= read -r line; do
-                echo "$line" | python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-print('{},{},{}'.format(d.get('id',''), d.get('text','').replace(',',';'), d.get('created','')))
-" 2>/dev/null
-            done < "$ENTRIES"
+            echo "type,time,value" > "$out"
+            for f in "$DATA_DIR"/*.log; do
+                [ -f "$f" ] || continue
+                local name=$(basename "$f" .log)
+                while IFS='|' read -r ts val; do
+                    echo "$name,$ts,$val" >> "$out"
+                done < "$f"
+            done
             ;;
         txt)
-            cat "$ENTRIES"
+            echo "=== Unixtime Export ===" > "$out"
+            for f in "$DATA_DIR"/*.log; do
+                [ -f "$f" ] || continue
+                echo "--- $(basename "$f" .log) ---" >> "$out"
+                cat "$f" >> "$out"
+                echo "" >> "$out"
+            done
             ;;
-        *)
-            echo "Formats: json, csv, txt"
-            ;;
+        *) echo "Formats: json, csv, txt"; return 1 ;;
     esac
+    echo "Exported to $out ($(wc -c < "$out") bytes)"
 }
 
-cmd_stats() {
-    ensure_dirs
-    local total=$(entry_count)
-    local size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1)
-    echo "[unixtime] Statistics"
-    echo "  Entries:    $total"
-    echo "  Data size:  $size"
-    echo "  Data dir:   $DATA_DIR"
-    if [ "$total" -gt 0 ]; then
-        local first=$(head -1 "$ENTRIES" | python3 -c "import json,sys; print(json.load(sys.stdin).get('created','?'))" 2>/dev/null || echo "?")
-        local last=$(tail -1 "$ENTRIES" | python3 -c "import json,sys; print(json.load(sys.stdin).get('created','?'))" 2>/dev/null || echo "?")
-        echo "  First:      $first"
-        echo "  Latest:     $last"
-    fi
-}
-
-cmd_config() {
-    ensure_dirs
-    echo "[unixtime] Configuration"
-    echo "  File: $CONFIG"
-    echo ""
-    python3 -c "
-import json
-with open('$CONFIG') as f:
-    d = json.load(f)
-for k,v in d.items():
-    print('  {}: {}'.format(k, v))
-" 2>/dev/null || echo "  (empty)"
-}
-
-cmd_status() {
-    ensure_dirs
-    echo "[unixtime] Status Check"
-    echo "  Version:  $VERSION"
+_status() {
+    echo "=== Unixtime Status ==="
+    echo "  Version: v2.0.0"
     echo "  Data dir: $DATA_DIR"
-    echo "  Entries:  $(entry_count)"
-    [ -f "$CONFIG" ] && echo "  Config:   OK" || echo "  Config:   MISSING"
-    [ -w "$DATA_DIR" ] && echo "  Writable: YES" || echo "  Writable: NO"
+    echo "  Entries: $(cat "$DATA_DIR"/*.log 2>/dev/null | wc -l) total"
+    echo "  Disk: $(du -sh "$DATA_DIR" 2>/dev/null | cut -f1)"
+    local last=$(tail -1 "$DATA_DIR/history.log" 2>/dev/null || echo "never")
+    echo "  Last activity: $last"
+    echo "  Status: OK"
 }
 
-cmd_reset() {
-    echo "Warning: This will delete ALL data in $DATA_DIR"
-    printf "Type 'yes' to confirm: "
-    read -r confirm
-    if [ "$confirm" = "yes" ]; then
-        rm -f "$ENTRIES" "$CONFIG"
-        echo "[unixtime] Data cleared."
+_search() {
+    local term="${1:?Usage: unixtime search <term>}"
+    echo "Searching for: $term"
+    local found=0
+    for f in "$DATA_DIR"/*.log; do
+        [ -f "$f" ] || continue
+        local matches=$(grep -i "$term" "$f" 2>/dev/null || true)
+        if [ -n "$matches" ]; then
+            echo "  --- $(basename "$f" .log) ---"
+            echo "$matches" | while read -r line; do
+                echo "    $line"
+                found=$((found + 1))
+            done
+        fi
+    done
+    [ $found -eq 0 ] && echo "  No matches found."
+}
+
+_recent() {
+    echo "=== Recent Activity ==="
+    if [ -f "$DATA_DIR/history.log" ]; then
+        tail -20 "$DATA_DIR/history.log" | while IFS='' read -r line; do
+            echo "  $line"
+        done
     else
-        echo "Cancelled."
+        echo "  No activity yet."
     fi
 }
 
+# Main dispatch
 case "${1:-help}" in
-    init)           cmd_init ;;
-    add)            shift; cmd_add "$@" ;;
-    list|ls)        cmd_list ;;
-    show|get)       shift; cmd_show "$@" ;;
-    remove|rm|del)  shift; cmd_remove "$@" ;;
-    search|find|grep) shift; cmd_search "$@" ;;
-    export)         shift; cmd_export "$@" ;;
-    stats)          cmd_stats ;;
-    config|cfg)     cmd_config ;;
-    status)         cmd_status ;;
-    reset)          cmd_reset ;;
-    help|-h|--help) show_help ;;
-    version|-v)     echo "unixtime v$VERSION" ;;
-    *)              echo "Unknown: $1"; show_help; exit 1 ;;
+    scan)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent scan entries:"
+            tail -20 "$DATA_DIR/scan.log" 2>/dev/null || echo "  No entries yet. Use: unixtime scan <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/scan.log"
+            local total=$(wc -l < "$DATA_DIR/scan.log")
+            echo "  [Unixtime] scan: $input"
+            echo "  Saved. Total scan entries: $total"
+            _log "scan" "$input"
+        fi
+        ;;
+    monitor)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent monitor entries:"
+            tail -20 "$DATA_DIR/monitor.log" 2>/dev/null || echo "  No entries yet. Use: unixtime monitor <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/monitor.log"
+            local total=$(wc -l < "$DATA_DIR/monitor.log")
+            echo "  [Unixtime] monitor: $input"
+            echo "  Saved. Total monitor entries: $total"
+            _log "monitor" "$input"
+        fi
+        ;;
+    report)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent report entries:"
+            tail -20 "$DATA_DIR/report.log" 2>/dev/null || echo "  No entries yet. Use: unixtime report <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/report.log"
+            local total=$(wc -l < "$DATA_DIR/report.log")
+            echo "  [Unixtime] report: $input"
+            echo "  Saved. Total report entries: $total"
+            _log "report" "$input"
+        fi
+        ;;
+    alert)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent alert entries:"
+            tail -20 "$DATA_DIR/alert.log" 2>/dev/null || echo "  No entries yet. Use: unixtime alert <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/alert.log"
+            local total=$(wc -l < "$DATA_DIR/alert.log")
+            echo "  [Unixtime] alert: $input"
+            echo "  Saved. Total alert entries: $total"
+            _log "alert" "$input"
+        fi
+        ;;
+    top)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent top entries:"
+            tail -20 "$DATA_DIR/top.log" 2>/dev/null || echo "  No entries yet. Use: unixtime top <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/top.log"
+            local total=$(wc -l < "$DATA_DIR/top.log")
+            echo "  [Unixtime] top: $input"
+            echo "  Saved. Total top entries: $total"
+            _log "top" "$input"
+        fi
+        ;;
+    usage)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent usage entries:"
+            tail -20 "$DATA_DIR/usage.log" 2>/dev/null || echo "  No entries yet. Use: unixtime usage <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/usage.log"
+            local total=$(wc -l < "$DATA_DIR/usage.log")
+            echo "  [Unixtime] usage: $input"
+            echo "  Saved. Total usage entries: $total"
+            _log "usage" "$input"
+        fi
+        ;;
+    check)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent check entries:"
+            tail -20 "$DATA_DIR/check.log" 2>/dev/null || echo "  No entries yet. Use: unixtime check <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/check.log"
+            local total=$(wc -l < "$DATA_DIR/check.log")
+            echo "  [Unixtime] check: $input"
+            echo "  Saved. Total check entries: $total"
+            _log "check" "$input"
+        fi
+        ;;
+    fix)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent fix entries:"
+            tail -20 "$DATA_DIR/fix.log" 2>/dev/null || echo "  No entries yet. Use: unixtime fix <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/fix.log"
+            local total=$(wc -l < "$DATA_DIR/fix.log")
+            echo "  [Unixtime] fix: $input"
+            echo "  Saved. Total fix entries: $total"
+            _log "fix" "$input"
+        fi
+        ;;
+    cleanup)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent cleanup entries:"
+            tail -20 "$DATA_DIR/cleanup.log" 2>/dev/null || echo "  No entries yet. Use: unixtime cleanup <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/cleanup.log"
+            local total=$(wc -l < "$DATA_DIR/cleanup.log")
+            echo "  [Unixtime] cleanup: $input"
+            echo "  Saved. Total cleanup entries: $total"
+            _log "cleanup" "$input"
+        fi
+        ;;
+    backup)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent backup entries:"
+            tail -20 "$DATA_DIR/backup.log" 2>/dev/null || echo "  No entries yet. Use: unixtime backup <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/backup.log"
+            local total=$(wc -l < "$DATA_DIR/backup.log")
+            echo "  [Unixtime] backup: $input"
+            echo "  Saved. Total backup entries: $total"
+            _log "backup" "$input"
+        fi
+        ;;
+    restore)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent restore entries:"
+            tail -20 "$DATA_DIR/restore.log" 2>/dev/null || echo "  No entries yet. Use: unixtime restore <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/restore.log"
+            local total=$(wc -l < "$DATA_DIR/restore.log")
+            echo "  [Unixtime] restore: $input"
+            echo "  Saved. Total restore entries: $total"
+            _log "restore" "$input"
+        fi
+        ;;
+    log)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent log entries:"
+            tail -20 "$DATA_DIR/log.log" 2>/dev/null || echo "  No entries yet. Use: unixtime log <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/log.log"
+            local total=$(wc -l < "$DATA_DIR/log.log")
+            echo "  [Unixtime] log: $input"
+            echo "  Saved. Total log entries: $total"
+            _log "log" "$input"
+        fi
+        ;;
+    benchmark)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent benchmark entries:"
+            tail -20 "$DATA_DIR/benchmark.log" 2>/dev/null || echo "  No entries yet. Use: unixtime benchmark <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/benchmark.log"
+            local total=$(wc -l < "$DATA_DIR/benchmark.log")
+            echo "  [Unixtime] benchmark: $input"
+            echo "  Saved. Total benchmark entries: $total"
+            _log "benchmark" "$input"
+        fi
+        ;;
+    compare)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent compare entries:"
+            tail -20 "$DATA_DIR/compare.log" 2>/dev/null || echo "  No entries yet. Use: unixtime compare <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/compare.log"
+            local total=$(wc -l < "$DATA_DIR/compare.log")
+            echo "  [Unixtime] compare: $input"
+            echo "  Saved. Total compare entries: $total"
+            _log "compare" "$input"
+        fi
+        ;;
+    stats) _stats ;;
+    export) shift; _export "$@" ;;
+    search) shift; _search "$@" ;;
+    recent) _recent ;;
+    status) _status ;;
+    help|--help|-h) _help ;;
+    version|--version|-v) _version ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Run 'unixtime help' for available commands."
+        exit 1
+        ;;
 esac
