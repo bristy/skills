@@ -3,9 +3,15 @@
   "slug": "youtube-activity",
   "displayName": "YouTube Activity",
   "latest": {
-    "version": "0.10.6-3",
-    "publishedAt": 1773327648538,
-    "commit": "https://github.com/openclaw/skills/commit/2281b24eb2f6fb8ef2c436b851753eb993e37d45"
+    "version": "0.10.7-dev",
+    "publishedAt": 1773496441631,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.10.6-3",
+      "publishedAt": 1773327648538,
+      "commit": "https://github.com/openclaw/skills/commit/2281b24eb2f6fb8ef2c436b851753eb993e37d45"
+    }
+  ]
 }
