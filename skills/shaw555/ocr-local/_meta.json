@@ -1,0 +1,11 @@
+{
+  "owner": "shaw555",
+  "slug": "ocr-local",
+  "displayName": "OCR - Local (No API Key)",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773531509815,
+    "commit": null
+  },
+  "history": []
+}
