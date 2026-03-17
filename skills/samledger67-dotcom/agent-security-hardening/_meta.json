@@ -1,0 +1,11 @@
+{
+  "owner": "samledger67-dotcom",
+  "slug": "agent-security-hardening",
+  "displayName": "Agent Security Hardening",
+  "latest": {
+    "version": "98.0.1",
+    "publishedAt": 1773724916597,
+    "commit": null
+  },
+  "history": []
+}
