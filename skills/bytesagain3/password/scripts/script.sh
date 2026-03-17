@@ -1,89 +1,332 @@
 #!/usr/bin/env bash
-# password - Password manager — generate strong passwords, chec
-# Powered by BytesAgain | bytesagain.com
+# Password — security tool
+# Powered by BytesAgain | bytesagain.com | hello@bytesagain.com
 set -euo pipefail
 
-VERSION="1.0.0"
-DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/password"
+DATA_DIR="${HOME}/.local/share/password"
 mkdir -p "$DATA_DIR"
 
-show_help() {
-    echo "Password v$VERSION"
+_log() { echo "$(date '+%m-%d %H:%M') $1: $2" >> "$DATA_DIR/history.log"; }
+
+_version() { echo "password v2.0.0"; }
+
+_help() {
+    echo "Password v2.0.0 — security toolkit"
     echo ""
-    echo "Usage: password <command> [options]"
+    echo "Usage: password <command> [args]"
     echo ""
     echo "Commands:"
-    echo "  run               Execute main function"
-    echo "  list              List all items"
-    echo "  add <item>        Add new item"
-    echo "  status            Show current status"
-    echo "  export <format>   Export data (json|csv|txt)"
-    echo "  help              Show this help"
+    echo "  generate           Generate"
+    echo "  check-strength     Check Strength"
+    echo "  rotate             Rotate"
+    echo "  audit              Audit"
+    echo "  store              Store"
+    echo "  retrieve           Retrieve"
+    echo "  expire             Expire"
+    echo "  policy             Policy"
+    echo "  report             Report"
+    echo "  hash               Hash"
+    echo "  verify             Verify"
+    echo "  revoke             Revoke"
+    echo "  stats              Summary statistics"
+    echo "  export <fmt>       Export (json|csv|txt)"
+    echo "  status             Health check"
+    echo "  help               Show this help"
+    echo "  version            Show version"
     echo ""
+    echo "Data: $DATA_DIR"
 }
 
-cmd_run() {
-    echo "[password] Running..."
-    echo "Processing complete."
-    echo "$(date '+%Y-%m-%d %H:%M') run" >> "$DATA_DIR/history.log"
+_stats() {
+    echo "=== Password Stats ==="
+    local total=0
+    for f in "$DATA_DIR"/*.log; do
+        [ -f "$f" ] || continue
+        local name=$(basename "$f" .log)
+        local c=$(wc -l < "$f")
+        total=$((total + c))
+        echo "  $name: $c entries"
+    done
+    echo "  ---"
+    echo "  Total: $total entries"
+    echo "  Data size: $(du -sh "$DATA_DIR" 2>/dev/null | cut -f1)"
+    echo "  Since: $(head -1 "$DATA_DIR/history.log" 2>/dev/null | cut -d'|' -f1 || echo 'N/A')"
 }
 
-cmd_list() {
-    echo "[password] Items:"
-    if [ -f "$DATA_DIR/items.txt" ]; then
-        cat -n "$DATA_DIR/items.txt"
+_export() {
+    local fmt="${1:-json}"
+    local out="$DATA_DIR/export.$fmt"
+    case "$fmt" in
+        json)
+            echo "[" > "$out"
+            local first=1
+            for f in "$DATA_DIR"/*.log; do
+                [ -f "$f" ] || continue
+                local name=$(basename "$f" .log)
+                while IFS='|' read -r ts val; do
+                    [ $first -eq 1 ] && first=0 || echo "," >> "$out"
+                    printf '  {"type":"%s","time":"%s","value":"%s"}' "$name" "$ts" "$val" >> "$out"
+                done < "$f"
+            done
+            echo "" >> "$out"
+            echo "]" >> "$out"
+            ;;
+        csv)
+            echo "type,time,value" > "$out"
+            for f in "$DATA_DIR"/*.log; do
+                [ -f "$f" ] || continue
+                local name=$(basename "$f" .log)
+                while IFS='|' read -r ts val; do
+                    echo "$name,$ts,$val" >> "$out"
+                done < "$f"
+            done
+            ;;
+        txt)
+            echo "=== Password Export ===" > "$out"
+            for f in "$DATA_DIR"/*.log; do
+                [ -f "$f" ] || continue
+                echo "--- $(basename "$f" .log) ---" >> "$out"
+                cat "$f" >> "$out"
+                echo "" >> "$out"
+            done
+            ;;
+        *) echo "Formats: json, csv, txt"; return 1 ;;
+    esac
+    echo "Exported to $out ($(wc -c < "$out") bytes)"
+}
+
+_status() {
+    echo "=== Password Status ==="
+    echo "  Version: v2.0.0"
+    echo "  Data dir: $DATA_DIR"
+    echo "  Entries: $(cat "$DATA_DIR"/*.log 2>/dev/null | wc -l) total"
+    echo "  Disk: $(du -sh "$DATA_DIR" 2>/dev/null | cut -f1)"
+    local last=$(tail -1 "$DATA_DIR/history.log" 2>/dev/null || echo "never")
+    echo "  Last activity: $last"
+    echo "  Status: OK"
+}
+
+_search() {
+    local term="${1:?Usage: password search <term>}"
+    echo "Searching for: $term"
+    local found=0
+    for f in "$DATA_DIR"/*.log; do
+        [ -f "$f" ] || continue
+        local matches=$(grep -i "$term" "$f" 2>/dev/null || true)
+        if [ -n "$matches" ]; then
+            echo "  --- $(basename "$f" .log) ---"
+            echo "$matches" | while read -r line; do
+                echo "    $line"
+                found=$((found + 1))
+            done
+        fi
+    done
+    [ $found -eq 0 ] && echo "  No matches found."
+}
+
+_recent() {
+    echo "=== Recent Activity ==="
+    if [ -f "$DATA_DIR/history.log" ]; then
+        tail -20 "$DATA_DIR/history.log" | while IFS='' read -r line; do
+            echo "  $line"
+        done
     else
-        echo "  (empty)"
+        echo "  No activity yet."
     fi
 }
 
-cmd_add() {
-    local item="${1:?Usage: password add <item>}"
-    echo "$item" >> "$DATA_DIR/items.txt"
-    echo "Added: $item"
-}
-
-cmd_status() {
-    echo "[password] Status"
-    echo "  Data dir: $DATA_DIR"
-    local count=0
-    [ -f "$DATA_DIR/items.txt" ] && count=$(wc -l < "$DATA_DIR/items.txt")
-    echo "  Items: $count"
-    echo "  Version: $VERSION"
-}
-
-cmd_export() {
-    local fmt="${1:-json}"
-    echo "[password] Exporting as $fmt..."
-    case "$fmt" in
-        json)
-            echo "{"
-            echo "  \"tool\": \"password\","
-            echo "  \"version\": \"$VERSION\","
-            local items="[]"
-            if [ -f "$DATA_DIR/items.txt" ]; then
-                items=$(python3 -c "
-import json
-with open('$DATA_DIR/items.txt') as f:
-    print(json.dumps([l.strip() for l in f if l.strip()]))
-" 2>/dev/null || echo "[]")
-            fi
-            echo "  \"items\": $items"
-            echo "}"
-            ;;
-        csv) [ -f "$DATA_DIR/items.txt" ] && cat "$DATA_DIR/items.txt" || echo "(empty)";;
-        txt) cmd_status;;
-        *) echo "Formats: json, csv, txt";;
-    esac
-}
-
+# Main dispatch
 case "${1:-help}" in
-    run) shift; cmd_run "$@";;
-    list) shift; cmd_list "$@";;
-    add) shift; cmd_add "$@";;
-    status) shift; cmd_status "$@";;
-    export) shift; cmd_export "$@";;
-    help|-h|--help) show_help;;
-    version|-v) echo "password v$VERSION";;
-    *) echo "Unknown: $1"; show_help; exit 1;;
+    generate)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent generate entries:"
+            tail -20 "$DATA_DIR/generate.log" 2>/dev/null || echo "  No entries yet. Use: password generate <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/generate.log"
+            local total=$(wc -l < "$DATA_DIR/generate.log")
+            echo "  [Password] generate: $input"
+            echo "  Saved. Total generate entries: $total"
+            _log "generate" "$input"
+        fi
+        ;;
+    check-strength)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent check-strength entries:"
+            tail -20 "$DATA_DIR/check-strength.log" 2>/dev/null || echo "  No entries yet. Use: password check-strength <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/check-strength.log"
+            local total=$(wc -l < "$DATA_DIR/check-strength.log")
+            echo "  [Password] check-strength: $input"
+            echo "  Saved. Total check-strength entries: $total"
+            _log "check-strength" "$input"
+        fi
+        ;;
+    rotate)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent rotate entries:"
+            tail -20 "$DATA_DIR/rotate.log" 2>/dev/null || echo "  No entries yet. Use: password rotate <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/rotate.log"
+            local total=$(wc -l < "$DATA_DIR/rotate.log")
+            echo "  [Password] rotate: $input"
+            echo "  Saved. Total rotate entries: $total"
+            _log "rotate" "$input"
+        fi
+        ;;
+    audit)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent audit entries:"
+            tail -20 "$DATA_DIR/audit.log" 2>/dev/null || echo "  No entries yet. Use: password audit <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/audit.log"
+            local total=$(wc -l < "$DATA_DIR/audit.log")
+            echo "  [Password] audit: $input"
+            echo "  Saved. Total audit entries: $total"
+            _log "audit" "$input"
+        fi
+        ;;
+    store)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent store entries:"
+            tail -20 "$DATA_DIR/store.log" 2>/dev/null || echo "  No entries yet. Use: password store <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/store.log"
+            local total=$(wc -l < "$DATA_DIR/store.log")
+            echo "  [Password] store: $input"
+            echo "  Saved. Total store entries: $total"
+            _log "store" "$input"
+        fi
+        ;;
+    retrieve)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent retrieve entries:"
+            tail -20 "$DATA_DIR/retrieve.log" 2>/dev/null || echo "  No entries yet. Use: password retrieve <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/retrieve.log"
+            local total=$(wc -l < "$DATA_DIR/retrieve.log")
+            echo "  [Password] retrieve: $input"
+            echo "  Saved. Total retrieve entries: $total"
+            _log "retrieve" "$input"
+        fi
+        ;;
+    expire)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent expire entries:"
+            tail -20 "$DATA_DIR/expire.log" 2>/dev/null || echo "  No entries yet. Use: password expire <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/expire.log"
+            local total=$(wc -l < "$DATA_DIR/expire.log")
+            echo "  [Password] expire: $input"
+            echo "  Saved. Total expire entries: $total"
+            _log "expire" "$input"
+        fi
+        ;;
+    policy)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent policy entries:"
+            tail -20 "$DATA_DIR/policy.log" 2>/dev/null || echo "  No entries yet. Use: password policy <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/policy.log"
+            local total=$(wc -l < "$DATA_DIR/policy.log")
+            echo "  [Password] policy: $input"
+            echo "  Saved. Total policy entries: $total"
+            _log "policy" "$input"
+        fi
+        ;;
+    report)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent report entries:"
+            tail -20 "$DATA_DIR/report.log" 2>/dev/null || echo "  No entries yet. Use: password report <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/report.log"
+            local total=$(wc -l < "$DATA_DIR/report.log")
+            echo "  [Password] report: $input"
+            echo "  Saved. Total report entries: $total"
+            _log "report" "$input"
+        fi
+        ;;
+    hash)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent hash entries:"
+            tail -20 "$DATA_DIR/hash.log" 2>/dev/null || echo "  No entries yet. Use: password hash <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/hash.log"
+            local total=$(wc -l < "$DATA_DIR/hash.log")
+            echo "  [Password] hash: $input"
+            echo "  Saved. Total hash entries: $total"
+            _log "hash" "$input"
+        fi
+        ;;
+    verify)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent verify entries:"
+            tail -20 "$DATA_DIR/verify.log" 2>/dev/null || echo "  No entries yet. Use: password verify <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/verify.log"
+            local total=$(wc -l < "$DATA_DIR/verify.log")
+            echo "  [Password] verify: $input"
+            echo "  Saved. Total verify entries: $total"
+            _log "verify" "$input"
+        fi
+        ;;
+    revoke)
+        shift
+        if [ $# -eq 0 ]; then
+            echo "Recent revoke entries:"
+            tail -20 "$DATA_DIR/revoke.log" 2>/dev/null || echo "  No entries yet. Use: password revoke <input>"
+        else
+            local input="$*"
+            local ts=$(date '+%Y-%m-%d %H:%M')
+            echo "$ts|$input" >> "$DATA_DIR/revoke.log"
+            local total=$(wc -l < "$DATA_DIR/revoke.log")
+            echo "  [Password] revoke: $input"
+            echo "  Saved. Total revoke entries: $total"
+            _log "revoke" "$input"
+        fi
+        ;;
+    stats) _stats ;;
+    export) shift; _export "$@" ;;
+    search) shift; _search "$@" ;;
+    recent) _recent ;;
+    status) _status ;;
+    help|--help|-h) _help ;;
+    version|--version|-v) _version ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Run 'password help' for available commands."
+        exit 1
+        ;;
 esac

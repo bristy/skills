@@ -1,9 +1,10 @@
 ---
 name: password
-version: 1.0.0
+version: "2.0.0"
 author: BytesAgain
 license: MIT-0
 tags: [password, tool, utility]
+description: "Password - command-line tool for everyday use"
 ---
 
 # Password
@@ -44,26 +45,19 @@ password status
 password export json
 ```
 
-## How It Works
-
-Processes input with built-in logic and outputs structured results. All data stays local.
-
-## Tips
-
 - Run `password help` for all commands
-- Data stored in `~/.local/share/password/`
-- No API keys required for basic features
-- Works offline
+password/`
 
 ---
 *Powered by BytesAgain | bytesagain.com*
-
-## How It Works
-
-Reads input, processes with built-in logic, outputs results. All data stays local.
-
-## Tips
+*Feedback & Feature Requests: https://bytesagain.com/feedback*
 
 - Run `password help` for all commands
-- No API keys required
-- Works offline
+
+## Output
+
+Results go to stdout. Save with `password run > output.txt`.
+
+## Configuration
+
+Set `PASSWORD_DIR` to change data directory. Default: `~/.local/share/password/`
