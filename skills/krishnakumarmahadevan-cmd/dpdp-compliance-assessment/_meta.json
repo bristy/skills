@@ -1,11 +1,17 @@
 {
   "owner": "krishnakumarmahadevan-cmd",
   "slug": "dpdp-compliance-assessment",
-  "displayName": "DPDP Compliance Assessment",
+  "displayName": "Dpdp Compliance Assessment",
   "latest": {
-    "version": "1.3.2",
-    "publishedAt": 1773472932936,
-    "commit": "https://github.com/openclaw/skills/commit/0f800500a86681a86e7ed2725a3added45486ed3"
+    "version": "1.0.2",
+    "publishedAt": 1773630597245,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.3.2",
+      "publishedAt": 1773472932936,
+      "commit": "https://github.com/openclaw/skills/commit/0f800500a86681a86e7ed2725a3added45486ed3"
+    }
+  ]
 }
