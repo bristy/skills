@@ -3,9 +3,15 @@
   "slug": "communityhub",
   "displayName": "Communityhub",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773450795701,
-    "commit": "https://github.com/openclaw/skills/commit/d5f3cd59fb008d1b4acf72f40b6d7540f266ed84"
+    "version": "1.0.6",
+    "publishedAt": 1773665350513,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773450795701,
+      "commit": "https://github.com/openclaw/skills/commit/d5f3cd59fb008d1b4acf72f40b6d7540f266ed84"
+    }
+  ]
 }
