@@ -1,6 +1,6 @@
 ---
 name: MX_FinData
-description: 一个面向多金融品种与多金融主体的数据查询技能。支持使用自然语言查询股票、板块、指数、企业发行人、债券、非上市公司等对象的各类金融指标与报表数据，包括量化数据、实时行情、主力资金、估值、公司基本信息、财务、高管、主营业务、股东、融资等各类金融指标；也可查询股票、非上市公司、股东、高管人物等主体之间的关系数据。技能执行后会生成一个包含查数结果的 xlsx 文件，以及一个对查询结果进行说明和描述的 txt 文件。调用前需配置 EM_API_KEY。
+description: 基于东方财富专业数据库，支持自然语言查询金融数据，覆盖A股、ETF、债券、港美股、基金等全品类资产，含实时行情、公司信息、估值、财务报表等，数据实时、权威、全面，可用于投资研究、交易复盘、行业分析、信用研究、财报审计、资产配置、报告撰写等场景，一站式满足机构与个人投资分析、市场监控、数据检索等需求。返回结果包含数据说明及 xlsx 文件。
 metadata:
   {
     "openclaw": {
@@ -12,7 +12,7 @@ metadata:
         {
           "id": "pip-deps",
           "kind": "python",
-          "package": "httpx pandas",
+          "package": "httpx pandas openpyxl",
           "label": "Install Python dependencies"
         }
       ]
@@ -20,14 +20,18 @@ metadata:
   }
 ---
 
-# 金融数据查询 (MX_FinData)
+# 金融数据查询
 
-## 支持的功能范围
+## 密钥来源与安全说明
+
+- 本技能仅使用一个环境变量：`EM_API_KEY`。
+- `EM_API_KEY` 由东方财富妙想服务（`https://ai.eastmoney.com/mxClaw`）签发，用于其接口鉴权。
+- 在提供密钥前，请先确认密钥来源、可用范围、有效期及是否支持重置/撤销。
+- 禁止在代码、提示词、日志或输出文件中硬编码/明文暴露密钥。
+
+## 功能范围
 
 ### 1. 支持查询的对象范围
-
-本 Skill 数据来自于妙想大模型，支持对以下金融对象进行数据查询：
-
 * 股票（A 股、港股、美股）
 * 板块、指数、股东
 * 企业发行人、债券、非上市公司
@@ -89,20 +93,43 @@ Skill 执行后会输出以下文件：
 - 当用户使用自然语言发起查询时，Skill 可根据问句内容识别查询对象、指标和时间范围，并输出结构化结果文件。
 - 对于支持范围内的查询请求，优先输出结构化查数结果，并同时生成结果说明文件，便于后续使用。
 
+## 前提条件
+
+### 1. 注册东方财富妙想账号
+
+访问 https://ai.eastmoney.com/mxClaw 注册账号并获取API_KEY。
+
+### 2. 配置 Token
+
+```bash
+# 添加到 ~/.zshrc
+export EM_API_KEY="your_api_key_here"
+```
+
+然后执行：
+```bash
+source ~/.zshrc
+```
+### 3. 安装依赖
+
+
+```bash
+pip3 install httpx pandas openpyxl --user
+```
 
 ## 快速开始
 
 ### 在工作目录下执行
 
 ```bash
-python3 scripts/get_data.py --query "贵州茅台近期走势如何"
+python3 {baseDir}/scripts/get_data.py --query "贵州茅台近期走势如何"
 ```
 
 ### 输出示例
 
 ```
-xlsx: workspace/MX_FinData/MX_FinData_9535fe18.xlsx
-描述: workspace/MX_FinData/MX_FinData_9535fe18_description.txt
+xlsx: /path/to/miaoxiang/MX_FinData/MX_FinData_9535fe18.xlsx
+描述: /path/to/miaoxiang/MX_FinData/MX_FinData_9535fe18_description.txt
 行数: 42
 ```
 
