@@ -6,46 +6,14 @@ A daily learning habit tracker skill for CoPaw/OpenClaw agents.
 
 - **Simple Check-in**: Just tell your agent "I'm done" or "check-in complete"
 - **Streak Tracking**: Build your consecutive day streak
-- **Smart Reminders**: Morning, afternoon, and evening reminders (via cron)
 - **Customizable**: Edit rules to fit your schedule
-- **Automatic Updates**: Optional version check on each check-in
 
 ## Installation
 
-This skill follows the OpenClaw/OpenClaw skill standard installation method.
-
-### Installing the Skill
+This skill follows the OpenClaw skill standard installation method.
 
 1. Copy this skill folder to your agent's skill storage directory
-   
-   The exact path depends on your agent configuration. Typically:
-   - Copy the `learning-checkin` folder to wherever your agent stores skills
-
-2. The skill will automatically initialize its data folder on first use.
-
-### Setting Up Reminders (Optional)
-
-If you want to receive automatic reminders, set up cron jobs using the agent's cron command:
-
-```bash
-# Morning reminder at 9:00
-<command> cron create --type agent --name "Learning Check-in Morning" \
-  --cron "0 9 * * *" --channel <your_channel> \
-  --text "Check if user needs reminder for learning check-in"
-
-# Afternoon reminder at 17:00
-<command> cron create --type agent --name "Learning Check-in Afternoon" \
-  --cron "0 17 * * *" --channel <your_channel> \
-  --text "Check if user needs reminder for learning check-in"
-
-# Evening reminder at 20:00
-<command> cron create --type agent --name "Learning Check-in Evening" \
-  --cron "0 20 * * *" --channel <your_channel> \
-  --text "Check if user needs reminder for learning check-in"
-```
-
-Replace `<command>` with your agent's command (e.g., `copaw`, `openclaw`, or your agent's default command).
-Replace `<your_channel>` with your messaging channel (console, discord, dingtalk, etc.).
+2. The skill will automatically initialize its data folder on first use
 
 ## Usage
 
@@ -59,13 +27,9 @@ Simply tell your agent:
 
 ### 1. First Time Setup
 
-The first time you activate this skill, tell your agent:
-"I want to use the learning check-in skill"
+Tell your agent: "I want to use the learning check-in skill"
 
-The agent will:
-- Welcome you and explain the rules
-- Set up your data folder automatically
-- Ask you to start your first check-in
+The agent will welcome you and explain the rules, then ask you to start your first check-in.
 
 ### 2. Daily Check-in
 
@@ -74,17 +38,7 @@ After completing your daily learning, tell your agent:
 - "Check-in complete"
 - "I finished studying"
 
-Your agent will:
-- Record your check-in
-- Tell you your current streak
-- Encourage you for tomorrow
-
-### 3. Reminders (Optional)
-
-If you set up cron jobs for reminders, you'll receive messages at:
-- **09:00** - Friendly morning reminder
-- **17:00** - Encouraging afternoon reminder  
-- **20:00** - Urgent evening reminder
+Your agent will record your check-in and show your current streak.
 
 ## Data Storage
 
@@ -92,29 +46,26 @@ Your check-in data is stored locally in the skill's data folder:
 
 ```
 <skill_directory>/data/
-├── rule.md       - Your personalized rules
-├── records.json  - Check-in history
-└── version.txt   - Current skill version
+├── rule.md           - Your personalized rules
+├── records.json      - Check-in history
+├── version.txt       - Current skill version
+├── cron_status.json  - Reminder configuration status
+└── reminder_log.json - Reminder sending log
 ```
-
-The data folder is automatically created when you first use the skill.
 
 ## Customization
 
-Edit the `rule.md` file (in the data folder) to customize:
-- Reminder times
-- Reminder messages
-- Your personal goals
+Edit the `rule.md` file in the data folder to customize reminder messages or notes.
 
 ## Technical Requirements
 
 - Python 3.x
-- No external dependencies (uses standard library only)
+- No external dependencies (standard library only)
 - Works on Windows, Linux, and macOS
 
 ## Version
 
-Current: **3.0.1**
+Current: **3.1.0**
 
 ## GitHub
 

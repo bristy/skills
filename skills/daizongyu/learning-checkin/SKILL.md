@@ -13,8 +13,7 @@ Help users build a daily learning habit through simple check-ins and intelligent
 This skill enables users to track their daily learning with:
 - Simple daily check-in (just say "I'm done" or "check-in complete")
 - Automatic streak tracking
-- Smart reminders at appropriate times (via cron jobs)
-- Optional version updates check
+- Optional smart reminders
 
 ## Data Storage
 
@@ -22,16 +21,16 @@ All data is stored locally in a `data` subfolder next to the skill:
 
 ```
 <skill_directory>/data/
-├── rule.md       - User's customizable rules
-├── records.json  - Check-in history
-└── version.txt   - Current version
+├── rule.md           - User's customizable rules
+├── records.json      - Check-in history
+├── version.txt       - Current skill version
+├── cron_status.json  - Reminder configuration status
+└── reminder_log.json - Reminder sending log
 ```
 
 The data folder is automatically created on first use.
 
 ## Commands
-
-The skill provides these functions that the Agent can call:
 
 ### 1. Initialize (First Time)
 
@@ -39,13 +38,17 @@ The skill provides these functions that the Agent can call:
 python <skill_path>/learning_checkin.py init
 ```
 
-**When to use:** First time the user activates this skill.
+**Returns:**
+- `welcome_message` - Welcome text for the user
+- `environment` - Only contains `user_language` (for message display)
+- `reminder_strategy` - Suggested reminder times
+- `cron_status` - Current reminder configuration status
 
 **Agent action:** 
-- Run the init command
-- Show welcome message in user's language
-- Explain the simple rules
-- Ask user to start their first check-in
+1. Run the init command
+2. Show welcome message and explain the check-in process
+3. Ask user if they want daily reminders
+4. Ask user to start their first check-in
 
 ### 2. Check-in
 
@@ -53,12 +56,10 @@ python <skill_path>/learning_checkin.py init
 python <skill_path>/learning_checkin.py checkin
 ```
 
-**When to use:** When user says they're done with their learning (e.g., "I finished my study session", "check-in done", "learning complete", etc.)
-
-**Agent action:**
-- Run checkin command
-- Show streak count with celebration
-- Encourage user to continue tomorrow
+**Returns:**
+- `success` - Whether check-in was recorded
+- `streak` - Current streak count
+- `message` - Celebration message (in English, translate to user's language)
 
 ### 3. Status
 
@@ -66,15 +67,24 @@ python <skill_path>/learning_checkin.py checkin
 python <skill_path>/learning_checkin.py status
 ```
 
-**When to use:** When user asks about their progress or streak.
+**Returns:**
+- `checked_in_today` - Whether user has checked in today
+- `streak` - Current streak count
+- `total_checkins` - Total days checked in
+- `message` - Status message (in English)
 
-**Agent action:**
-- Run status command
-- Tell user if they've checked in today
-- Share their current streak
-- Show total days checked in
+### 4. Get User Language
 
-### 4. Get Reminder Message
+```bash
+python <skill_path>/learning_checkin.py env
+```
+
+**Returns:**
+- `user_language` - Detected language (zh/en)
+
+**Why needed:** Only to display messages in the user's preferred language.
+
+### 5. Get Reminder Message
 
 ```bash
 python <skill_path>/learning_checkin.py message <time>
@@ -82,91 +92,95 @@ python <skill_path>/learning_checkin.py message <time>
 
 Where `<time>` is one of: `09:00`, `17:00`, `20:00`
 
-**When to use:** When sending a scheduled reminder.
+**Returns:**
+- `message` - Reminder text (in English, translate to user's language)
 
-**Agent action:**
-- Run message command with appropriate time slot
-- Send the reminder to user
-- The message tone becomes more encouraging/urgent as the day progresses
-
-### 5. Check Reminder Status
+### 6. Check Reminder Status
 
 ```bash
 python <skill_path>/learning_checkin.py reminder <time>
 ```
 
-Where `<time>` is one of: `09:00`, `17:00`, `20:00`
+**Returns:**
+- `should_send` - Whether reminder should be sent
+- `checked_in` - Whether user has already checked in today
 
-**When to use:** Before sending a reminder (typically called by cron job).
+### 7. Update Cron Status
 
-**Agent action:**
-- Run reminder command
-- If result shows "should_send": true, then send the reminder
-- The command automatically logs that reminder was sent
+```bash
+python <skill_path>/learning_checkin.py update-cron <times>
+```
+
+**When to use:** After setting up reminders (optional).
+
+### 8. Get Cron Status
+
+```bash
+python <skill_path>/learning_checkin.py cron-status
+```
+
+**Returns:**
+- `configured` - Whether reminders are set up
+- `times` - Configured reminder times
 
 ## Default Behavior
 
 ### Check-in Rule
 - User checks in once per day
 - Simply tell the Agent "I'm done" or "check-in complete"
-- That's it! No complex forms or steps
 
-### Default Reminder Schedule
-- **09:00 (Morning):** Friendly reminder
-- **17:00 (Afternoon):** Encouraging reminder  
-- **20:00 (Evening):** Urgent reminder (don't break the streak!)
+### Reminder Strategy (Suggested)
+If user wants reminders, Agent can use any scheduling method:
+- **Evening (20:00)** is recommended as default
+- Or user's preferred time
+
+The skill will check if user already checked in before sending reminders.
 
 ### Streak System
-- Consecutive days of check-ins = streak
-- Miss a day = streak resets to 0
+- Consecutive days = streak
+- Miss a day = streak resets
 
 ## Customization
 
-Users can edit the `rule.md` file (in the data folder) to customize:
-- Reminder times
-- Reminder messages
-- Their personal goals or notes
+Users can edit the `rule.md` file (in the data folder) to customize reminder messages.
 
-## Version Check
+## Version
 
-On each check-in, the skill can optionally check GitHub for new versions:
-- Non-blocking (5 second timeout)
-- If new version available, Agent tells user
+See GitHub releases: https://github.com/daizongyu/learning-checkin/releases
 
 ## Agent Guidelines
 
 ### First Interaction (Welcome)
 The Agent should:
 1. Be warm and encouraging
-2. Explain in simple, non-technical language:
-   - "Just tell me when you've done your learning for today"
-   - "I'll remind you if you forget"
-   - "You'll build a streak!"
-3. Ask: "Ready to start your first check-in?"
+2. Explain the simple check-in process
+3. Ask if user wants daily reminders (optional feature)
+4. Ask: "Ready to start your first check-in?"
 
-### Daily Check-in Interaction
-The Agent should:
-1. Celebrate the check-in
-2. Mention current streak
-3. Encourage for tomorrow
-4. Keep it positive and simple
+### Check-in Interaction
+- Translate messages to user's language
+- Celebrate the check-in
+- Show streak count
 
-### Reminder Interaction
-The Agent should:
-1. Use the appropriate tone for the time of day
-2. Morning: Cheerful and friendly
-3. Afternoon: Supportive and encouraging
-4. Evening: Urgent but caring
+### Reminder Implementation (Optional)
+If user wants reminders:
+- Agent decides how to implement (cron, native scheduler, etc.)
+- The skill provides `reminder` and `message` commands
+- Check if user already checked in before sending
 
 ## Technical Notes
 
+- **Data collection**: Only `user_language` is collected for message display
+- All messages are in **English** - Agent translates to user's language
 - All file paths use UTF-8 encoding
 - Compatible with Windows, Linux, macOS
 - Data stored in `data` subfolder next to the skill
+- **No external network requests** from the skill
+- **No automatic scheduling** - Agent decides implementation
 - No external dependencies (Python standard library only)
 
 ## Version
 
-Current version: 3.0.1
+Current version: 3.1.0
 
 GitHub: https://github.com/daizongyu/learning-checkin
