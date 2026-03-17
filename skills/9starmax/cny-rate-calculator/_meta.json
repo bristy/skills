@@ -3,9 +3,15 @@
   "slug": "cny-rate-calculator",
   "displayName": "Cny Skill Extracted",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773654050534,
-    "commit": "https://github.com/openclaw/skills/commit/c752134fc6d22e7803ca7849bbc0dea230fd1d4d"
+    "version": "1.0.8",
+    "publishedAt": 1773681242488,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773654050534,
+      "commit": "https://github.com/openclaw/skills/commit/c752134fc6d22e7803ca7849bbc0dea230fd1d4d"
+    }
+  ]
 }

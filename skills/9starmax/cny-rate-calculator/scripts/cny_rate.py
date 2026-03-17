@@ -5,7 +5,7 @@
 自動抓取台銀人民幣匯率並計算優惠價格
 
 Author: HomeClaw
-Version: 3.1.0 - 方向鍵互動選單 + 完整匯率通知
+Version: 1.2.0
 """
 
 import requests
@@ -13,6 +13,7 @@ import re
 import sys
 import os
 import json
+import uuid
 from datetime import datetime
 from typing import Optional, Tuple, Dict, Any, List
 
@@ -169,16 +170,15 @@ def menu_select(title: str, options: List[str], hints: List[str] = None,
         return -1
 
 
-def confirm(question: str, default_yes: bool = True) -> bool:
+def confirm(question: str) -> bool:
     """
     是/否確認選單（方向鍵版）。
 
     Returns:
         True = 是，False = 否
     """
-    opts  = ["是，繼續", "否，跳過"]
-    hints = ["", ""]
-    idx = menu_select(question, opts, hints)
+    opts = ["是，繼續", "否，跳過"]
+    idx  = menu_select(question, opts)
     if idx == -1:
         return False
     return idx == 0
@@ -248,10 +248,10 @@ def menu_multiselect(title: str, options: List[str], subtitle: str = "",
             if key in (b'\xe0', b'\x00'):
                 key2 = msvcrt.getch()
                 if key2 == b'H':        # ↑
-                    current = (current - 1) % len(options)  # noqa: PLW2901
+                    current = (current - 1) % len(options)
                     render(first=False)
                 elif key2 == b'P':      # ↓
-                    current = (current + 1) % len(options)  # noqa: PLW2901
+                    current = (current + 1) % len(options)
                     render(first=False)
             elif key == b' ':           # Space: toggle
                 if current in selected:
@@ -279,10 +279,10 @@ def menu_multiselect(title: str, options: List[str], subtitle: str = "",
                     if nxt == '[':
                         arrow = sys.stdin.read(1)
                         if arrow == 'A':    # ↑
-                            current = (current - 1) % len(options)  # noqa: PLW2901
+                            current = (current - 1) % len(options)
                             render(first=False)
                         elif arrow == 'B':  # ↓
-                            current = (current + 1) % len(options)  # noqa: PLW2901
+                            current = (current + 1) % len(options)
                             render(first=False)
                     else:
                         print()
@@ -331,6 +331,26 @@ class CNYRateCalculator:
         os.path.join(os.environ.get('LOCALAPPDATA', ''), 'openclaw', 'config.json'),
     ]
 
+    OPENCLAW_CRON_PATHS = [
+        os.path.expanduser("~/.openclaw/cron/jobs.json"),
+        os.path.join(os.environ.get('APPDATA', ''), 'openclaw', 'cron', 'jobs.json'),
+        os.path.join(os.environ.get('LOCALAPPDATA', ''), 'openclaw', 'cron', 'jobs.json'),
+    ]
+
+    SKILL_NAME  = "cny-rate-calculator"
+    SKILL_EVENT = "執行人民幣匯率計算並發送通知"
+
+    DEFAULT_SCHEDULE = {
+        'enabled':        True,
+        'days_of_week':   [1, 2, 3, 4, 5],
+        'start_time':     '09:00',
+        'end_time':       '17:00',
+        'interval_hours': 1,
+        'schedule_times': [f"{h:02d}:00" for h in range(9, 18)],
+        'description':    '週一至週五 09:00–17:00 每小時',
+        'cron':           '0 9-17 * * 1,2,3,4,5',
+    }
+
     def __init__(self, config_path: Optional[str] = None):
         self.session = requests.Session()
         self.session.headers.update({
@@ -360,6 +380,86 @@ class CNYRateCalculator:
                 return p
         return None
 
+    def _find_cron_jobs_path(self) -> Optional[str]:
+        """尋找 OpenClaw cron/jobs.json，找不到則嘗試從 openclaw.json 同層推算"""
+        for p in self.OPENCLAW_CRON_PATHS:
+            if p and os.path.exists(p):
+                return p
+        # 從 openclaw.json 路徑往上推算
+        oc_path = self._find_openclaw_config()
+        if oc_path:
+            candidate = os.path.join(os.path.dirname(oc_path), 'cron', 'jobs.json')
+            if os.path.exists(candidate):
+                return candidate
+        return None
+
+    def _register_cron_job(self, cron_expr: str, tz: str = 'Asia/Taipei') -> bool:
+        """將排程寫入 OpenClaw cron/jobs.json（存在同名則更新，不存在則新增）"""
+        jobs_path = self._find_cron_jobs_path()
+
+        # 若找不到現有檔案，嘗試從 openclaw.json 同層建立目錄
+        if not jobs_path:
+            oc_path = self._find_openclaw_config()
+            if not oc_path:
+                print("  ⚠️  找不到 OpenClaw cron 路徑，請手動登記排程。", file=sys.stderr)
+                return False
+            jobs_path = os.path.join(os.path.dirname(oc_path), 'cron', 'jobs.json')
+            os.makedirs(os.path.dirname(jobs_path), exist_ok=True)
+
+        # 讀取現有 jobs
+        if os.path.exists(jobs_path):
+            try:
+                with open(jobs_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            except Exception:
+                data = {'version': 1, 'jobs': []}
+        else:
+            data = {'version': 1, 'jobs': []}
+
+        now_ms = int(datetime.now().timestamp() * 1000)
+
+        # 更新既有同名排程，或新增
+        existing = next((j for j in data['jobs'] if j.get('name') == self.SKILL_NAME), None)
+        if existing:
+            existing['schedule']['expr'] = cron_expr
+            existing['schedule']['tz']   = tz
+            existing['updatedAtMs']      = now_ms
+            existing['enabled']          = True
+        else:
+            data['jobs'].append({
+                'id':           str(uuid.uuid4()),
+                'agentId':      'main',
+                'sessionKey':   'agent:main:main',
+                'name':         self.SKILL_NAME,
+                'enabled':      True,
+                'createdAtMs':  now_ms,
+                'updatedAtMs':  now_ms,
+                'schedule': {
+                    'kind': 'cron',
+                    'expr': cron_expr,
+                    'tz':   tz,
+                },
+                'sessionTarget': 'main',
+                'wakeMode':      'now',
+                'payload': {
+                    'kind': 'systemEvent',
+                    'text': self.SKILL_EVENT,
+                },
+                'delivery': {'mode': 'none'},
+                'state': {
+                    'consecutiveErrors': 0,
+                },
+            })
+
+        try:
+            with open(jobs_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            print(f"  ✅ 排程已登記：{cron_expr}（{jobs_path}）")
+            return True
+        except Exception as e:
+            print(f"  ⚠️  無法寫入 cron/jobs.json：{e}", file=sys.stderr)
+            return False
+
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         if not config_path or not os.path.exists(config_path):
             raise ConfigError("❌ 找不到 config.json 配置文件")
@@ -377,25 +477,8 @@ class CNYRateCalculator:
             print(f"❌ 保存配置失敗: {e}", file=sys.stderr)
             return False
 
-    def is_config_ready(self) -> bool:
-        channels = self.config.get('channels', [])
-        sched    = self.config.get('schedule', {})
-        if not channels:
-            return False
-        for ch in channels:
-            t   = ch.get('type', '').strip()
-            tgt = ch.get('target', '').strip()
-            if not t:
-                return False
-            if t != 'console' and not tgt:
-                return False
-        if not sched.get('enabled', False):
-            return False
-        if not sched.get('schedule_times', []):
-            return False
-        return True
-
     def validate_config(self) -> List[str]:
+        """驗證 config.json 完整性，回傳錯誤訊息列表（空列表代表正常）"""
         errors   = []
         channels = self.config.get('channels', [])
         sched    = self.config.get('schedule', {})
@@ -423,9 +506,9 @@ class CNYRateCalculator:
     # -------------------------------------------------------
 
     def _detect_channels(self) -> List[Dict[str, Any]]:
-        """從 openclaw.json 讀取已啟用的頻道"""
+        """從 openclaw.json 讀取已啟用的頻道（以 ALL_CHANNELS 為基準，排除 console）"""
         result = []
-        path = self._find_openclaw_config()
+        path   = self._find_openclaw_config()
         if not path:
             return result
         try:
@@ -434,19 +517,11 @@ class CNYRateCalculator:
         except Exception:
             return result
 
-        channels = oc.get('channels', {})
-        defs = [
-            ('telegram',   'Telegram',    '需要輸入 Chat ID'),
-            ('discord',    'Discord',     '需要輸入 Webhook URL'),
-            ('signal',     'Signal',      '需要輸入目標電話號碼'),
-            ('whatsapp',   'WhatsApp',    '需要輸入目標電話號碼'),
-            ('slack',      'Slack',       '需要輸入 Webhook URL'),
-            ('imessage',   'iMessage',    '需要輸入聯絡人名稱'),
-            ('irc',        'IRC',         '需要輸入頻道名稱'),
-            ('googlechat', 'Google Chat', '需要輸入 Webhook URL'),
-        ]
-        for ch_type, ch_name, ch_note in defs:
-            if channels.get(ch_type, {}).get('enabled', False):
+        oc_channels = oc.get('channels', {})
+        for ch_type, ch_name, ch_note in self.ALL_CHANNELS:
+            if ch_type == 'console':
+                continue
+            if oc_channels.get(ch_type, {}).get('enabled', False):
                 result.append({'type': ch_type, 'name': ch_name, 'note': ch_note})
         return result
 
@@ -535,7 +610,21 @@ class CNYRateCalculator:
 
     def _wizard_add_channel(self) -> Optional[Dict[str, str]]:
         """新增單一頻道子精靈"""
+        # ALL_CHANNELS 範圍內已啟用的頻道
         detected_types = {ch['type'] for ch in self._detect_channels()}
+
+        # 直接讀 openclaw.json 取得所有啟用頻道（含 ALL_CHANNELS 未涵蓋的新頻道）
+        all_oc_enabled: Set[str] = set()
+        oc_path = self._find_openclaw_config()
+        if oc_path:
+            try:
+                with open(oc_path, 'r', encoding='utf-8') as f:
+                    oc = json.load(f)
+                for t, info in oc.get('channels', {}).items():
+                    if info.get('enabled', False):
+                        all_oc_enabled.add(t)
+            except Exception:
+                pass
 
         options:      List[str] = []
         hints:        List[str] = []
@@ -551,7 +640,7 @@ class CNYRateCalculator:
             channel_list.append(ch_type)
 
         # openclaw.json 裡有啟用、但不在已知清單的新頻道 → 動態加入
-        for ch_type in detected_types - known_types:
+        for ch_type in sorted(all_oc_enabled - known_types):
             options.append(f"{ch_type.title()}（已啟用，透過 Gateway 發送）")
             hints.append("OpenClaw 新增頻道，自動使用 Gateway API")
             channel_list.append(ch_type)
@@ -638,7 +727,7 @@ class CNYRateCalculator:
             hours = sorted(int(t.split(':')[0]) for t in schedule_times)
             return f"0 {','.join(str(h) for h in hours)} * * {days_str}"
 
-    def _wizard_schedule(self) -> Dict[str, Any]:  # noqa: return always set
+    def _wizard_schedule(self) -> Dict[str, Any]:
         # ── 1/3 選執行日期 ──────────────────────────────────
         while True:
             day_indices = menu_multiselect(
@@ -746,6 +835,9 @@ class CNYRateCalculator:
         else:
             print(f"\n  ⚠️  無法自動儲存排程，請手動編輯 config.json")
 
+        # 將排程登記到 OpenClaw cron/jobs.json
+        self._register_cron_job(schedule['cron'])
+
         # 測試訊息
         print()
         want_test = confirm(
@@ -759,7 +851,7 @@ class CNYRateCalculator:
         print("=" * 52)
         print(f"  📡 頻道：{ch_names}")
         print(f"  ⏰ 排程：{schedule['description']}")
-        print(f"\n  下次執行將直接抓取匯率並發送通知。")
+        print(f"\n  排程通知請使用：python scripts/cny_rate.py --run")
         return True
 
     # -------------------------------------------------------
@@ -836,7 +928,6 @@ class CNYRateCalculator:
         return {
             'buy_rate':  buy,
             'sell_rate': sell,
-            'mid':       mid,
             'prices': [
                 {'label': lbl, 'price': self.round3(mid + d), 'delta': d}
                 for d, lbl in zip(deltas, labels)
@@ -852,7 +943,7 @@ class CNYRateCalculator:
                 f"台銀買入：{results['buy_rate']}\n"
                 f"台銀賣出：{results['sell_rate']}")
         msg2 = '\n'.join(f"{p['label']}：{p['price']:.3f}" for p in results['prices'])
-        msg3 = "台銀匯率：\nhttps://rate.bot.com.tw/xrt"
+        msg3 = "LINE官方：\nhttps://bit.ly/47vlVrq\n\n台銀匯率：\nhttps://rate.bot.com.tw/xrt"
         return [msg1, msg2, msg3]
 
     # -------------------------------------------------------
@@ -976,26 +1067,25 @@ class CNYRateCalculator:
 
     def _check_new_channels(self) -> None:
         """比對 openclaw.json 與目前設定，若有新啟用頻道則發通知提醒"""
-        detected      = self._detect_channels()                         # openclaw.json 啟用的
-        configured    = {ch['type'] for ch in self.config.get('channels', [])}  # skill 已設定的
-        known_types   = {ch_type for ch_type, _, _ in self.ALL_CHANNELS}
+        detected   = self._detect_channels()
+        configured = {ch['type'] for ch in self.config.get('channels', [])}
 
-        new_channels = [
-            ch for ch in detected
-            if ch['type'] not in configured and ch['type'] in known_types
-        ]
+        new_channels = [ch for ch in detected if ch['type'] not in configured]
         if not new_channels:
             return
 
-        names = '、'.join(ch['name'] for ch in new_channels)
-        alert = (
-            f"📡 偵測到新啟用頻道：{names}\n\n"
-            f"這些頻道尚未加入匯率通知清單。\n\n"
-            f"回覆以下任一關鍵字即可管理通知頻道：\n"
-            f"• 加入頻道\n"
-            f"• 移除頻道\n"
-            f"• 頻道設定"
+        channel_lines = '\n'.join(
+            f"{i+1}. {ch['name']}" for i, ch in enumerate(new_channels)
         )
+        alert = (
+            f"📡 偵測到新啟用頻道\n\n"
+            f"以下頻道可加入匯率通知清單：\n"
+            f"{channel_lines}\n\n"
+            f"回覆頻道名稱或編號即可加入\n"
+            f"（例：Discord 或 1）\n"
+            f"回覆「略過」忽略此提示"
+        )
+        names = '、'.join(ch['name'] for ch in new_channels)
         print(f"\n  ⚠️  偵測到新頻道：{names}（尚未加入通知清單）")
         self.send_message(alert)
 
@@ -1004,9 +1094,15 @@ class CNYRateCalculator:
     # -------------------------------------------------------
 
     def run_scheduled(self) -> bool:
-        channels  = self.config.get('channels', [])
-        sched     = self.config.get('schedule', {})
-        ch_names  = '、'.join(self._ch_display_name(ch['type']) for ch in channels)
+        errors = self.validate_config()
+        if errors:
+            for e in errors:
+                print(e, file=sys.stderr)
+            return False
+
+        channels = self.config.get('channels', [])
+        sched    = self.config.get('schedule', {})
+        ch_names = '、'.join(self._ch_display_name(ch['type']) for ch in channels)
         print(f"  📡 頻道：{ch_names}   ⏰ 排程：{sched.get('description','')}\n")
 
         self._check_new_channels()
@@ -1087,10 +1183,62 @@ class CNYRateCalculator:
         return False
 
     # -------------------------------------------------------
+    # 自動套用基本設定（不需互動）
+    # -------------------------------------------------------
+
+    def auto_setup(self) -> bool:
+        """自動套用基本設定：偵測第一個可用頻道 + 預設排程，不需互動"""
+        detected = self._detect_channels()
+        if not detected:
+            print("❌ 找不到任何已啟用的 OpenClaw 頻道，無法自動設定。", file=sys.stderr)
+            return False
+
+        first = detected[0]
+        ch_type = first['type']
+
+        # 需要 target 的頻道，從 openclaw.json 自動取得
+        target = ''
+        if ch_type != 'console':
+            oc_path = self._find_openclaw_config()
+            if oc_path:
+                try:
+                    with open(oc_path, 'r', encoding='utf-8') as f:
+                        oc = json.load(f)
+                    ch_cfg = oc.get('channels', {}).get(ch_type, {})
+                    # Telegram 取 allowFrom 第一筆作為 chat_id
+                    if ch_type == 'telegram':
+                        allow = ch_cfg.get('allowFrom', [])
+                        target = allow[0] if allow else ''
+                    else:
+                        target = ch_cfg.get('webhookUrl', ch_cfg.get('url', ''))
+                except Exception:
+                    pass
+
+        if not target and ch_type != 'console':
+            print(f"⚠️  無法自動取得 {ch_type} 的 target，請手動執行設定精靈。", file=sys.stderr)
+            return False
+
+        self.config['channels'] = [{'type': ch_type, 'target': target}]
+        self.config['schedule'] = self.DEFAULT_SCHEDULE.copy()
+
+        if not self._save_config(self.config):
+            print("❌ 無法儲存自動設定。", file=sys.stderr)
+            return False
+
+        self._register_cron_job(self.DEFAULT_SCHEDULE['cron'])
+
+        name = self._ch_display_name(ch_type)
+        print(f"✅ 已自動套用基本設定")
+        print(f"   頻道：{name}（{target}）")
+        print(f"   排程：{self.DEFAULT_SCHEDULE['description']}")
+        print(f"   如需調整，請執行：python scripts/cny_rate.py")
+        return True
+
+    # -------------------------------------------------------
     # 主入口
     # -------------------------------------------------------
 
-    def run(self, force_setup: bool = False) -> bool:
+    def run(self) -> bool:
         print("=" * 52)
         print("  🦞  大草原匯率計算器")
         print("=" * 52)
@@ -1110,7 +1258,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "使用範例:\n"
-            "  python scripts/cny_rate.py                          # 初始設定精靈\n"
+            "  python scripts/cny_rate.py                          # 互動式設定精靈\n"
+            "  python scripts/cny_rate.py --auto-setup             # 自動套用基本設定\n"
             "  python scripts/cny_rate.py --run                    # 執行排程通知\n"
             "  python scripts/cny_rate.py --list-channels          # 列出頻道狀態（JSON）\n"
             "  python scripts/cny_rate.py --add-channel telegram 123456789\n"
@@ -1120,6 +1269,7 @@ def main():
     )
     parser.add_argument('--config',         '-c', help='指定 config.json 路徑')
     parser.add_argument('--run',            '-r', action='store_true', help='執行排程通知（跳過設定精靈）')
+    parser.add_argument('--auto-setup',           action='store_true', help='自動套用基本設定（第一個可用頻道 + 預設排程）')
     parser.add_argument('--list-channels',        action='store_true', help='列出頻道狀態（JSON 輸出）')
     parser.add_argument('--add-channel',          nargs=2, metavar=('TYPE', 'TARGET'), help='新增頻道')
     parser.add_argument('--remove-channel',       nargs='+', metavar=('TYPE', 'TARGET'), help='移除頻道')
@@ -1127,6 +1277,9 @@ def main():
 
     try:
         calc = CNYRateCalculator(args.config)
+
+        if args.auto_setup:
+            sys.exit(0 if calc.auto_setup() else 1)
 
         if args.list_channels:
             calc.list_channels_json()
@@ -1151,7 +1304,7 @@ def main():
     except ConfigError as e:
         print(f"\n{e}", file=sys.stderr)
         sys.exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"\n❌ 發生錯誤：{e}", file=sys.stderr)
         sys.exit(1)
 

@@ -8,6 +8,63 @@ description: Auto-fetch Bank of Taiwan CNY exchange rates and calculate tiered p
 
 Automatically fetch Bank of Taiwan CNY exchange rates and calculate tiered pricing.
 
+---
+
+## 🤖 Agent 指引（自動執行規則）
+
+> **以下規則 Agent 必須優先遵守，在任何使用者互動之前先執行檢查。**
+
+### 規則一：Agent 啟動時 → 主動偵測並引導設定
+
+Agent 每次啟動時，必須：
+
+1. 讀取技能目錄下的 `config.json`
+2. 檢查 `schedule.enabled` 是否為 `true`、`channels` 是否非空
+3. 若任一條件不符（**未完成設定**），立即透過 OpenClaw 已啟用的頻道發送以下訊息：
+
+```
+🦞 大草原匯率計算器尚未完成設定
+
+請選擇：
+1. 快速設定
+2. 自訂設定
+```
+
+4. 等待使用者回覆：
+   - 回覆 `1` 或「快速設定」→ Agent 執行：
+     ```
+     python scripts/cny_rate.py --auto-setup
+     ```
+     自動套用基本設定（第一個已啟用頻道 + 預設排程：週一至週五 09:00–17:00 每小時），
+     並回覆：「✅ 已套用基本設定，排程通知即將啟動。如需調整請輸入『設定匯率』。」
+   - 回覆 `2` 或「自訂設定」→ Agent 在伺服器端執行：
+     ```
+     python scripts/cny_rate.py
+     ```
+     並回覆：「✅ 設定精靈已啟動，請依照終端提示完成設定。」
+
+5. 設定精靈完成後自動將排程寫入 `~/.openclaw/cron/jobs.json`
+
+### 規則二：排程觸發事件 → 執行匯率通知
+
+當收到系統事件「執行人民幣匯率計算並發送通知」時：
+
+1. 先確認 `config.json` 的 `schedule.enabled` 為 `true` 且 `channels` 非空
+2. 若**已完成設定**，執行：
+   ```
+   python scripts/cny_rate.py --run
+   ```
+3. 若**尚未完成設定**，改為執行設定精靈（同規則一步驟 3）
+
+### 規則三：觸發設定精靈的關鍵字
+
+使用者輸入以下任一關鍵字時，執行 `python scripts/cny_rate.py`：
+
+- `設定匯率`、`匯率設定`、`初始化`、`重新設定`
+- `setup`、`configure`、`init`
+
+---
+
 ## ⚠️ 使用前必須完成
 
 **本技能會自動檢測系統中已配置的頻道，並引導您完成設定。**
@@ -103,10 +160,9 @@ Automatically fetch Bank of Taiwan CNY exchange rates and calculate tiered prici
 
 ```json
 {
-  "channel": {
-    "type": "telegram",
-    "target": "YOUR_CHAT_ID"
-  }
+  "channels": [
+    { "type": "telegram", "target": "YOUR_CHAT_ID" }
+  ]
 }
 ```
 
@@ -186,10 +242,10 @@ python scripts/cny_rate.py
     "name": "Bank of Taiwan",
     "url": "https://rate.bot.com.tw/xrt"
   },
-  "channel": {
-    "type": "telegram",
-    "target": "123456789"
-  },
+  "channels": [
+    { "type": "telegram", "target": "123456789" },
+    { "type": "discord",  "target": "https://discord.com/api/webhooks/..." }
+  ],
   "schedule": {
     "enabled": true,
     "days_of_week": [1, 2, 3, 4, 5],
@@ -264,42 +320,80 @@ crontab -e
 
 ## 頻道管理（對話指令）
 
-安裝完成後，可直接透過已設定的頻道（如 Telegram）發送以下任一關鍵字，管理通知頻道清單：
+安裝完成後，可直接透過已設定的頻道（如 Telegram）與 agent 互動管理通知頻道清單。
 
 | 關鍵字 | 功能 |
 |--------|------|
-| `加入頻道` | 將新頻道加入通知清單 |
+| `加入頻道` | 查看可加入的頻道並選擇加入 |
 | `移除頻道` | 從通知清單移除指定頻道 |
-| `頻道設定` | 查看並管理目前所有通知頻道 |
+| `頻道設定` | 查看目前所有通知頻道狀態 |
 
-### 觸發條件
+---
 
-當使用者透過任何已設定頻道傳送上述關鍵字時，執行以下流程：
+### 觸發一：使用者主動輸入關鍵字
 
-1. 執行 `python scripts/cny_rate.py --list-channels` 取得目前頻道狀態
-2. 解析 JSON 輸出：
-   - `configured`：目前已在通知清單的頻道
+當使用者傳送 `加入頻道`、`移除頻道` 或 `頻道設定` 時：
+
+1. 執行 `python scripts/cny_rate.py --list-channels` 取得 JSON：
+   - `configured`：目前通知清單中的頻道
    - `available`：OpenClaw 已啟用但尚未加入的頻道
-3. 依使用者意圖操作：
 
-**加入頻道：**
-- 列出 `available` 清單，詢問要加入哪個
-- 詢問目標值（Chat ID / 電話號碼 / Webhook URL）
-- 執行：`python scripts/cny_rate.py --add-channel <type> <target>`
-- 回覆確認結果
+2. **加入頻道** → 展示 `available` 編號清單，詢問選哪個：
+   ```
+   可加入的頻道：
+   1. Discord
+   2. Slack
+   回覆編號或名稱選擇，回覆「取消」退出
+   ```
 
-**移除頻道：**
-- 列出 `configured` 清單，詢問要移除哪個
-- 執行：`python scripts/cny_rate.py --remove-channel <type> [target]`
-- 回覆確認結果
+3. **移除頻道** → 展示 `configured` 編號清單，詢問選哪個
 
-**頻道設定（查看）：**
-- 同時展示已設定與可加入的頻道清單
-- 詢問是否要進行加入或移除操作
+4. **頻道設定** → 同時展示兩份清單，詢問要加入還是移除
+
+---
+
+### 觸發二：回覆新頻道偵測通知
+
+排程執行偵測到新頻道時，會發送以下格式的通知：
+
+```
+📡 偵測到新啟用頻道
+
+以下頻道可加入匯率通知清單：
+1. Discord
+2. Slack
+
+回覆頻道名稱或編號即可加入
+（例：Discord 或 1）
+回覆「略過」忽略此提示
+```
+
+當使用者回覆**編號**（如 `1`）或**頻道名稱**（如 `Discord`）時：
+
+1. 對照通知中的清單確認選擇的頻道類型
+2. 詢問該頻道需要的目標值：
+
+   | 頻道 | 詢問內容 |
+   |------|---------|
+   | Telegram | 請提供 Chat ID（純數字） |
+   | Discord / Slack / Google Chat | 請提供 Webhook URL |
+   | Signal / WhatsApp | 請提供目標電話號碼 |
+   | iMessage | 請提供聯絡人名稱 |
+   | IRC | 請提供頻道名稱 |
+
+3. 收到目標值後執行：
+   ```
+   python scripts/cny_rate.py --add-channel <type> <target>
+   ```
+4. 回覆確認結果，並告知下次排程將發送到新頻道
+
+使用者回覆 `略過` 則不執行任何操作，回覆確認已略過。
+
+---
 
 ### 自動偵測通知
 
-排程執行時若偵測到 OpenClaw 有新啟用的頻道（尚未加入通知清單），會自動透過現有頻道發送提醒訊息，內容包含上述關鍵字供使用者直接回覆操作。
+排程執行時若偵測到 OpenClaw 有新啟用的頻道（尚未加入通知清單），自動透過現有頻道發送上述格式的提醒訊息。
 
 ---
 
