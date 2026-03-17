@@ -3,9 +3,15 @@
   "slug": "hippocortex",
   "displayName": "Hippocortex",
   "latest": {
-    "version": "2.2.1",
-    "publishedAt": 1773688588611,
-    "commit": "https://github.com/openclaw/skills/commit/752a039bf289de3063b128943087e66387db1e73"
+    "version": "2.2.2",
+    "publishedAt": 1773692785423,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.2.1",
+      "publishedAt": 1773688588611,
+      "commit": "https://github.com/openclaw/skills/commit/752a039bf289de3063b128943087e66387db1e73"
+    }
+  ]
 }
