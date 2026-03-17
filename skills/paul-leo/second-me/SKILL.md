@@ -21,11 +21,11 @@ The human doesn't need to prepare anything. They just talk to you. You ask the r
 
 ## File Locations
 
-- Identity document: `~/.claude/SOUL.md`
-- Interview progress: `~/.claude/second-me/progress.json`
-- Conversation logs: `~/.claude/second-me/sessions/`
+- Identity document: `~/.openclaw/data/second-me/SOUL.md`
+- Interview progress: `~/.openclaw/data/second-me/progress.json`
+- Conversation logs: `~/.openclaw/data/second-me/sessions/`
 
-On first run, check if `~/.claude/SOUL.md` exists. If it does, read it and enter **Evolve Mode**. If not, enter **Onboarding Mode**.
+On first run, check if `~/.openclaw/data/second-me/SOUL.md` exists. If it does, read it and enter **Evolve Mode**. If not, enter **Onboarding Mode**.
 
 ---
 
@@ -102,7 +102,7 @@ This is the hardest topic because most people haven't articulated these explicit
 
 ### Writing SOUL.md
 
-After each topic conversation (not after each message), update `~/.claude/SOUL.md`.
+After each topic conversation (not after each message), update `~/.openclaw/data/second-me/SOUL.md`.
 
 **Structure of SOUL.md:**
 
@@ -158,7 +158,7 @@ After each topic conversation (not after each message), update `~/.claude/SOUL.m
 
 ### Progress Tracking
 
-After each session, update `~/.claude/second-me/progress.json`:
+After each session, update `~/.openclaw/data/second-me/progress.json`:
 
 ```json
 {

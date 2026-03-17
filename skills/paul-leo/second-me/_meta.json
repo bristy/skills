@@ -3,9 +3,15 @@
   "slug": "second-me",
   "displayName": "Second Me",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773508393609,
-    "commit": "https://github.com/openclaw/skills/commit/938a447097cc4a18f67057f4ec712eeac417e4e1"
+    "version": "1.0.1",
+    "publishedAt": 1773638957012,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773508393609,
+      "commit": "https://github.com/openclaw/skills/commit/938a447097cc4a18f67057f4ec712eeac417e4e1"
+    }
+  ]
 }
