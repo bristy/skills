@@ -1,7 +1,7 @@
 ---
 name: Hydration Tracker
 description: "每日水分追踪器，帮助您设定补水目标、记录饮水量、检查进度并提供个性化提醒。确保您保持最佳水合状态，提升健康和精力。关键词：水，饮水，健康，提醒，水合，追踪，健康管理。"
-version: "1.0.0"
+version: "2.0.0"
 author: "BytesAgain"
 tags: ["health", "hydration", "water", "reminder", "wellness", "utility", "健康", "饮水"]
 categories: ["Health & Wellness", "Utility", "Personal Management"]
@@ -55,7 +55,7 @@ commands:
     description: "显示Hydration Tracker的版本信息。"
     usage: "hydration-tracker info"
 changelog:
-  - version: "1.0.0"
+  - version: "2.0.0"
     date: "2026-03-15"
     changes:
       - "初始版本发布：提供每日饮水追踪、目标设定和进度检查功能。"
@@ -87,3 +87,17 @@ water-reminder help
 ---
 💬 Feedback & Feature Requests: https://bytesagain.com/feedback
 Powered by BytesAgain | bytesagain.com
+
+## Examples
+
+```bash
+# Show help
+hydration-tracker help
+
+# Run
+hydration-tracker run
+```
+
+## Commands
+
+Run `hydration-tracker help` to see all available commands.
