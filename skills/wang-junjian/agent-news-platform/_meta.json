@@ -1,0 +1,11 @@
+{
+  "owner": "wang-junjian",
+  "slug": "agent-news-platform",
+  "displayName": "Agent News 平台内容管理技能",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773676848863,
+    "commit": null
+  },
+  "history": []
+}
