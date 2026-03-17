@@ -3,9 +3,15 @@
   "slug": "dingtalk-document",
   "displayName": "Dingtalk Document",
   "latest": {
-    "version": "0.1.1",
-    "publishedAt": 1773329677103,
-    "commit": "https://github.com/openclaw/skills/commit/1b0b35392f2ac731da63dd80de0869a7b1fdacb9"
+    "version": "0.1.2",
+    "publishedAt": 1773673424051,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.1",
+      "publishedAt": 1773329677103,
+      "commit": "https://github.com/openclaw/skills/commit/1b0b35392f2ac731da63dd80de0869a7b1fdacb9"
+    }
+  ]
 }
