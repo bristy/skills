@@ -3,9 +3,15 @@
   "slug": "chaos-testing",
   "displayName": "Chaos Testing",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773450759331,
-    "commit": "https://github.com/openclaw/skills/commit/8d997a5cf3f9b75149e0bb61f1b667f97b4f2d35"
+    "version": "1.0.6",
+    "publishedAt": 1773665047964,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773450759331,
+      "commit": "https://github.com/openclaw/skills/commit/8d997a5cf3f9b75149e0bb61f1b667f97b4f2d35"
+    }
+  ]
 }
