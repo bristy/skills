@@ -172,19 +172,19 @@ if __name__ == "__main__":
         # 输出原始JSON
         result = fetcher.get_coupons()
         print(json.dumps(result, ensure_ascii=False, indent=2))
-    elif args.platform == "all":
+    elif args.platform == "all" or args.platform == "全部":
         # 输出格式化后的列表
         result = fetcher.get_coupons()
         print(format_coupons_list(result))
-    elif args.platform == "meituan":
+    elif args.platform == "meituan" or args.platform == "美团":
         coupons = fetcher.get_meituan_coupons()
         for i, coupon in enumerate(coupons, 1):
             print(f"{i}. {format_coupon_display(coupon, '美团')}")
-    elif args.platform == "eleme":
+    elif args.platform == "eleme" or args.platform == "饿了么" or args.platform == "淘宝闪购":
         coupons = fetcher.get_eleme_coupons()
         for i, coupon in enumerate(coupons, 1):
             print(f"{i}. {format_coupon_display(coupon, '淘宝闪购')}")
-    elif args.platform == "jd":
+    elif args.platform == "jd" or args.platform == "京东":
         coupons = fetcher.get_jd_coupons()
         for i, coupon in enumerate(coupons, 1):
             print(f"{i}. {format_coupon_display(coupon, '京东')}")

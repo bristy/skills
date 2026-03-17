@@ -1,11 +1,17 @@
 {
   "owner": "moooai",
   "slug": "takeout-coupon",
-  "displayName": "Takeout Coupon",
+  "displayName": "Takeout Coupon 外卖优惠券隐藏券大额券，美团、京东、闪购/饿了么",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1773313292813,
-    "commit": "https://github.com/openclaw/skills/commit/5ac4235fcb00c4e473522ec3100cf941a9da2494"
+    "version": "1.0.1",
+    "publishedAt": 1773652633291,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1773313292813,
+      "commit": "https://github.com/openclaw/skills/commit/5ac4235fcb00c4e473522ec3100cf941a9da2494"
+    }
+  ]
 }
