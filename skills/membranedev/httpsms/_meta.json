@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "httpsms",
+  "displayName": "Httpsms",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773612152329,
+    "commit": null
+  },
+  "history": []
+}
