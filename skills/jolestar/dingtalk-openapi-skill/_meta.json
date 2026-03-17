@@ -1,0 +1,11 @@
+{
+  "owner": "jolestar",
+  "slug": "dingtalk-openapi-skill",
+  "displayName": "DingTalk OpenAPI Skill",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773617056994,
+    "commit": null
+  },
+  "history": []
+}
