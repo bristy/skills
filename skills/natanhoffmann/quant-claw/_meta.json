@@ -3,9 +3,15 @@
   "slug": "quant-claw",
   "displayName": "QuantClaw",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1773425762531,
-    "commit": "https://github.com/openclaw/skills/commit/9c656e18f33efdcc70237b0b5fa7f248f01113dc"
+    "version": "1.0.6",
+    "publishedAt": 1773595695817,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1773425762531,
+      "commit": "https://github.com/openclaw/skills/commit/9c656e18f33efdcc70237b0b5fa7f248f01113dc"
+    }
+  ]
 }
