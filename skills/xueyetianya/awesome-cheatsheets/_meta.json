@@ -3,9 +3,15 @@
   "slug": "awesome-cheatsheets",
   "displayName": "Awesome Cheatsheets",
   "latest": {
-    "version": "2.3.0",
-    "publishedAt": 1773447333153,
-    "commit": "https://github.com/openclaw/skills/commit/fd124cc234d090fded287f7330571af64021d335"
+    "version": "1.0.6",
+    "publishedAt": 1773664659240,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.3.0",
+      "publishedAt": 1773447333153,
+      "commit": "https://github.com/openclaw/skills/commit/fd124cc234d090fded287f7330571af64021d335"
+    }
+  ]
 }
