@@ -3,11 +3,16 @@
   "slug": "hedgecrust",
   "displayName": "Hedgecrust",
   "latest": {
-    "version": "2.1.0",
-    "publishedAt": 1773620573802,
-    "commit": "https://github.com/openclaw/skills/commit/ba80b509d02481639491ab360b3efd3363468238"
+    "version": "2.7.0",
+    "publishedAt": 1773683325522,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.1.0",
+      "publishedAt": 1773620573802,
+      "commit": "https://github.com/openclaw/skills/commit/ba80b509d02481639491ab360b3efd3363468238"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773517988113,
