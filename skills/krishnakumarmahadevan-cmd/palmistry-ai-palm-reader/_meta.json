@@ -1,11 +1,17 @@
 {
   "owner": "krishnakumarmahadevan-cmd",
   "slug": "palmistry-ai-palm-reader",
-  "displayName": "Palmistry - AI Palm Reader",
+  "displayName": "Palmistry Ai Palm Reader",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773484250654,
-    "commit": "https://github.com/openclaw/skills/commit/4b1dbd529e3dc191409758f0d011514f7744f138"
+    "version": "1.0.2",
+    "publishedAt": 1773630662189,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773484250654,
+      "commit": "https://github.com/openclaw/skills/commit/4b1dbd529e3dc191409758f0d011514f7744f138"
+    }
+  ]
 }
