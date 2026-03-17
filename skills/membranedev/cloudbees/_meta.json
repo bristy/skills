@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "cloudbees",
+  "displayName": "Cloudbees",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773543749465,
+    "commit": null
+  },
+  "history": []
+}
