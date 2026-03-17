@@ -1,0 +1,11 @@
+{
+  "owner": "vswarm-ai",
+  "slug": "fleet-memory-manager",
+  "displayName": "Fleet Memory Manager",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773626652629,
+    "commit": null
+  },
+  "history": []
+}
