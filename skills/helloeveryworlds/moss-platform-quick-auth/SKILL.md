@@ -1,73 +1,31 @@
 ---
 name: moss-platform-quick-auth
-description: Handle Moss platform authentication via Quick Auth endpoints and return usable credentials. Use when a user provides an email and asks to register/login, send verification code, complete code-based auth, or use API no-code auth (api-register/api-login) to get access_token/refresh_token/api_key.
+description: B-only Quick Auth for Moss platform. Use only api-login / api-register (no email code flow).
 ---
 
-# Moss Platform Quick Auth
+# Moss Platform Quick Auth (B-only)
 
-Execute authentication against:
+仅使用 **方案 B（无验证码）**：
+- `POST /studio-api/v1/auth/quick/api-login`
+- `POST /studio-api/v1/auth/quick/api-register`
 
-- Base URL: `https://<host>/studio-api/v1/auth/quick/*`
+禁止使用：
+- `send-code`
+- `login`
+- `register`
 
-Use `curl` via shell for deterministic API calls.
+## Base URL
 
-## Inputs to Collect
+`https://<host>/studio-api/v1/auth/quick/*`
 
-Collect these before calling endpoints:
+## Required Inputs
 
-- `host` (example: `sotatts.online`)
+- `host`（例如 `studio.mosi.cn`）
 - `email`
-- Optional: `code` (for code-based flow)
-- Optional: user intent (`new user` / `existing user` / `auto`)
 
-## Flow A: Code-based Quick Auth
+## Flow (B-only)
 
-### Step 1: Send code
-
-```bash
-curl -sS -X POST "https://<host>/studio-api/v1/auth/quick/send-code" \
-  -H 'Content-Type: application/json' \
-  --data '{"email":"<email>"}'
-```
-
-Expected success fields:
-
-- `message`
-- `expires_in`
-- `cooldown_in`
-
-If `IN_COOLDOWN`, wait and retry.
-
-### Step 2: Login or register
-
-Preferred decision logic:
-
-1. Try `/quick/login` first when user status unknown
-2. If `USER_NOT_EXIST`, call `/quick/register`
-
-Login:
-
-```bash
-curl -sS -X POST "https://<host>/studio-api/v1/auth/quick/login" \
-  -H 'Content-Type: application/json' \
-  --data '{"email":"<email>","code":"<code>"}'
-```
-
-Register:
-
-```bash
-curl -sS -X POST "https://<host>/studio-api/v1/auth/quick/register" \
-  -H 'Content-Type: application/json' \
-  --data '{"email":"<email>","code":"<code>"}'
-```
-
-On register success, persist `temp_password` immediately (returned once).
-
-## Flow B: API Auth (No Code)
-
-Use for server-to-server or user-approved no-interaction login.
-
-### Try login first
+### 1) 先尝试 api-login
 
 ```bash
 curl -sS -X POST "https://<host>/studio-api/v1/auth/quick/api-login" \
@@ -75,7 +33,7 @@ curl -sS -X POST "https://<host>/studio-api/v1/auth/quick/api-login" \
   --data '{"email":"<email>"}'
 ```
 
-If `USER_NOT_EXIST`, call register:
+### 2) 若返回 USER_NOT_EXIST，则 api-register
 
 ```bash
 curl -sS -X POST "https://<host>/studio-api/v1/auth/quick/api-register" \
@@ -83,39 +41,31 @@ curl -sS -X POST "https://<host>/studio-api/v1/auth/quick/api-register" \
   --data '{"email":"<email>"}'
 ```
 
-Expected fields:
+## Success Fields
 
 - `user_id`
 - `access_token`
 - `refresh_token`
 - `expires_in`
-- `api_key` (should be present)
-- `temp_password` (register only; store once)
+- `api_key`
+- `temp_password`（仅注册返回，一次性）
 
 ## Output Contract
 
-Return to user:
-
-- Which endpoint was used
-- Result status (`login success` / `register success` / `error code`)
+返回给用户：
+- 使用了哪个 endpoint
+- 结果状态（login success / register success / error code）
 - `user_id`
 - `expires_in`
-- Credentials (`access_token`, `refresh_token`, `api_key`, `temp_password` if present)
+- 凭据（按需脱敏展示）
 
-If token-auth endpoints fail unexpectedly (`UNAUTHORIZED` after successful auth), report as backend inconsistency and include endpoint + response payload for debugging.
+## Error Handling
 
-## Error Handling Map
+- `USER_NOT_EXIST` → api-login 切换到 api-register
+- `EMAIL_EXISTS` → api-register 切回 api-login
+- `ACCOUNT_BANNED` → 终止并提示
 
-- `USER_NOT_EXIST` → switch login → register
-- `EMAIL_EXISTS` → switch register → login
-- `INVALID_CODE` → ask user for correct code
-- `CODE_EXPIRED` / `CODE_NOT_FOUND` → re-send code then retry
-- `IN_COOLDOWN` → wait `cooldown_in` seconds
-- `ACCOUNT_BANNED` → stop and notify user
+## Security
 
-## Security & UX Rules
-
-- Never claim mailbox access without explicit integration.
-- Mask credentials by default in summaries unless user explicitly asks for full raw values.
-- Warn that `temp_password` is one-time display and must be saved.
-- Keep API calls idempotent where possible and avoid tight resend loops.
+- 默认脱敏展示凭据，除非用户明确要原文。
+- 明确提示 `temp_password` 仅返回一次，必须立即保存。
