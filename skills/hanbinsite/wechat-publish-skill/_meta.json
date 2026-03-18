@@ -1,0 +1,11 @@
+{
+  "owner": "hanbinsite",
+  "slug": "wechat-publish-skill",
+  "displayName": "微信创作",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773835459916,
+    "commit": null
+  },
+  "history": []
+}
