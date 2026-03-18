@@ -1,0 +1,11 @@
+{
+  "owner": "fangtianwd",
+  "slug": "housing-price-data",
+  "displayName": "中国70城房价数据",
+  "latest": {
+    "version": "2.1.0",
+    "publishedAt": 1773806360027,
+    "commit": null
+  },
+  "history": []
+}
