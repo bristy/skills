@@ -3,9 +3,15 @@
   "slug": "ubuntu-inspector",
   "displayName": "Ubuntu Inspector",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773633166566,
-    "commit": "https://github.com/openclaw/skills/commit/d5293e11fb9bb4963ae28f011a6615e6296858e2"
+    "version": "1.0.1",
+    "publishedAt": 1773793553065,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773633166566,
+      "commit": "https://github.com/openclaw/skills/commit/d5293e11fb9bb4963ae28f011a6615e6296858e2"
+    }
+  ]
 }
