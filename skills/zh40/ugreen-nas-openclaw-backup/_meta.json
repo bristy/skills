@@ -1,0 +1,11 @@
+{
+  "owner": "zh40",
+  "slug": "ugreen-nas-openclaw-backup",
+  "displayName": "Ugreen NAS备份",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1773831941894,
+    "commit": null
+  },
+  "history": []
+}
