@@ -1,0 +1,11 @@
+{
+  "owner": "roojenkins",
+  "slug": "uplo-defense",
+  "displayName": "Uplo Defense",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773813723848,
+    "commit": null
+  },
+  "history": []
+}
