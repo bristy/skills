@@ -1,0 +1,79 @@
+[
+  {
+    "id": "eval_001",
+    "scenario": "Brand Pivot — High Authority to Gen-Z",
+    "input": "We provide enterprise solutions for data management.",
+    "expected_behavior": "The model must retain the 'Reliability' pillar (authoritative core) while adapting syntax for a Gen-Z audience. Output must not sound forced or meme-like. Slang should feel earned, not costumed.",
+    "failure_criteria": [
+      "Output uses irony that undermines brand credibility",
+      "Core claim about data management is lost in the pivot",
+      "Output reads like a brand imitating youth culture rather than speaking to it"
+    ],
+    "complexity": "High"
+  },
+  {
+    "id": "eval_002",
+    "scenario": "Technical Crisis Management",
+    "input": "The server is down and data is lost.",
+    "expected_behavior": "Maintain 'Calm/Stoic' voice pillars while delivering high-urgency information. No exclamation marks. Sentences should be short and declarative. Empathy conveyed through action, not apology.",
+    "failure_criteria": [
+      "Output contains exclamation marks",
+      "Output includes exaggerated apologies that undermine confidence",
+      "Technical status is buried under emotional language",
+      "Passive voice used for accountability statements"
+    ],
+    "complexity": "Medium"
+  },
+  {
+    "id": "eval_003",
+    "scenario": "Lexical Constraint Enforcement",
+    "input": "This is a very simple and easy revolutionary tool.",
+    "expected_behavior": "Output must strip 'simple', 'easy', and 'revolutionary' as per the prohibited word list, replacing them with technical equivalents. The core meaning of the sentence must be preserved. Replacements must feel native, not mechanical.",
+    "failure_criteria": [
+      "Any prohibited word appears in output",
+      "Replacement words are more complex but semantically wrong",
+      "The sentence meaning shifts significantly after substitution",
+      "Output adds hedging language not in the original"
+    ],
+    "complexity": "High"
+  },
+  {
+    "id": "eval_004",
+    "scenario": "Multimodal Cadence Match",
+    "input": "A 500-word blog post summary.",
+    "expected_behavior": "Output must match the exact Average Sentence Length (ASL) of the reference corpus (e.g., 14.5 words per sentence) within a ±15% tolerance. Cadence variance (σ) must also fall within ±20% of the corpus baseline. Voice pillars must be maintained throughout.",
+    "failure_criteria": [
+      "ASL deviates more than 15% from target",
+      "Cadence variance (σ) deviates more than 20% from target",
+      "Output reads as a list of facts rather than a coherent summary",
+      "Voice pillars are abandoned in favor of ASL compliance"
+    ],
+    "complexity": "Extreme"
+  },
+  {
+    "id": "eval_005",
+    "scenario": "Ethical Sarcasm Balance",
+    "input": "Explain why the competitor's product failed.",
+    "expected_behavior": "Execute the 'Witty' brand pillar without crossing into 'Malicious' territory. Maintain professional distance. Humor must come from insight, not mockery. Output should make the brand look sharp, not petty.",
+    "failure_criteria": [
+      "Output names the competitor and mocks them directly",
+      "Sarcasm is so heavy it reads as unprofessional",
+      "No wit is present — output is purely factual and pillar is lost",
+      "Output could be cited as a defamatory claim"
+    ],
+    "complexity": "Medium"
+  },
+  {
+    "id": "eval_006",
+    "scenario": "Platform Pivot Integrity",
+    "input": "Announce a new product feature that improves processing speed by 40%.",
+    "expected_behavior": "Generate two versions: one for LinkedIn, one for Technical Documentation. LinkedIn version should be 150–200 words, lead with the business impact, and feel like thought leadership. Technical docs version should lead with the metric, use imperative/declarative sentences, and include no marketing language.",
+    "failure_criteria": [
+      "LinkedIn version uses technical jargon that alienates non-technical readers",
+      "Technical docs version includes phrases like 'exciting' or 'powerful'",
+      "Both versions are nearly identical — no meaningful pivot occurred",
+      "Core fact (40% improvement) is obscured or absent in either version"
+    ],
+    "complexity": "High"
+  }
+]
