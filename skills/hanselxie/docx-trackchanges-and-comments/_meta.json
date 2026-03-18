@@ -1,0 +1,11 @@
+{
+  "owner": "hanselxie",
+  "slug": "docx-trackchanges-and-comments",
+  "displayName": "用于为Word文档开启并调整修订模式，添加、删除批注等功能",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773815946406,
+    "commit": null
+  },
+  "history": []
+}
