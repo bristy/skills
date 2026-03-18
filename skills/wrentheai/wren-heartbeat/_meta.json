@@ -1,0 +1,11 @@
+{
+  "owner": "wrentheai",
+  "slug": "wren-heartbeat",
+  "displayName": "Agent Heartbeat",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773726460131,
+    "commit": null
+  },
+  "history": []
+}
