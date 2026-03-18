@@ -1,0 +1,11 @@
+{
+  "owner": "yc556600",
+  "slug": "xhs-note-gen",
+  "displayName": "采用强大模型，一键生成小红书图文，助力品牌曝光和转化。适用于用户希望“生成小红书笔记/小红书文案/笔记”时，通过API自动生成结果而非手动撰写。",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773750872196,
+    "commit": null
+  },
+  "history": []
+}
