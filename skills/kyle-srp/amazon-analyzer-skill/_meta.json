@@ -1,0 +1,11 @@
+{
+  "owner": "kyle-srp",
+  "slug": "amazon-analyzer-skill",
+  "displayName": "APIClaw Amazon Analysis",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1773732450959,
+    "commit": null
+  },
+  "history": []
+}
