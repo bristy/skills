@@ -3,11 +3,16 @@
   "slug": "clawexchange",
   "displayName": "Clawexchange",
   "latest": {
-    "version": "0.2.1",
-    "publishedAt": 1773259806023,
-    "commit": "https://github.com/openclaw/skills/commit/e41c2c9acc034aad4111d4c797893248b4b87dc7"
+    "version": "0.3.1",
+    "publishedAt": 1773691612927,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.2.1",
+      "publishedAt": 1773259806023,
+      "commit": "https://github.com/openclaw/skills/commit/e41c2c9acc034aad4111d4c797893248b4b87dc7"
+    },
     {
       "version": "0.2.0",
       "publishedAt": 1772494665034,
