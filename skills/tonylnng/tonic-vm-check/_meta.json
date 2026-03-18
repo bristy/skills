@@ -1,0 +1,11 @@
+{
+  "owner": "tonylnng",
+  "slug": "tonic-vm-check",
+  "displayName": "VM Health Check",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1773818176324,
+    "commit": null
+  },
+  "history": []
+}
