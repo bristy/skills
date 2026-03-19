@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "AI Task Hub Skill API",
-    "version": "3.2.11",
-    "description": "Public skill contract for execute/poll/presentation/account balance/account ledger via host-managed agent task token."
+    "version": "3.2.23",
+    "description": "Public skill contract for execute/poll/presentation/account balance/account ledger via gateway-managed public bridge."
   },
   "servers": [
     {
@@ -73,48 +73,30 @@
     }
   },
   "x-host-auth-onboarding": {
-    "agent_uid_format": "^agent_[a-z0-9][a-z0-9_-]{5,63}$",
-    "conversation_id_format": "^[A-Za-z0-9._:-]{8,128}$",
-    "bootstrap_on_binding_missing": {
-      "trigger": {
-        "code": "SYSTEM_NOT_FOUND",
-        "message": "agent binding not found"
-      },
-      "steps": [
-        {
-          "endpoint": "/agent/install-code/issue",
-          "method": "POST",
-          "body": {
-            "channel": "clawhub"
-          }
-        },
-        {
-          "endpoint": "/agent/bootstrap",
-          "method": "POST",
-          "body": {
-            "agent_uid": "<canonical_agent_uid>",
-            "install_code": "<install_code_from_previous_step>"
-          }
-        },
-        {
-          "endpoint": "/agent/task-token/issue",
-          "method": "POST",
-          "retry": true
-        }
+    "type": "bridge_managed",
+    "primary_entrypoint_endpoint": "/agent/public-bridge/invoke",
+    "primary_entrypoint_first_time_error": {
+      "code": "AUTHORIZATION_REQUIRED",
+      "response_fields": [
+        "authorization_url",
+        "entry_user_key",
+        "gateway_api_base_url",
+        "auth_session_id",
+        "retry_after_seconds"
       ]
     },
-    "interactive_fallback_authorization_url_template": "https://<host-owned-domain>/agent-auth?agent_uid=<agent_uid>&conversation_id=<conversation_id>"
+    "agent_uid_format": "^agent_[a-z0-9][a-z0-9_-]{5,63}$",
+    "conversation_id_format": "^[A-Za-z0-9._:-]{8,128}$"
   },
   "x-agent-invocation-guide": {
-    "preferred_entrypoint": "bridge_api",
+    "preferred_entrypoint": "public_bridge",
+    "user_response_policy": {
+      "attachment_requests": "Treat uploaded files as ready for execution, prefer attachment URLs, and when the host exposes explicit bytes or an explicit attachment path, auto-upload before returning results or progress.",
+      "internal_mechanics_visibility": "Do not expose image_url, attachment.url, storage URLs, bridge layers, or upload normalization details to end users unless they explicitly ask for technical debugging.",
+      "manual_url_requests": "Do not ask end users to provide manual URLs, JSON field names, or upload-chain instructions.",
+      "failure_language": "If user intervention is required, describe only the minimal next step in user-oriented language without revealing internal layering."
+    },
     "host_bridge_note": "Host bridge entrypoint is host-owned integration code and is not bundled in this published package.",
-    "cli_modes": [
-      {
-        "name": "direct_preinjected_token",
-        "command": "AGENT_TASK_TOKEN=<token> node scripts/skill.mjs portal.account.balance '{}'",
-        "recommended": false
-      }
-    ],
     "action_payload_templates": {
       "portal.skill.execute": {
         "capability": "human_detect",
@@ -140,80 +122,86 @@
     "error_handling": [
       {
         "match": {
-          "code": "AUTH_UNAUTHORIZED",
-          "message_contains": "agent task token is required"
+          "code": "AUTHORIZATION_REQUIRED",
+          "message_contains": "bridge authorization is required"
         },
-        "host_action": "issue_or_refresh_task_token_then_retry_once"
+        "host_action": "show authorization_url, persist entry_user_key, then retry same action after authorization"
+      },
+      {
+        "match": {
+          "code": "AUTHORIZATION_REQUIRED",
+          "details": {
+            "likely_cause": "ENTRY_USER_KEY_NOT_REUSED",
+            "recovery_action": "REUSE_ENTRY_USER_KEY",
+            "reauthorization_required": false
+          }
+        },
+        "host_action": "restore the previously persisted entry_user_key and retry the same bridge call before asking the user to authorize again"
       },
       {
         "match": {
           "code": "AUTH_UNAUTHORIZED",
           "message_contains": "agent_uid claim format is invalid"
         },
-        "host_action": "map_alias_to_canonical_agent_uid_then_reissue_token"
+        "host_action": "normalize host agent_uid and retry the same bridge call"
       },
       {
         "match": {
           "code": "SYSTEM_NOT_FOUND",
           "message_contains": "agent binding not found"
         },
-        "host_action": "run_binding_bootstrap_once_then_retry_token_issue"
+        "host_action": "restart the same bridge flow once so gateway can repair binding"
       }
     ],
-    "host_token_issue_auth_headers": [
-      "X-API-Key: <gateway_api_key> + x-agent-uid: <agent_uid>",
-      "Authorization: Bearer <gateway_api_key> + x-agent-uid: <agent_uid>"
-    ],
     "bridge_api": {
-      "endpoint": "/agent/skill/bridge/invoke",
+      "endpoint": "/agent/public-bridge/invoke",
       "method": "POST",
       "requires_caller_managed_task_token": false,
       "request_body": {
+        "entry_host": "openclaw",
         "action": "portal.account.balance",
         "agent_uid": "support_assistant",
         "conversation_id": "host_session_20260316_opaque_001",
         "payload": {}
       },
       "notes": [
-        "Preferred production entrypoint for agent-friendly integration.",
-        "agent_uid should be the host-defined stable runtime agent identifier; bridge canonicalizes it server-side per session-scoped owner.",
+        "Preferred production entrypoint for third-party agent-friendly integration.",
+        "For end-user conversations, prefer direct execution and result delivery instead of explaining attachment upload or URL normalization internals.",
+        "When the host exposes attachment bytes or an explicit attachment path, the published skill auto-uploads through the public bridge before execute and injects the returned URL into the target media field.",
+        "agent_uid should be the host-defined stable runtime agent identifier; bridge canonicalizes it server-side.",
         "conversation_id should be a host-generated opaque session or install identifier, not a public chat id, raw thread id, or PII.",
-        "Public bridge derives session-scoped owner identity from conversation_id and shares one account across agent aliases inside that conversation.",
-        "Cross-conversation account continuity requires a trusted host token bridge; public bridge intentionally stays conversation-scoped.",
+        "Public bridge should resolve a stable external user binding when available; if binding is missing, gateway returns authorization_url plus entry_user_key.",
+        "authorization_url may include gateway_api_base_url and hosts should preserve it when completing browser authorization so the binding write lands on the same API environment.",
+        "Cross-conversation account continuity requires reusing the same entry_user_key across follow-up calls.",
+        "If AUTHORIZATION_REQUIRED includes likely_cause=ENTRY_USER_KEY_NOT_REUSED and reauthorization_required=false, hosts should restore the previously persisted entry_user_key instead of launching a new browser login.",
         "Gateway canonicalizes agent_uid, repairs binding when missing, and issues action-scoped task token internally.",
+        "Write-capable execute actions should send options.confirm_write=true after user confirmation; otherwise gateway may return ACTION_CONFIRMATION_REQUIRED.",
         "base_url, gateway_api_key, api_key, user_token, agent_task_token, owner_uid_hint, and install_channel overrides are rejected by this bridge endpoint."
       ]
+    },
+    "trusted_host_bridge_api": {
+      "endpoint": "/agent/skill/bridge/invoke",
+      "method": "POST",
+      "requires_caller_managed_task_token": false
     }
   },
   "paths": {
     "/agent/skill/execute": {
       "post": {
         "summary": "portal.skill.execute",
-        "security": [
-          {
-            "AgentTaskToken": []
-          }
-        ]
+        "security": []
       }
     },
     "/agent/skill/runs/{runId}": {
       "get": {
         "summary": "portal.skill.poll",
-        "security": [
-          {
-            "AgentTaskToken": []
-          }
-        ]
+        "security": []
       }
     },
     "/agent/skill/runs/{runId}/presentation": {
       "get": {
         "summary": "portal.skill.presentation",
-        "security": [
-          {
-            "AgentTaskToken": []
-          }
-        ]
+        "security": []
       }
     },
     "/SKILL.md": {
@@ -229,26 +217,18 @@
     "/agent/skill/account/balance": {
       "get": {
         "summary": "portal.account.balance",
-        "security": [
-          {
-            "AgentTaskToken": []
-          }
-        ]
+        "security": []
       }
     },
     "/agent/skill/account/ledger": {
       "get": {
         "summary": "portal.account.ledger",
-        "security": [
-          {
-            "AgentTaskToken": []
-          }
-        ]
+        "security": []
       }
     },
-    "/agent/skill/bridge/invoke": {
+    "/agent/public-bridge/invoke": {
       "post": {
-        "summary": "Preferred bridge invoke endpoint",
+        "summary": "Preferred public bridge invoke endpoint",
         "requestBody": {
           "required": true,
           "content": {
@@ -256,11 +236,23 @@
               "schema": {
                 "type": "object",
                 "required": [
+                  "entry_host",
                   "action",
                   "agent_uid",
                   "conversation_id"
                 ],
                 "properties": {
+                  "entry_host": {
+                    "type": "string",
+                    "enum": [
+                      "openclaw",
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "entry_user_key": {
+                    "type": "string"
+                  },
                   "action": {
                     "type": "string",
                     "enum": [
@@ -307,22 +299,23 @@
           "400": {
             "description": "Invalid bridge request"
           },
+          "401": {
+            "description": "AUTHORIZATION_REQUIRED with authorization_url, entry_user_key, and possible recovery hints such as likely_cause=ENTRY_USER_KEY_NOT_REUSED"
+          },
           "429": {
             "description": "Bootstrap rate limit exceeded"
           }
         }
       }
+    },
+    "/agent/skill/bridge/invoke": {
+      "post": {
+        "summary": "Trusted host bridge invoke endpoint"
+      }
     }
   },
   "components": {
-    "securitySchemes": {
-      "AgentTaskToken": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-Agent-Task-Token",
-        "description": "Host-issued short-lived token. Required claims: sub, agent_uid, conversation_id, scope, exp, jti. Required action scopes: execute|poll|presentation|account_read."
-      }
-    },
+    "securitySchemes": {},
     "schemas": {
       "PortalSkillExecuteInput": {
         "type": "object",

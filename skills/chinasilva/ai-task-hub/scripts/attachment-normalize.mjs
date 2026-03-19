@@ -1,7 +1,7 @@
 import { extname } from 'node:path';
 
 export const DEFAULT_SITE_BASE_URL = 'https://gateway-api.binaryworks.app';
-const DIRECT_UPLOAD_PATH = '/agent/skill/bridge/upload-file';
+const DIRECT_UPLOAD_PATH = '/agent/public-bridge/upload-file';
 
 const IMAGE_CAPABILITIES = new Set([
   'human_detect',
@@ -55,8 +55,9 @@ export async function normalizeExecutePayload(payloadRaw, _options = {}) {
 
   const normalizedInput = { ...input };
   const explicitNormalized = normalizeExplicitUrlFields(normalizedInput, payload);
+  const handledByCapability = normalizeCapabilitySpecificFields(capability, normalizedInput, payload);
 
-  if (!explicitNormalized) {
+  if (!explicitNormalized && !handledByCapability) {
     const attachmentUrl = resolveAttachmentUrl(normalizedInput, payload);
     const targetFromCapability = resolveTargetField(capability);
     if (attachmentUrl) {
@@ -71,10 +72,10 @@ export async function normalizeExecutePayload(payloadRaw, _options = {}) {
       throw createNormalizeError(
         400,
         'VALIDATION_FILE_PATH_NOT_SUPPORTED',
-        'local file_path is disabled in the published ai-task-hub skill; upload the chat attachment through your host product and pass attachment.url or image_url/audio_url/file_url',
+        'local file_path is disabled in the published ai-task-hub skill; for third-party agent entry upload the chat attachment through /agent/public-bridge/upload-file, then pass attachment.url or image_url/audio_url/file_url/video_url',
         {
           file_path: localAttachment.filePath,
-          supported_inputs: ['attachment.url', 'image_url', 'audio_url', 'file_url'],
+          supported_inputs: ['attachment.url', 'image_url', 'audio_url', 'file_url', 'video_url'],
           recommended_upload_api: `${DEFAULT_SITE_BASE_URL}${DIRECT_UPLOAD_PATH}`
         }
       );
@@ -96,7 +97,7 @@ function toObject(value) {
 
 function normalizeExplicitUrlFields(input, payload) {
   let found = false;
-  for (const field of ['image_url', 'audio_url', 'file_url']) {
+  for (const field of ['image_url', 'audio_url', 'file_url', 'video_url']) {
     const inInput = typeof input[field] === 'string' ? input[field].trim() : '';
     if (inInput) {
       input[field] = inInput;
@@ -112,6 +113,25 @@ function normalizeExplicitUrlFields(input, payload) {
   }
   return found;
 }
+function normalizeCapabilitySpecificFields(capability, input, payload) {
+  if (capability !== 'tencent-video-face-fusion') {
+    return false;
+  }
+
+  const videoUrl = readOptionalString(input.video_url) || readOptionalString(payload.video_url);
+  if (videoUrl) {
+    input.video_url = videoUrl;
+  }
+
+  const mergeInfos = normalizeTencentMergeInfos(input.merge_infos ?? payload.merge_infos);
+  if (mergeInfos) {
+    input.merge_infos = mergeInfos;
+  }
+
+  validateTencentVideoFaceFusionInput(input);
+  return true;
+}
+
 
 function resolveAttachmentUrl(input, payload) {
   const fromInput = readNestedString(input, ['attachment', 'url']);
@@ -175,8 +195,46 @@ function resolveTargetField(capability) {
 }
 
 function hasAnyMediaUrl(input) {
-  return ['image_url', 'audio_url', 'file_url'].some(
+  return ['image_url', 'audio_url', 'file_url', 'video_url'].some(
     (field) => typeof input[field] === 'string' && input[field].trim().length > 0
+  );
+}
+
+function normalizeTencentMergeInfos(value) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return null;
+  }
+
+  return value.map((item) => {
+    const mergeInfo = toObject(item);
+    const mergeFaceImage = toObject(mergeInfo.merge_face_image);
+    const url = readOptionalString(mergeFaceImage.url);
+
+    return {
+      ...mergeInfo,
+      merge_face_image: url ? { ...mergeFaceImage, url } : { ...mergeFaceImage }
+    };
+  });
+}
+
+function validateTencentVideoFaceFusionInput(input) {
+  const videoUrl = readOptionalString(input.video_url);
+  const mergeInfos = Array.isArray(input.merge_infos) ? input.merge_infos : [];
+  const mergeFaceUrl = readNestedString(toObject(mergeInfos[0]), ['merge_face_image', 'url']);
+
+  if (videoUrl && mergeFaceUrl) {
+    return;
+  }
+
+  throw createNormalizeError(
+    400,
+    'VALIDATION_BAD_REQUEST',
+    'tencent-video-face-fusion requires two uploaded files: input.video_url (source video) and input.merge_infos[0].merge_face_image.url (merge face image); ask the user to upload both files and prefer a short source video for testing',
+    {
+      required_inputs: ['input.video_url', 'input.merge_infos[0].merge_face_image.url'],
+      recommended_upload_api: DEFAULT_SITE_BASE_URL + DIRECT_UPLOAD_PATH,
+      attachment_url_single_file_supported: false
+    }
   );
 }
 

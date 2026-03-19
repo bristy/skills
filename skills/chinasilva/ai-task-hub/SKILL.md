@@ -1,18 +1,18 @@
 ---
 name: ai-task-hub
 description: AI task hub for image analysis, background removal, speech-to-text, text-to-speech, markdown conversion, points balance/ledger lookup, and async execute/poll/presentation orchestration. Use when users need hosted AI outcomes while host runtime manages identity, credits, payment, and risk control.
-version: 3.2.11
+version: 3.2.23
 metadata:
   openclaw:
     skillKey: ai-task-hub
     emoji: "🧩"
     homepage: https://gateway.binaryworks.app
+    transport:
+      preferredEntrypoint: /agent/public-bridge/invoke
+      trustedHostEntrypoint: /agent/skill/bridge/invoke
     requires:
       bins:
         - node
-      env:
-        - AGENT_TASK_TOKEN
-    primaryEnv: AGENT_TASK_TOKEN
 ---
 
 # AI Task Hub
@@ -24,7 +24,16 @@ Public package boundary:
 - Only orchestrates `portal.skill.execute`, `portal.skill.poll`, `portal.skill.presentation`, `portal.account.balance`, and `portal.account.ledger`.
 - Does not exchange `api_key` or `userToken` inside this package.
 - Does not handle recharge or payment flows inside this package.
-- Assumes host runtime injects short-lived task tokens and attachment URLs.
+- Prefers attachment URLs, and when host runtime explicitly exposes attachment bytes or an explicit attachment path, auto-uploads through the public bridge and injects the returned URL.
+- Third-party agent entry uses `POST /agent/public-bridge/invoke`.
+
+## User-Facing Response Policy
+
+- When users upload images, audio, documents, or video and ask for a capability, treat the input as ready to process and prefer executing immediately, then return results, progress, or the smallest necessary next step.
+- Do not explain `image_url`, `attachment.url`, storage URLs, bridge layers, host uploads, input normalization, or controlled media domain details to end users unless they explicitly ask for technical debugging.
+- Do not ask end users to provide manual URLs, JSON field names, or upload-chain instructions; those are internal host-to-skill mechanics.
+- If the runtime supports attachment handling, complete upload, transfer, URL injection, and execute/poll/presentation orchestration silently.
+- Only when execution actually fails and the user must intervene should you mention missing processable files, incomplete authorization, or retry guidance, using user-oriented language without exposing internal layering.
 
 Chinese documentation: `SKILL.zh-CN.md`
 
@@ -32,8 +41,8 @@ Chinese documentation: `SKILL.zh-CN.md`
 
 Use this skill when the user asks to:
 
-- detect people, faces, hands, keypoints, or tags from images
-- remove backgrounds or generate cutout/matting results for products or portraits
+- detect faces, human presence, body keypoints, image tags, or facial emotion from images
+- generate person/product segmentation, mask, cutout, or matting outputs that this public package explicitly exposes
 - transcribe uploaded audio into text (`speech to text`, `audio transcription`)
 - generate speech from text input (`text to speech`, `voice generation`)
 - convert uploaded files into markdown (`document to markdown`)
@@ -72,6 +81,11 @@ Example requests that should trigger this skill:
 - `account.ledger` aliases: points ledger, credits history, points statement
 - `embeddings/reranker` aliases: vectorization, semantic vectors, relevance reranking
 
+Public discovery boundary for visual capabilities:
+
+- This published skill only advertises visual capabilities whose backing services are currently enabled for public delivery.
+- Disabled or internally retained legacy routes are intentionally omitted from discovery references and capability manifests even if related backend code still exists.
+
 ## Runtime Contract
 
 Default API base URL: `https://gateway-api.binaryworks.app`
@@ -85,83 +99,60 @@ Action to endpoint mapping:
 - `portal.account.balance` -> `GET /agent/skill/account/balance`
 - `portal.account.ledger` -> `GET /agent/skill/account/ledger`
 
-## Auth Contract (Host-Managed)
+## Install Mechanism & Runtime Requirements
 
-Every request must include:
+- This skill is instruction-first and does not define a remote installer flow.
+- Runtime execution is limited to bundled local scripts under `scripts/*.mjs`.
+- Required runtime binary is `node` (as declared in `metadata.openclaw.requires.bins`).
+- No remote download-to-exec install chain is used (`curl|wget ... | sh|bash|python|node` is not part of this package).
 
-- `X-Agent-Task-Token: <jwt_or_paseto>`
+## Auth Contract
 
-Required token claims:
+Third-party agent entry mode (recommended):
 
-- `sub` (user_id)
-- `agent_uid`
-- `conversation_id`
-- `scope` (one or more of `execute|poll|presentation|account_read`)
-- `exp`
-- `jti`
+- Use `POST /agent/public-bridge/invoke` as the first entrypoint for OpenClaw / Codex / Claude style runtimes.
+- Do not require end users to provide any credential.
+- On first use without an existing binding, gateway returns `AUTHORIZATION_REQUIRED` with `authorization_url` and `entry_user_key`.
+- The returned `authorization_url` may include `gateway_api_base_url`; preserve it when completing browser authorization so `/agent-auth/complete` is posted back to the same API environment that created the auth session.
+- Host/runtime should show `authorization_url` to the user, persist `entry_user_key`, then retry the same action with that same `entry_user_key`.
+- If gateway later returns `AUTHORIZATION_REQUIRED` with `details.likely_cause=ENTRY_USER_KEY_NOT_REUSED`, `details.recovery_action=REUSE_ENTRY_USER_KEY`, and `details.reauthorization_required=false`, host should restore the previously persisted `entry_user_key` and retry without sending the user through browser authorization again.
 
 Identifier format constraints used by gateway auth:
 
 - `agent_uid` must match `^agent_[a-z0-9][a-z0-9_-]{5,63}$`.
 - `conversation_id` must match `^[A-Za-z0-9._:-]{8,128}$`.
-- In direct task-token mode, do not pass short host aliases like `assistant`/`planner` directly as `agent_uid`; host should map internal agent IDs to canonical `agent_uid`.
 - In deployed bridge mode, host may pass its own stable runtime agent identifier and the gateway bridge will canonicalize it server-side.
-
-Required scope per action:
-
-- `portal.skill.execute` -> `execute`
-- `portal.skill.poll` -> `poll`
-- `portal.skill.presentation` -> `presentation`
-- `portal.account.balance` -> `account_read`
-- `portal.account.ledger` -> `account_read`
-
-Token lifetime policy:
-
-- Host should issue short-lived tokens (default 300s, max 900s).
-- Host should mint least-privilege scope for the current action; do not include `account_read` unless account actions are needed.
-
-CLI argument order for `scripts/skill.mjs`:
-
-- `[agent_task_token] <action> <payload_json>`
-- If token arg is omitted, script reads `AGENT_TASK_TOKEN` from environment.
-- Legacy `base_url` override is not allowed in the published package; calls are pinned to the default API base URL.
-- Host runtime should refresh and inject short-lived, action-scoped `AGENT_TASK_TOKEN` automatically to avoid user-facing auth friction.
 
 Host-side token bridge (outside published package):
 
-- To keep this package compliant and low-privilege, token issuance is expected to happen in host runtime.
-- Preferred deployed bridge endpoint: `POST /agent/skill/bridge/invoke`.
-- That bridge endpoint is served by gateway runtime, not bundled into this published package, and does not require caller-managed `AGENT_TASK_TOKEN`.
+- To keep this package compliant and low-privilege, this published runtime does not issue or accept caller-managed task tokens.
+- Preferred deployed bridge endpoint for third-party agent entry: `POST /agent/public-bridge/invoke`.
+- Trusted host runtime that can safely hold bridge assertion secret may continue to use `POST /agent/skill/bridge/invoke`.
+- These bridge endpoints are served by gateway runtime, not bundled into this published package, and do not require caller-managed credentials.
 - Bridge request body should include `action`, `agent_uid`, `conversation_id`, and optional `payload`.
 - `conversation_id` should be a host-generated opaque session/install identifier, not a public chat ID, raw thread ID, or PII.
-- Public bridge derives session-scoped owner identity from `conversation_id` and shares one account across agent aliases inside that conversation.
-- Cross-conversation account continuity requires a trusted host token bridge or direct mode with host-issued `AGENT_TASK_TOKEN`; public bridge intentionally does not accept owner overrides.
+- Public bridge should resolve a stable external user binding when available; if the binding is missing, gateway returns a host-owned authorization URL plus `entry_user_key` so user can complete first-time binding in browser.
+- Cross-conversation account continuity requires reusing the same `entry_user_key`; public bridge intentionally does not accept owner overrides.
 - Gateway bridge will canonicalize `agent_uid`, repair binding when missing, issue short-lived internal task token, and run the action server-side.
+- `portal.skill.execute` through public bridge is write-capable and should send `options.confirm_write=true` after user confirmation; otherwise gateway may return `ACTION_CONFIRMATION_REQUIRED`.
 - `base_url`, `gateway_api_key`, `api_key`, `user_token`, `agent_task_token`, `owner_uid_hint`, and `install_channel` overrides are rejected by the deployed bridge endpoint.
-- Host may call `POST /agent/task-token/issue` with host-managed gateway credential headers and then inject the returned `AGENT_TASK_TOKEN`.
-- Recommended host behavior: retry once on `AUTH_UNAUTHORIZED` by refreshing task token, then re-run the same action.
+- Recommended host behavior: persist `entry_user_key`, normalize `agent_uid`, and re-run the same bridge action after authorization completes.
 
 Host integration modes:
 
-- `automatic` (recommended): host runtime silently issues short-lived action-scoped token and injects `AGENT_TASK_TOKEN`.
-- `interactive fallback` (optional): if host has no server-side token bridge yet, host may present a host-owned authorization URL (example template: `https://<host-owned-domain>/agent-auth?agent_uid=<agent_uid>&conversation_id=<conversation_id>`), let user complete authorization, then host issues/injects short-lived `AGENT_TASK_TOKEN`.
+- `interactive` (recommended): host calls `POST /agent/public-bridge/invoke`, surfaces the returned host-owned authorization URL to the user when needed, persists returned `entry_user_key`, and retries after authorization completes.
+- `trusted host bridge` (secondary): a trusted backend you control may call `POST /agent/skill/bridge/invoke` with its own bridge assertion secret.
 - Published skill package itself does not open browser, persist credentials, or perform OAuth/token exchange flows.
-- The authorization URL above is owned by host integration, not by this skill package or gateway default pages. If host has not implemented that route, `404` is expected.
-
-Binding bootstrap on `SYSTEM_NOT_FOUND`:
-
-- If host receives `SYSTEM_NOT_FOUND` with message `agent binding not found`, host should auto-bootstrap binding once before re-issuing task token.
-- Step 1: issue an install code through host onboarding API.
-- Step 2: bind canonical `agent_uid` through host bootstrap API using that install code.
-- Step 3: retry task-token issuance and inject returned `AGENT_TASK_TOKEN`.
+- The authorization URL above is owned by deployed gateway/admin-web pages, not by this skill package runtime.
 
 ## Agent Invocation Quickstart
 
-Preferred invocation mode for host-integrated agents (recommended):
+Preferred invocation mode for third-party agent entry (recommended):
 
 - Deployed bridge API:
 ```json
 {
+  "entry_host": "openclaw",
   "action": "portal.account.balance",
   "agent_uid": "support_assistant",
   "conversation_id": "host_session_20260316_opaque_001",
@@ -169,30 +160,21 @@ Preferred invocation mode for host-integrated agents (recommended):
 }
 ```
 
-- Send that body to `POST /agent/skill/bridge/invoke`.
-- This is the recommended production entrypoint for agent-friendly integration.
+- Send that body to `POST /agent/public-bridge/invoke`.
+- This is the recommended production entrypoint for third-party agent-friendly integration.
+- On first use, gateway may return `AUTHORIZATION_REQUIRED` with `authorization_url` and `entry_user_key`.
+- Persist `entry_user_key` and retry with the same value after user authorization completes.
+- Preserve any `gateway_api_base_url` embedded in the authorization flow so the completion request lands on the same gateway API environment.
 - `agent_uid` should be your host-defined stable runtime agent identifier.
-- `conversation_id` should be your host-generated opaque session/install identifier; it is not tied to Telegram or any single tool.
-- Reuse the same opaque `conversation_id` across agent aliases when those aliases should share one account inside the same host session.
-- If you need one account across multiple conversations or threads, use a trusted host token bridge instead of passing owner identity through the public bridge request.
+- `conversation_id` should be your host-generated opaque session/install identifier; it is not tied to Telegram or any single tool and does not determine account ownership.
+- Use the same `entry_user_key` across conversations when those conversations should share one account.
 
-Direct `scripts/skill.mjs` invocation is fallback-only:
+Trusted host runtime secondary mode:
 
-- Use direct mode only when runtime already injects short-lived `AGENT_TASK_TOKEN`.
-- Do not ask end users to paste token manually in normal host-integrated flows.
+- If you control the upstream backend and it can safely hold bridge assertion secret, use `POST /agent/skill/bridge/invoke`.
+- This path is for trusted host runtime only, not OpenClaw / Codex / Claude style third-party entry.
 
-Fallback direct mode examples:
-
-- Action-first + env token:
-```bash
-AGENT_TASK_TOKEN=<token> node scripts/skill.mjs portal.account.balance '{}'
-```
-- Explicit token arg:
-```bash
-node scripts/skill.mjs <agent_task_token> portal.skill.poll '{"run_id":"run_123"}'
-```
-
-Action payload templates (same for bridge API and direct mode):
+Action payload templates (same for public bridge and trusted host bridge mode):
 
 - `portal.skill.execute`
 ```json
@@ -221,24 +203,32 @@ Action payload templates (same for bridge API and direct mode):
 
 Agent-side decision flow:
 
-- Always prefer `POST /agent/skill/bridge/invoke` so binding repair and token lifecycle stay host-managed.
+- Always prefer `POST /agent/public-bridge/invoke` for third-party agent entry so first-time authorization can return `authorization_url` plus `entry_user_key`.
 - New task: call `portal.skill.execute`, then poll with `portal.skill.poll` until `data.terminal=true`, then fetch `portal.skill.presentation`.
 - Account query: call `portal.account.balance` or `portal.account.ledger` directly.
-- Reuse the same opaque `conversation_id` across agent aliases when one host session should share one balance/ledger.
-- For cross-conversation continuity, use a trusted host token bridge or direct mode with host-issued `AGENT_TASK_TOKEN`; do not pass `owner_uid_hint` to the public bridge endpoint.
-- If using direct mode and `AUTH_UNAUTHORIZED` + `agent task token is required`: request host to issue/inject short-lived `AGENT_TASK_TOKEN`, then retry once.
+- Keep `conversation_id` as session context only; do not use it as the account key.
+- For cross-conversation continuity in third-party entry mode, persist and reuse the same `entry_user_key`; do not pass `owner_uid_hint` to the public bridge endpoint.
+- If `AUTHORIZATION_REQUIRED` is returned, show `authorization_url`, persist `entry_user_key`, then retry the same action after user authorization completes.
+- If `AUTHORIZATION_REQUIRED` includes `details.likely_cause=ENTRY_USER_KEY_NOT_REUSED`, do not open a new auth flow yet; first restore the previously persisted `entry_user_key` and retry the same bridge call.
+- Treat `details.reauthorization_required=false` as a recovery hint that browser re-login is unnecessary for this failure mode.
 - If `AUTH_UNAUTHORIZED` + `agent_uid claim format is invalid`: use canonical `agent_uid` (`agent_...`) instead of a short host alias (`assistant`, `planner`).
-- If `SYSTEM_NOT_FOUND` + `agent binding not found`: host should run one binding bootstrap cycle, then retry token issuance.
-
-Host token-issue auth headers:
-
-- `X-API-Key: <gateway_api_key>` + `x-agent-uid: <agent_uid>`
-- or `Authorization: Bearer <gateway_api_key>` + `x-agent-uid: <agent_uid>`
+- If `SYSTEM_NOT_FOUND` + `agent binding not found`: restart the same bridge flow once and let gateway repair binding.
 
 Output parsing contract:
 
 - Always parse standard gateway envelope: `request_id`, `data`, `error`.
 - Treat non-empty `error` as failure even when HTTP tooling hides status code.
+
+## Visualization Playbooks (Agent Guidance)
+
+- For successful visual actions (`portal.skill.execute`, `portal.skill.poll`, `portal.skill.presentation`), the script enriches responses with `data.agent_guidance.visualization.playbook`.
+- Playbook mapping covers the visual capabilities currently exposed by this published skill (detection/classification/keypoints/segmentation/matting families).
+- Global rendering guardrail for all visual capabilities:
+- Must use skill-native rendered assets first (`overlay`/`mask`/`cutout`/`view_url`) when available.
+- Manual local drawing fallback is disabled by default (`allow_manual_draw=false`) to avoid inconsistent agent-side rendering.
+- If rendered assets are missing, fallback is summary-only from structured output (`raw`/`visual.spec`), not local drawing.
+- Example special rule:
+- `body-contour-63pt` -> when both rendered assets and geometry are absent, playbook marks `status=degraded` and recommends fallback capability `body-keypoints-2d`.
 
 ## Payload Contract
 
@@ -251,11 +241,19 @@ Output parsing contract:
 
 Attachment normalization:
 
-- Prefer explicit `image_url` / `audio_url` / `file_url`.
+- Prefer explicit `image_url` / `audio_url` / `file_url` / `video_url`.
 - `attachment.url` is mapped to target media field by capability.
-- Local `file_path` is disabled in the published package.
-- Host must upload chat attachments first, then pass URL fields.
-- Example host upload endpoint: `/agent/skill/bridge/upload-file`.
+- When host runtime exposes attachment bytes or an explicit attachment path, this published package auto-uploads through the public bridge and injects the returned URL before execute.
+- There is no separate `portal.upload` action in this package; for third-party agent entry, callers should keep using `portal.skill.execute`, and the bundled runtime will auto-upload explicit bytes/path inputs when available.
+- If a host bypasses the bundled auto-upload helper and implements upload itself, use `POST /agent/public-bridge/upload-file` for third-party/public entry, not `POST /agent/skill/bridge/upload-file`.
+- Arbitrary unmanaged local filesystem access remains unsupported.
+- Example host upload endpoint: `/agent/public-bridge/upload-file`.
+- `tencent-video-face-fusion` requires 2 uploaded files from the user before execution:
+  - source video -> `input.video_url`
+  - merge face image -> `input.merge_infos[0].merge_face_image.url`
+- If either Tencent face fusion file is missing, agent should ask the user to upload both files first.
+- Prefer a short source video for testing or smoke runs because Tencent legacy facefusion jobs are asynchronous and slower than image-only tasks.
+- Do not rely on a single `attachment.url` auto-mapping for `tencent-video-face-fusion`; host must pass both structured URL fields explicitly.
 
 ## Error Contract
 
