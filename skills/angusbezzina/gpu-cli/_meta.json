@@ -3,11 +3,16 @@
   "slug": "gpu-cli",
   "displayName": "GPU CLI: Remote GPU Compute for ML Training and Inference",
   "latest": {
-    "version": "1.1.1",
-    "publishedAt": 1773339458169,
-    "commit": "https://github.com/openclaw/skills/commit/9dbee3f8874a549c116b78b0f9ef16b77ccff592"
+    "version": "1.2.0",
+    "publishedAt": 1773771854807,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.1.1",
+      "publishedAt": 1773339458169,
+      "commit": "https://github.com/openclaw/skills/commit/9dbee3f8874a549c116b78b0f9ef16b77ccff592"
+    },
     {
       "version": "1.1.0",
       "publishedAt": 1772036192971,

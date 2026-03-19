@@ -22,8 +22,11 @@ Safety & scope
 Quick prompts
 - "Run `runner.sh gpu status --json` and summarize pod state".
 - "Run `runner.sh gpu doctor --json` and summarize failures".
-- "Run `runner.sh gpu inventory --json --available` and recommend a GPU under $0.50/hr".
-- "Run `runner.sh gpu run echo hello` then post the output".
+- See `templates/prompts.md` for more examples.
+
+Security
+- Input sanitization: character blocklist (`; & | \` ( ) > < $ { }` + newlines) plus subcommand allowlist. Commands are executed via direct `gpu` binary invocation — no shell re-evaluation (`bash -c` / `eval`).
+- See `SECURITY.md` for the full threat model, permission rationale, and version history.
 
 Notes
 - For image/video/LLM work, ask the agent to include appropriate flags (e.g., `--gpu-type "RTX 4090"`, `-p 8000:8000`, or `--rebuild`).

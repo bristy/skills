@@ -5,19 +5,19 @@ set -euo pipefail
 # GPU CLI ClawHub Skill Runner
 # - Whitelists `gpu` commands
 # - Denies shell injections (pipes, chaining, redirection, subshells)
-# - Preflight: gpu --version, gpu doctor --json
+# - Preflight: gpu --version, gpu doctor --json (skipped for read-only cmds)
 # - Optional caps: price/time (dry-run by default)
 # - Exit-code remediation (daemon restart), cleanup on timeout/cancel
 #
 # Inputs (from ClawHub manifest settings or env overrides):
-#   SKILL_DRY_RUN            (bool) default true
-#   SKILL_REQUIRE_CONFIRM    (bool) default true
-#   SKILL_MAX_PRICE_PER_HOUR (float) default 0.50, 0 disables
-#   SKILL_MAX_RUNTIME_MIN    (int)   default 30,   0 disables
-#   SKILL_DEFAULT_GPU_TYPE   (str)   default "RTX 4090"
-#   SKILL_PROVIDER           (str)   default "runpod"
-#   SKILL_CONFIRM            ("yes" to bypass confirm gate)
-#   SKILL_INPUT              (optional freeform text)
+#   SKILL_DRY_RUN              (bool) default true
+#   SKILL_REQUIRE_CONFIRM      (bool) default true
+#   SKILL_MAX_PRICE_PER_HOUR   (float) default 0.50, 0 disables
+#   SKILL_MAX_RUNTIME_MINUTES  (int)   default 30,   0 disables
+#   SKILL_DEFAULT_GPU_TYPE     (str)   default "RTX 4090"
+#   SKILL_PROVIDER             (str)   default "runpod"
+#   SKILL_CONFIRM              ("yes" to bypass confirm gate)
+#   SKILL_INPUT                (optional freeform text)
 #
 # Invocation:
 #   runner.sh <gpu ...>                 # e.g., runner.sh gpu status --json
@@ -28,11 +28,14 @@ echo_info()  { printf "[gpu-skill] %s\n" "$*" >&2; }
 echo_warn()  { printf "[gpu-skill][warn] %s\n" "$*" >&2; }
 echo_error() { printf "[gpu-skill][error] %s\n" "$*" >&2; }
 
-# Load settings with defaults (ClawHub should map manifest settings to envs)
+# Exit code for "blocked by policy" (distinct from success)
+EXIT_BLOCKED=4
+
+# Load settings with defaults (ClawHub maps manifest settings to envs)
 SKILL_DRY_RUN=${SKILL_DRY_RUN:-true}
 SKILL_REQUIRE_CONFIRM=${SKILL_REQUIRE_CONFIRM:-true}
 SKILL_MAX_PRICE_PER_HOUR=${SKILL_MAX_PRICE_PER_HOUR:-0.50}
-SKILL_MAX_RUNTIME_MIN=${SKILL_MAX_RUNTIME_MIN:-30}
+SKILL_MAX_RUNTIME_MINUTES=${SKILL_MAX_RUNTIME_MINUTES:-30}
 SKILL_DEFAULT_GPU_TYPE=${SKILL_DEFAULT_GPU_TYPE:-"RTX 4090"}
 SKILL_PROVIDER=${SKILL_PROVIDER:-"runpod"}
 SKILL_CONFIRM=${SKILL_CONFIRM:-""}
@@ -42,7 +45,6 @@ CMD_STR=""
 if [[ $# -gt 0 ]]; then
   CMD_STR="$*"
 elif [[ -n "${SKILL_INPUT:-}" ]]; then
-  # Normalize whitespace
   CMD_STR=$(echo "$SKILL_INPUT" | tr -s ' ')
 else
   echo_error "No command provided. Example: 'gpu status --json' or set SKILL_INPUT."
@@ -51,16 +53,15 @@ fi
 
 # Whitelist: must start with 'gpu '
 if [[ ! "$CMD_STR" =~ ^gpu[[:space:]]+ ]]; then
-  echo_error "Only 'gpu …' commands are permitted by this skill."
+  echo_error "Only 'gpu ...' commands are permitted by this skill."
   exit 2
 fi
 
-# Debug: show parsed command (stderr)
 echo_info "Parsed command: $CMD_STR"
 
-# Deny injection characters: any of ; & | ` ( ) > <
-if [[ "$CMD_STR" =~ [\;\&\|\`\(\)\>\<] ]]; then
-  echo_error "Command contains disallowed shell operators. Please provide a single 'gpu …' command without chaining or redirection."
+# Deny injection characters: ; & | ` ( ) > < $ { } and embedded newlines
+if [[ "$CMD_STR" =~ [\;\&\|\`\(\)\>\<\$\{\}] ]] || [[ "$CMD_STR" == *$'\n'* ]]; then
+  echo_error "Command contains disallowed shell operators. Please provide a single 'gpu ...' command without chaining, redirection, or variable expansion."
   exit 2
 fi
 
@@ -84,8 +85,9 @@ maybe_force_json() {
   local s="$1"
   case "$SUBCMD" in
     status|inventory|logs|config|daemon|volume|llm|comfyui)
-      if [[ "$s" != *" --json"* && "$s" != *" --json "* ]]; then
+      if [[ "$s" != *"--json"* ]]; then
         s+=" --json"
+        echo_info "Appended --json flag"
       fi
       ;;
   esac
@@ -93,7 +95,6 @@ maybe_force_json() {
 }
 
 CMD_STR=$(maybe_force_json "$CMD_STR")
-echo_info "JSON flag normalized: $CMD_STR"
 
 # Preflight checks
 echo_info "Preflight: checking gpu --version"
@@ -102,44 +103,61 @@ if ! gpu --version >/dev/null 2>&1; then
   exit 2
 fi
 
-echo_info "Preflight: running gpu doctor --json"
-if ! OUT=$(gpu doctor --json 2>&1); then
-  echo_error "'gpu doctor' failed. Output:\n$OUT"
-  exit 1
-fi
-echo_info "Preflight: doctor bytes $(printf "%s" "$OUT" | wc -c | tr -d ' ')"
-if ! printf "%s" "$OUT" | tr -d '\n' | grep -q '"healthy"[[:space:]]*:[[:space:]]*true'; then
-  echo_warn "Readiness check reported not healthy. Proceeding may fail."
+# Skip doctor preflight for read-only subcommands (they surface their own errors)
+READ_ONLY_CMDS=(status logs config inventory doctor)
+is_read_only=false
+for c in "${READ_ONLY_CMDS[@]}"; do
+  if [[ "$SUBCMD" == "$c" ]]; then is_read_only=true; break; fi
+done
+
+if [[ "$is_read_only" != true ]]; then
+  echo_info "Preflight: running gpu doctor --json"
+  if ! OUT=$(gpu doctor --json 2>&1); then
+    echo_error "'gpu doctor' failed. Output:\n$OUT"
+    exit 1
+  fi
+  if ! printf "%s" "$OUT" | tr -d '\n' | grep -q '"healthy"[[:space:]]*:[[:space:]]*true'; then
+    echo_warn "Readiness check reported not healthy. Proceeding may fail."
+  fi
 fi
 
-# Price check (best-effort; requires inventory JSON). Skip if disabled.
+# Price check (best-effort). Only meaningful for 'run' subcommand.
 PRICE_NOTE=""
-if [[ "${SKILL_MAX_PRICE_PER_HOUR}" != "0" ]]; then
-  # Determine target GPU from command or default
+if [[ "${SKILL_MAX_PRICE_PER_HOUR}" != "0" && "$SUBCMD" == "run" ]]; then
   TARGET_GPU="$SKILL_DEFAULT_GPU_TYPE"
   if echo "$CMD_STR" | grep -q -- "--gpu-type"; then
-    # Extract next token after --gpu-type (handles quotes crudely)
-    TARGET_GPU=$(echo "$CMD_STR" | sed -E 's/.*--gpu-type[[:space:]]+"?([^" ]+)"?.*/\1/' )
-    # Re-substitute spaces if user quoted; fallback if parse failed
-    if [[ -z "$TARGET_GPU" ]]; then TARGET_GPU="$SKILL_DEFAULT_GPU_TYPE"; fi
+    # Extract quoted value after --gpu-type (supports "RTX 4090" style)
+    TARGET_GPU=$(echo "$CMD_STR" | sed -E 's/.*--gpu-type[[:space:]]+"([^"]+)".*/\1/' )
+    if [[ -z "$TARGET_GPU" || "$TARGET_GPU" == "$CMD_STR" ]]; then
+      # Try unquoted single-word fallback
+      TARGET_GPU=$(echo "$CMD_STR" | sed -E 's/.*--gpu-type[[:space:]]+([^[:space:]"-]+).*/\1/' )
+    fi
+    if [[ -z "$TARGET_GPU" || "$TARGET_GPU" == "$CMD_STR" ]]; then
+      TARGET_GPU="$SKILL_DEFAULT_GPU_TYPE"
+    fi
   fi
   if INV=$(gpu inventory --json --available 2>/dev/null); then
-    # Find cost_per_hour for TARGET_GPU (simple grep/sed; tolerate whitespace)
-    INV_FLAT=$(printf "%s" "$INV" | tr -d '\n' | tr -d ' ')
-    TGT_FLAT=$(printf "%s" "$TARGET_GPU" | tr -d ' ')
-    LINE=$(printf "%s" "$INV_FLAT" | grep -oi "{[^}]*\"gpu_type\":\"$TGT_FLAT\"[^}]*}" | head -n1 || true)
-    if [[ -n "$LINE" ]]; then
-      PRICE=$(printf "%s" "$LINE" | sed -E 's/.*\"cost_per_hour\":([0-9.]+).*/\1/' || true)
-      if [[ -n "$PRICE" ]]; then
-        PRICE_NOTE="GPU $TARGET_GPU at \$${PRICE}/hr"
-        # If PRICE > MAX, gate execution
-        cmp=$(awk -v a="$PRICE" -v b="$SKILL_MAX_PRICE_PER_HOUR" 'BEGIN{if (a>b) print 1; else print 0}' || echo 0)
-        if [[ "$cmp" == "1" ]]; then
-          echo_warn "Estimated price ${PRICE_NOTE} exceeds cap \$${SKILL_MAX_PRICE_PER_HOUR}/hr."
-          if [[ "$SKILL_REQUIRE_CONFIRM" == "true" && "$SKILL_CONFIRM" != "yes" ]]; then
-            echo_info "Set SKILL_CONFIRM=yes to proceed despite cap, or lower GPU price."
-            exit 0
-          fi
+    # Use jq if available, fall back to grep/sed
+    PRICE=""
+    if command -v jq >/dev/null 2>&1; then
+      PRICE=$(printf "%s" "$INV" | jq -r --arg g "$TARGET_GPU" \
+        '.[] | select(.gpu_type == $g) | .cost_per_hour' 2>/dev/null | head -n1 || true)
+    else
+      # Best-effort: flatten JSON and match (may fail on nested objects)
+      INV_FLAT=$(printf "%s" "$INV" | tr -d '\n')
+      LINE=$(printf "%s" "$INV_FLAT" | grep -oi "{[^}]*\"gpu_type\"[[:space:]]*:[[:space:]]*\"$TARGET_GPU\"[^}]*}" | head -n1 || true)
+      if [[ -n "$LINE" ]]; then
+        PRICE=$(printf "%s" "$LINE" | sed -E 's/.*"cost_per_hour"[[:space:]]*:[[:space:]]*([0-9.]+).*/\1/' || true)
+      fi
+    fi
+    if [[ -n "$PRICE" && "$PRICE" != "null" ]]; then
+      PRICE_NOTE="GPU $TARGET_GPU at \$${PRICE}/hr"
+      cmp=$(awk -v a="$PRICE" -v b="$SKILL_MAX_PRICE_PER_HOUR" 'BEGIN{if (a>b) print 1; else print 0}' || echo 0)
+      if [[ "$cmp" == "1" ]]; then
+        echo_warn "Estimated price ${PRICE_NOTE} exceeds cap \$${SKILL_MAX_PRICE_PER_HOUR}/hr."
+        if [[ "$SKILL_REQUIRE_CONFIRM" == "true" && "$SKILL_CONFIRM" != "yes" ]]; then
+          echo_info "Set SKILL_CONFIRM=yes to proceed despite cap, or lower GPU price."
+          exit $EXIT_BLOCKED
         fi
       fi
     fi
@@ -151,43 +169,46 @@ echo_info "Command preview: $CMD_STR"
 if [[ -n "$PRICE_NOTE" ]]; then echo_info "Cost estimate: $PRICE_NOTE"; fi
 if [[ "$SKILL_DRY_RUN" == "true" ]]; then
   echo_info "Dry-run enabled; not executing. Toggle SKILL_DRY_RUN=false to run."
-  exit 0
+  exit $EXIT_BLOCKED
 fi
 if [[ "$SKILL_REQUIRE_CONFIRM" == "true" && "$SKILL_CONFIRM" != "yes" ]]; then
   echo_info "Confirmation required. Set SKILL_CONFIRM=yes to proceed."
-  exit 0
+  exit $EXIT_BLOCKED
 fi
+
+# Build argument array from CMD_STR for direct execution (no shell re-evaluation)
+read -ra CMD_ARGS <<<"$CMD_STR"
+# Remove leading "gpu" — we invoke the gpu binary directly
+CMD_ARGS=("${CMD_ARGS[@]:1}")
 
 # Runtime timeout (best-effort). Prefer coreutils 'timeout' if present.
 run_with_timeout() {
   local minutes="$1"; shift
   if [[ "$minutes" -gt 0 ]] && command -v timeout >/dev/null 2>&1; then
-    timeout "$((minutes*60))" bash -lc "$*"
+    timeout "$((minutes*60))" gpu "$@"
     return $?
   fi
-  bash -lc "$*"
+  gpu "$@"
 }
 
-# Execute with basic remediation: if daemon error (13), start daemon and retry once for 'run'
+# Execute with basic remediation: if daemon error (13), start daemon and retry once
 ATTEMPT=1
 MAX_ATTEMPTS=2
 EXIT=1
 while [[ $ATTEMPT -le $MAX_ATTEMPTS ]]; do
-  echo_info "Executing (attempt $ATTEMPT/$MAX_ATTEMPTS)…"
-  if [[ "$SKILL_MAX_RUNTIME_MIN" =~ ^[0-9]+$ ]]; then
-    set +e
-    run_with_timeout "$SKILL_MAX_RUNTIME_MIN" "$CMD_STR"
+  echo_info "Executing (attempt $ATTEMPT/$MAX_ATTEMPTS)..."
+  set +e
+  if [[ "$SKILL_MAX_RUNTIME_MINUTES" =~ ^[0-9]+$ ]]; then
+    run_with_timeout "$SKILL_MAX_RUNTIME_MINUTES" "${CMD_ARGS[@]}"
     EXIT=$?
-    set -e
   else
-    set +e
-    bash -lc "$CMD_STR"
+    gpu "${CMD_ARGS[@]}"
     EXIT=$?
-    set -e
   fi
+  set -e
 
   if [[ $EXIT -eq 0 ]]; then break; fi
-  if [[ $EXIT -eq 13 && "$SUBCMD" == "run" && $ATTEMPT -lt $MAX_ATTEMPTS ]]; then
+  if [[ $EXIT -eq 13 && $ATTEMPT -lt $MAX_ATTEMPTS ]]; then
     echo_warn "Daemon connection error (13). Attempting 'gpu daemon start' then retry."
     gpu daemon start || true
     sleep 2
