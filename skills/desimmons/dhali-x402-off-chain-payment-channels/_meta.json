@@ -1,0 +1,11 @@
+{
+  "owner": "desimmons",
+  "slug": "dhali-x402-off-chain-payment-channels",
+  "displayName": "Off-chain x402 Payments",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773955425041,
+    "commit": null
+  },
+  "history": []
+}
