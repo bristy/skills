@@ -1,6 +1,6 @@
 ---
 name: fastfish-format
-description: "多渠道格式化与美化：公众号、小红书文章排版，18 套预设样式，配图编排指引。不包含发布。通过 system.run 调用 CLI，无需 MCP。当用户需要公众号格式整理、小红书文案格式化、Markdown 渲染、样式选择或配图流程指引时使用本技能。"
+description: "多渠道格式化与美化：公众号、小红书文章排版，30 套预设样式，配图编排指引。不包含发布。通过 system.run 调用 CLI，无需 MCP。当用户需要公众号格式整理、小红书文案格式化、Markdown 渲染、样式选择或配图流程指引时使用本技能。"
 metadata:
   {
     "openclaw":
@@ -23,7 +23,7 @@ metadata:
 
 ## 安装 fastfish-format（首次使用必读）
 
-1. 克隆仓库：`git clone --branch v0.1.0 https://github.com/superxs777/fastfish-format.git`（**推荐指定 tag 固定版本**）
+1. 克隆仓库：`git clone --branch <release-tag> https://github.com/superxs777/fastfish-format.git`（**推荐指定 tag 固定版本**，如 `v0.1.0` 或更新版本）
 2. 进入目录：`cd fastfish-format`
 3. 安装依赖：`pip install -r requirements.txt` 或 `pip install -e .`
 4. 可选：`pip install fastfish-format[api]` 启动 HTTP API 服务（默认 8900 端口）
@@ -95,7 +95,7 @@ python {baseDir}/../scripts/ffformat_cli.py --json '{"command":"normalize-xhs","
 python {baseDir}/../scripts/ffformat_cli.py --json '{"command":"render","content_file":"/tmp/article.md","format_style":"minimal"}'
 ```
 
-format_style 可选：minimal、business、literary、phycat-cherry、phycat-sakura 等（见 styles 命令）。
+format_style 可选：minimal、business、literary、phycat-*、mweb-* 等（见 styles 命令）。
 
 ### 4. 获取可用样式列表
 
@@ -105,7 +105,7 @@ format_style 可选：minimal、business、literary、phycat-cherry、phycat-sak
 python {baseDir}/../scripts/ffformat_cli.py --json '{"command":"styles"}'
 ```
 
-返回样式列表（index、id、label），供用户按序号选择。
+返回样式列表（index、id、label），供用户按序号选择。当前共 30 套样式，列表顺序已按默认展示优先级排序。
 
 ### 5. 配图流程指引
 
@@ -140,6 +140,7 @@ python {baseDir}/../scripts/ffformat_cli.py --json '{"command":"workflows"}'
 - "公众号格式整理" → `normalize-wechat` + content_file
 - "小红书文案格式化" → `normalize-xhs` + content_file
 - "用樱花粉样式渲染" → `render` + format_style: phycat-sakura
+- "用 Bear 柔和样式渲染" → `render` + format_style: mweb-bear-default
 - "有哪些样式" → `styles`
 - "配图流程" → `workflows`
 
