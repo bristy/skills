@@ -1,5 +1,10 @@
 # Jira JSON Quick Reference (short shapes + parameters)
 
+Use this file together with `refs/cli-rest-quickref.md`.
+For `POST` and `PUT` operations, prefer writing the JSON payload to a temp file before sending it.
+
+---
+
 ## ADF minimal (plain text -> Jira rich text)
 Use this wrapper for comment bodies, descriptions, textarea fields, and worklog comments.
 
@@ -20,13 +25,11 @@ Use this wrapper for comment bodies, descriptions, textarea fields, and worklog 
 ```
 
 ### Notes
+- Multiple paragraphs => multiple `paragraph` items in `content`
+- Newlines inside one paragraph are not guaranteed to render as separate lines
+- Prefer multiple paragraphs instead of embedding visual layout in plain text
 
-- Multiple paragraphs =&gt; multiple `paragraph` items in `content`.
-- Newlines inside a paragraph are not guaranteed to render as separate lines; prefer multiple paragraphs.
-
-* * *
-
-* * *
+---
 
 ## Issue create — POST /rest/api/3/issue
 
@@ -52,7 +55,12 @@ Use this wrapper for comment bodies, descriptions, textarea fields, and worklog 
       "type": "doc",
       "version": 1,
       "content": [
-        { "type": "paragraph", "content": [{ "type": "text", "text": "Context and requirements..." }] }
+        {
+          "type": "paragraph",
+          "content": [
+            { "type": "text", "text": "Context and requirements..." }
+          ]
+        }
       ]
     },
     "priority": { "name": "Medium" },
@@ -64,15 +72,14 @@ Use this wrapper for comment bodies, descriptions, textarea fields, and worklog 
 ```
 
 ### Parameters (short)
-
 - `fields.project`: `{ key }` or `{ id }`
 - `fields.issuetype`: `{ name }` or `{ id }`
 - `fields.summary`: string
 - `fields.description`: ADF doc
-- `fields.assignee.accountId`: string (Cloud uses accountId)
-- `update`: optional operation-based updates (rare on create)
+- `fields.assignee.accountId`: string (Jira Cloud uses `accountId`)
+- `update`: optional operation-based updates
 
-* * *
+---
 
 ## Issue edit — PUT /rest/api/3/issue/{issueIdOrKey}
 
@@ -99,21 +106,18 @@ Use this wrapper for comment bodies, descriptions, textarea fields, and worklog 
 ```
 
 ### Parameters (short)
-
-- `fields`: direct field replacement (strings, arrays, objects, ADF where required)
+- `fields`: direct field replacement
 - `update`: operations such as `add`, `remove`, `set` depending on field type
-- Query (useful):
+- useful query parameters:
+  - `notifyUsers` (bool)
+  - `returnIssue` (bool)
 
-    - `notifyUsers` (bool)
-    - `returnIssue` (bool) to get updated issue back
-
-* * *
+---
 
 ## Issue transitions
 
 ### List transitions — GET /rest/api/3/issue/{issueIdOrKey}/transitions
-
-No body. Use response to pick a `transition.id`.
+No body. Use the response to pick a `transition.id`.
 
 ### Apply transition — POST /rest/api/3/issue/{issueIdOrKey}/transitions
 ```json
@@ -127,7 +131,12 @@ No body. Use response to pick a `transition.id`.
             "type": "doc",
             "version": 1,
             "content": [
-              { "type": "paragraph", "content": [{ "type": "text", "text": "Moved to Done." }] }
+              {
+                "type": "paragraph",
+                "content": [
+                  { "type": "text", "text": "Moved to Done." }
+                ]
+              }
             ]
           }
         }
@@ -138,17 +147,15 @@ No body. Use response to pick a `transition.id`.
 ```
 
 ### Parameters (short)
-
 - `transition.id`: required (string)
 - `update.comment[].add.body`: ADF doc (optional)
-- `fields`: optional field updates allowed by that transition screen
+- `fields`: optional transition-screen fields when allowed
 
-* * *
+---
 
 ## Comments
 
 ### List — GET /rest/api/3/issue/{issueIdOrKey}/comment
-
 No body.
 
 ### Add — POST /rest/api/3/issue/{issueIdOrKey}/comment
@@ -158,7 +165,12 @@ No body.
     "type": "doc",
     "version": 1,
     "content": [
-      { "type": "paragraph", "content": [{ "type": "text", "text": "Status update..." }] }
+      {
+        "type": "paragraph",
+        "content": [
+          { "type": "text", "text": "Status update..." }
+        ]
+      }
     ]
   },
   "visibility": {
@@ -169,18 +181,14 @@ No body.
 ```
 
 ### Update — PUT /rest/api/3/issue/{issueIdOrKey}/comment/{id}
-
-Same shape as Add (body/visibility/properties).
+Same shape as Add (`body`, `visibility`, `properties`).
 
 ### Parameters (short)
-
 - `body`: ADF doc (required for add/update)
-- `visibility`: optional restriction
-
-    - typical: `{ "type": "role", "value": "<RoleName>" }` or group-based restriction
+- `visibility`: optional restriction such as role-based visibility
 - `properties`: optional entity properties array
 
-* * *
+---
 
 ## Worklogs — POST /rest/api/3/issue/{issueIdOrKey}/worklog
 ```json
@@ -191,20 +199,24 @@ Same shape as Add (body/visibility/properties).
     "type": "doc",
     "version": 1,
     "content": [
-      { "type": "paragraph", "content": [{ "type": "text", "text": "Implemented feature X." }] }
+      {
+        "type": "paragraph",
+        "content": [
+          { "type": "text", "text": "Implemented feature X." }
+        ]
+      }
     ]
   }
 }
 ```
 
 ### Parameters (short)
-
 - `started`: timestamp string
-- `timeSpentSeconds`: int
+- `timeSpentSeconds`: integer
 - `comment`: ADF doc (optional)
 - `visibility`: optional
 
-* * *
+---
 
 ## JQL enhanced search — GET /rest/api/3/search/jql
 
@@ -218,10 +230,9 @@ Same shape as Add (body/visibility/properties).
 ```
 
 ### Pagination
+- Use `nextPageToken` from the response until `isLast=true`
 
-- Use `nextPageToken` from the response until `isLast=true`.
-
-* * *
+---
 
 ## Boards — GET /rest/agile/1.0/board
 
@@ -233,6 +244,8 @@ Same shape as Add (body/visibility/properties).
   "name": "Backend"
 }
 ```
+
+---
 
 ## Sprint create — POST /rest/agile/1.0/sprint
 ```json
@@ -246,13 +259,12 @@ Same shape as Add (body/visibility/properties).
 ```
 
 ### Parameters (short)
-
 - `name`: required
 - `originBoardId`: required (int)
 - `goal`: optional
-- `startDate`, `endDate`: optional (but required to start sprint by state change later)
+- `startDate`, `endDate`: optional
 
-* * *
+---
 
 ## Sprint add issues — POST /rest/agile/1.0/sprint/{sprintId}/issue
 ```json

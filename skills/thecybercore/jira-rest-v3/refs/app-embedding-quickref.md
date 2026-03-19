@@ -1,32 +1,29 @@
-# File: skills/jira-atrest/refs/app-embedding-quickref.md
-
 # App Embedding Quickref (Jira Cloud, ADF)
 
-This quickref explains **generic patterns** to embed app-relevant “data blobs” into Jira issue **description/comments** via REST API v3 (ADF), plus a **concrete example** for a Mermaid-diagram app.
+This quick reference explains generic patterns to embed app-relevant data into Jira issue descriptions or comments via REST API v3 (ADF), plus a concrete example for a Mermaid-diagram app.
 
 ---
 
-## 1) Generic: How to embed app data into Jira “text bodies”
+## 1) Generic: how to embed app data into Jira text bodies
 
 ### 1.1 Where apps typically read data from
-Most Jira apps integrate via one (or more) of these data carriers:
+Most Jira apps integrate via one or more of these carriers:
+1. issue description (ADF)
+2. issue comments (ADF)
+3. custom fields (text or textarea; textarea is often ADF)
+4. issue entity properties (structured JSON, not normally visible in the UI)
+5. attachments (files referenced from description/comments or consumed directly by the app)
 
-1) **Issue description** (ADF)  
-2) **Issue comments** (ADF)  
-3) **Custom fields** (text/textarea fields, often ADF for textarea)  
-4) **Issue entity properties** (structured JSON, not visible unless surfaced by an app)  
-5) **Attachments** (files referenced from description/comments or consumed by the app)
-
-If your integration goal is “put structured data somewhere apps can parse”, **ADF code blocks** are the most universal for descriptions/comments.
+If your integration goal is “put structured data somewhere apps can parse”, ADF code blocks are the most universal option for descriptions and comments.
 
 ---
 
-### 1.2 Recommended pattern: “Marker + ADF codeBlock”
-Embed a *stable marker* line so parsers (humans + apps) can find the payload reliably.
+### 1.2 Recommended pattern: marker + ADF codeBlock
+Embed a stable marker line so parsers and humans can find the payload reliably.
 
-**Human-readable pattern (recommended):**
-- Paragraph: short label + identifier
-- Code block: the payload (JSON/YAML/Mermaid/etc.)
+Recommended human-readable pattern:
+- paragraph: short label + identifier
+- code block: the payload (JSON, YAML, Mermaid, etc.)
 
 #### ADF snippet: marker paragraph + JSON code block
 ```json
@@ -53,21 +50,21 @@ Embed a *stable marker* line so parsers (humans + apps) can find the payload rel
   ]
 }
 ```
-**Notes**
 
-- Keep the marker line consistent: e.g. `APPDATA: <appKey> v<schema>`.
-- Put the *entire* machine payload in the codeBlock. Avoid inline JSON in paragraphs.
+Notes:
+- Keep the marker line consistent, for example `APPDATA: <appKey> v<schema>`.
+- Put the entire machine-readable payload into the `codeBlock`.
+- Avoid inline JSON inside paragraphs.
 
-* * *
+---
 
-### 1.3 Supported “carrier types” inside ADF you’ll use often
-
-- `paragraph` for headings/labels
+### 1.3 Common ADF carriers you will use often
+- `paragraph` for headings and labels
 - `codeBlock` for machine-readable payloads
-- `panel` / `expand` when you want to hide details (still searchable/editable)
-- `inlineCard` for “smart link” URLs (when you store a link to an external artifact)
+- `panel` or `expand` when you want to hide details but keep them in the document
+- `inlineCard` for smart-link style references to an external artifact
 
-#### ADF snippet: link out to an attachment/artifact (inlineCard)
+#### ADF snippet: inlineCard to an external artifact
 ```json
 {
   "type": "inlineCard",
@@ -75,68 +72,57 @@ Embed a *stable marker* line so parsers (humans + apps) can find the payload rel
 }
 ```
 
-* * *
+---
 
-### 1.4 “Text to ADF” rules for openClaw automation
-
+### 1.4 Plain text to ADF rules for openClaw automation
 When the user provides plain text but you need reliable formatting:
+- convert plain text into ADF
+- convert multiple paragraphs into multiple `paragraph` nodes
+- convert machine-readable payloads into a `codeBlock`
+- do not assume Markdown will render as intended in Jira rich-text fields
 
-- Convert text into ADF:
+---
 
-    - newlines =&gt; multiple `paragraph` nodes
-    - long payload =&gt; `codeBlock` node
-- Do **not** assume Markdown is rendered; store structured formatting as ADF.
-
-* * *
-
-### 1.5 Alternative pattern: Issue entity properties (structured JSON, not in text)
-
-If you need data that should not clutter the description/comments, store JSON via:
-
+### 1.5 Alternative pattern: issue entity properties
+If you need structured JSON that should not clutter the description or comments, store it via:
 - `PUT /rest/api/3/issue/{issueKey}/properties/{propertyKey}`
 
 Pros:
-
-- clean UI, structured
+- clean UI
+- structured JSON
 
 Cons:
-- not visible unless the app reads it or you build a panel/report
+- not visible unless the app reads it or you surface it elsewhere
 
-Use this if:
+Use this when:
+- you control the consuming automation or app, or
+- the vendor documents a specific property key contract
 
-- you control the consumer (your own app/automation), or
-- the vendor app explicitly documents a property key contract.
-
-* * *
+---
 
 ## 2) Concrete example: ContentCraft — Mermaid Diagrams for Jira
 
-### 2.1 What the user does in the UI (quick)
-
-This app is commonly used by:
-
+### 2.1 UI-oriented usage
+This kind of app is commonly used by:
 - opening an issue
-- enabling the **“Diagrams”** panel
-- creating/editing Mermaid diagrams in that panel’s editor/viewer
+- enabling the Diagrams panel
+- creating or editing Mermaid diagrams in that panel
 
-(If you want diagrams *rendered* by the app, you typically manage them through the app UI unless the vendor provides a dedicated API.)
+If you want diagrams rendered by the app, the polished rendering often happens in the app UI, not in the raw Jira description or comment.
 
-* * *
+---
 
-### 2.2 openClaw automation-friendly approach (store Mermaid source in the issue body)
+### 2.2 openClaw-friendly approach: keep Mermaid source in the issue body
+Even if the app renders diagrams in a panel, it is useful to keep Mermaid source in the issue description or a comment as a portable source of truth.
 
-Even if the app renders diagrams in a panel, it’s often useful to keep Mermaid source in the **issue description or a comment** as a portable “source of truth”:
+Recommended embedding pattern:
+- paragraph marker: `DIAGRAM: mermaid (ContentCraft)`
+- code block with language `mermaid`
 
-**Recommended “marker + mermaid code” embedding:**
-
-- Paragraph marker: `DIAGRAM: mermaid (ContentCraft)`
-- Code block with language `mermaid`
-
-#### ADF payload: comment body that contains a Mermaid diagram
-
+#### ADF payload: comment body containing Mermaid source
 Use this as the `body` for:
-
 - `POST /rest/api/3/issue/{issueKey}/comment`
+
 ```json
 {
   "type": "doc",
@@ -162,28 +148,28 @@ Use this as the `body` for:
 }
 ```
 
-**Why this helps**
+Why this helps:
+- humans can read and edit Mermaid quickly
+- the source remains searchable in Jira
+- the diagram source stays close to ticket discussion
 
-- Humans can read/edit Mermaid quickly.
-- Source is searchable in Jira.
-- You can keep it versioned alongside ticket discussion.
+---
 
-* * *
+### 2.3 Practical two-track workflow
+1. openClaw writes or updates Mermaid source in the description or a comment as ADF `codeBlock` with `language=mermaid`
+2. the team uses the app’s Diagrams panel to render, inspect, and present the diagram
 
-### 2.3 Practical “two-track” workflow (best of both worlds)
+---
 
-1. openClaw writes/updates the Mermaid source in description/comment (ADF codeBlock, `language=mermaid`).
-2. The team uses the ContentCraft **Diagrams panel** to render, inspect, and present the diagram in a polished view.
+### 2.4 Mermaid usage guidance
+- use standard Mermaid syntax
+- keep diagrams small and composable
+- prefer multiple focused diagrams instead of one oversized graph
 
-* * *
+---
 
-### 2.4 Mermaid syntax reference (quick)
-
-Use standard Mermaid syntax in the code block (flowcharts, sequence, gantt, etc.).
-
-Keep diagrams small and composable; prefer multiple diagrams over one huge graph.
-
-```
-Wenn du willst, kann ich dir auch gleich **eine kurze Standard-„Helper“-Routine** (in Skill-Textform) ergänzen, die *Plaintext → ADF* (inkl. `codeBlock`-Escaping) beschreibt, damit Agenten das immer konsistent erzeugen.
-::contentReference[oaicite:2]{index=2}
-```
+## 3) Recommended helper routine for the skill
+It is useful to add one plain-text-to-ADF helper routine to the skill so agents consistently generate:
+- paragraph nodes for human text
+- codeBlock nodes for payloads
+- stable markers for app-owned content blocks

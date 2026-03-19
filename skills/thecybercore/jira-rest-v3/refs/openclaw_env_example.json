@@ -11,7 +11,7 @@
     "ATREST_JIRA_USER_AGENT": "openClaw-jira-atrest/1.0",
 
     "ATREST_JIRA_DEFAULT_PROJECT_KEY": "PROJ",
-    "ATREST_JIRA_DEFAULT_ISSUE_TYPE": "Gask",
+    "ATREST_JIRA_DEFAULT_ISSUE_TYPE": "Task",
     "ATREST_JIRA_DEFAULT_BOARD_ID": "123",
     "ATREST_JIRA_DEFAULT_MAX_RESULTS": "50",
     "ATREST_JIRA_DEFAULT_FIELDS": "summary,status,assignee,priority,updated",
