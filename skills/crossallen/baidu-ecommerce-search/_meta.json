@@ -3,11 +3,16 @@
   "slug": "baidu-ecommerce-search",
   "displayName": "Baidu Ecommerce Search",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1773311506800,
-    "commit": "https://github.com/openclaw/skills/commit/a610e82fadfb731cfa0c546ab5ccc8e25e207cc4"
+    "version": "1.0.10",
+    "publishedAt": 1773751108037,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1773311506800,
+      "commit": "https://github.com/openclaw/skills/commit/a610e82fadfb731cfa0c546ab5ccc8e25e207cc4"
+    },
     {
       "version": "1.0.4",
       "publishedAt": 1773060877984,
