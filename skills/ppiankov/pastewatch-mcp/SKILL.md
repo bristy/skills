@@ -1,6 +1,6 @@
 ---
 name: pastewatch-mcp
-description: Secret redaction MCP server for OpenClaw agents. Prevents API keys, DB credentials, SSH keys, emails, IPs, JWTs, and 29+ other secret types from leaking to LLM providers. Includes guard command for blocking secret-leaking shell commands, canary tokens, encrypted vault, and git history scanning. Use when reading/writing files that may contain secrets, setting up agent security, or auditing for credential exposure.
+description: Secret redaction MCP server for OpenClaw agents. Prevents API keys, DB credentials, SSH keys, emails, IPs, JWTs, and 30+ other secret types from leaking to LLM providers. Includes guard command, API proxy, canary tokens, encrypted vault, git history scanning, org posture scanning, file watcher, and dashboard. Use when reading/writing files that may contain secrets, setting up agent security, or auditing for credential exposure.
 metadata: {"openclaw":{"requires":{"bins":["pastewatch-cli","mcporter"]}}}
 ---
 
@@ -25,7 +25,7 @@ cd /usr/local/bin && sha256sum -c /tmp/pastewatch-cli.sha256
 chmod +x /usr/local/bin/pastewatch-cli
 ```
 
-Verify: `pastewatch-cli version` (expect 0.18.0+)
+Verify: `pastewatch-cli version` (expect 0.23.0+)
 
 ## MCP Server Setup
 
@@ -34,92 +34,159 @@ mcporter config add pastewatch --command "pastewatch-cli mcp --audit-log /var/lo
 mcporter list pastewatch --schema  # 6 tools
 ```
 
+**Severity threshold:** `pastewatch-cli mcp --min-severity medium` or set `mcpMinSeverity` in `.pastewatch.json`.
+
 ## Agent Integration (one-command setup)
 
 ```bash
-pastewatch-cli setup claude-code    # hooks + MCP config
+pastewatch-cli setup claude-code    # hooks + MCP + CLAUDE.md snippet + doctor check
 pastewatch-cli setup cline          # MCP + hook instructions
 pastewatch-cli setup cursor         # MCP + advisory
 ```
 
-`--severity` aligns hook blocking and MCP redaction thresholds. `--project` for project-level config.
+`--severity` aligns thresholds. `--project` for project-level config. Idempotent — safe to re-run.
 
 ## MCP Tools
 
 | Tool | Purpose |
 |------|---------|
-| `pastewatch_read_file` | Read file with secrets replaced by `__PW{TYPE_N}__` placeholders |
-| `pastewatch_write_file` | Write file, resolving placeholders back to real values locally |
-| `pastewatch_check_output` | Verify text contains no raw secrets before returning |
+| `pastewatch_read_file` | Read file with secrets replaced by placeholders |
+| `pastewatch_write_file` | Write file, resolving placeholders back locally |
+| `pastewatch_check_output` | Verify text contains no raw secrets |
 | `pastewatch_scan` | Scan text for sensitive data |
 | `pastewatch_scan_file` | Scan a file |
 | `pastewatch_scan_dir` | Scan directory recursively |
 
-## Guard — Block Secret-Leaking Commands
+**Placeholder format:** `__PW_TYPE_N__` (changed from `__PW{TYPE_N}__` in v0.19.7 for LLM proxy compatibility). Configurable via `placeholderPrefix`.
 
-Complements chainwatch: chainwatch blocks destructive commands, guard blocks commands that would leak secrets.
+## API Proxy — Last Line of Defense
+
+Catches secrets from sub-agents that bypass hooks and MCP. Sits between your agent and the LLM provider, scanning all outbound requests.
+
+```bash
+pastewatch-cli proxy                    # scans all outbound API requests
+pastewatch-cli proxy --port 9998 --upstream https://api.anthropic.com
+pastewatch-cli proxy --forward-proxy http://corporate:8080  # chain with corporate proxy
+pastewatch-cli proxy --severity medium --audit-log /var/log/pastewatch-proxy.log
+```
+
+### Proxy + Chainwatch Chain (recommended for OpenClaw)
+
+Stack both proxies for defense-in-depth:
+
+```
+OpenClaw → chainwatch:9999 (policy) → pastewatch:9998 (secrets) → api.anthropic.com
+```
+
+Setup as systemd services:
+
+```bash
+# 1. Pastewatch proxy (starts first)
+cat > /etc/systemd/system/pastewatch-proxy.service << 'EOF'
+[Unit]
+Description=Pastewatch API Proxy (secret redaction)
+After=network-online.target
+Before=chainwatch-intercept.service
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/pastewatch-cli proxy \
+  --port 9998 --upstream https://api.anthropic.com \
+  --severity high --audit-log /var/log/pastewatch-proxy.log
+Restart=always
+RestartSec=3
+MemoryMax=128M
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 2. Update chainwatch to forward to pastewatch (not Anthropic directly)
+# Change --upstream from https://api.anthropic.com to http://localhost:9998
+
+# 3. Enable and start
+systemctl daemon-reload
+systemctl enable pastewatch-proxy
+systemctl start pastewatch-proxy
+systemctl restart chainwatch-intercept
+```
+
+**Rollback:** Stop pastewatch-proxy, revert chainwatch `--upstream` to `https://api.anthropic.com`, restart chainwatch.
+
+## Guard — Block Secret-Leaking Commands
 
 ```bash
 pastewatch-cli guard "cat .env"              # BLOCKED if .env has secrets
 pastewatch-cli guard "psql -f migrate.sql"   # scans SQL file
-pastewatch-cli guard "docker-compose up"     # scans referenced env_files
+pastewatch-cli guard "docker-compose up"     # scans env_files
 ```
 
-Guard understands:
-- Shell builtins: cat, echo, env, printenv, source, curl, wget
-- DB CLIs: psql, mysql, mongosh, redis-cli, sqlite3 (connection strings, -f flags, passwords)
-- Infra tools: ansible, terraform, docker, kubectl, helm (env-files, var-files)
-- Scripting: python, ruby, node, perl, php (script file args)
-- File transfer: scp, rsync, ssh, ssh-keygen
-- Pipe chains (`|`) and command chaining (`&&`, `||`, `;`) — each segment scanned
-- Subshell extraction: `$(cat .env)` and backtick expressions
-- Redirect operators: `>`, `>>`, `<`, `2>` — scans source files
+Covers: shell builtins, DB CLIs (psql/mysql/mongosh/redis-cli/sqlite3), infra tools (ansible/terraform/docker/kubectl/helm), scripting (python/ruby/node/perl/php), file transfer (scp/rsync/ssh), pipe chains, subshells, redirects.
+
+## File Watcher
+
+```bash
+pastewatch-cli watch .              # continuous monitoring, real-time detection
+```
 
 ## Canary Tokens
 
-Generate format-valid but non-functional tokens to detect leaks:
-
 ```bash
-pastewatch-cli canary generate --prefix myagent    # creates canaries for 7 secret types
-pastewatch-cli canary verify                        # confirms detection rules catch them
-pastewatch-cli canary check --log /var/log/app.log  # search logs for leaked canaries
+pastewatch-cli canary generate --prefix myagent
+pastewatch-cli canary verify
+pastewatch-cli canary check --log /var/log/app.log
 ```
 
 ## Encrypted Vault
 
-Store secrets encrypted locally instead of plaintext .env:
-
 ```bash
-pastewatch-cli --init-key                    # generate 256-bit key (.pastewatch-key, mode 0600)
-pastewatch-cli fix --encrypt                 # secrets → ChaCha20-Poly1305 vault
-pastewatch-cli vault list                    # show entries without decrypting
-pastewatch-cli vault decrypt                 # export to .env for deployment
-pastewatch-cli vault export                  # print export VAR=VALUE for shell
-pastewatch-cli vault rotate-key              # re-encrypt with new key
+pastewatch-cli --init-key                    # 256-bit key, mode 0600
+pastewatch-cli fix --encrypt                 # → ChaCha20-Poly1305 vault
+pastewatch-cli vault list | decrypt | export | rotate-key
 ```
 
 ## Git History Scanning
 
 ```bash
-pastewatch-cli scan --git-log                          # scan full history
-pastewatch-cli scan --git-log --range HEAD~50..HEAD    # last 50 commits
-pastewatch-cli scan --git-log --since 2025-01-01       # since date
+pastewatch-cli scan --git-log
+pastewatch-cli scan --git-log --range HEAD~50..HEAD --since 2025-01-01
 ```
 
-Deduplicates by fingerprint — same secret across commits reported once at introduction point.
+Deduplicates by fingerprint. Output: text, json, sarif, markdown.
 
-## Session Reports
+## Org Posture Scanning
 
 ```bash
+pastewatch-cli posture --org ppiankov           # scan all repos in org/user
+pastewatch-cli posture --repos org/repo1,org/repo2
+pastewatch-cli posture --compare previous.json  # trend tracking
+pastewatch-cli posture --findings-only           # hide clean repos
+```
+
+## Dashboard & Reports
+
+```bash
+pastewatch-cli dashboard                                  # aggregate across sessions
 pastewatch-cli report --audit-log /var/log/pastewatch-audit.log
 pastewatch-cli report --format json --since 2026-03-01T00:00:00Z
 ```
 
+## Configuration
+
+```bash
+pastewatch-cli init                         # generate .pastewatch.json
+pastewatch-cli init --profile banking       # enterprise: JDBC, RFC 1918 IPs, service accounts
+pastewatch-cli config                       # show resolved config
+pastewatch-cli doctor                       # health check
+```
+
+Config cascade: `/etc/pastewatch/config.json` (admin) > project `.pastewatch.json` > `~/.config/pastewatch/config.json`.
+
+Features: `sensitiveHosts`, `sensitiveIPPrefixes`, `xmlSensitiveTags`, `mcpMinSeverity`, `placeholderPrefix`.
+
 ## Detection Scope
 
-29+ types: AWS, Anthropic/OpenAI/HuggingFace/Groq keys, DB connections, SSH keys, JWTs, emails, IPs, credit cards (Luhn), Slack/Discord webhooks, Azure, GCP service accounts, npm/PyPI/RubyGems/GitLab tokens, Telegram bot tokens, and more.
+30+ types: AWS keys/secrets, Anthropic/OpenAI/HuggingFace/Groq/Perplexity keys, DB connections, JDBC URLs, SSH keys, JWTs, emails, IPs, credit cards (Luhn), Slack/Discord webhooks, Azure, GCP service accounts, npm/PyPI/RubyGems/GitLab tokens, Telegram bot tokens, XML credentials, and more.
 
-Deterministic regex. No ML. No API calls. Microseconds per scan.
+Gitignore-aware scanning (v0.21.0+). Deterministic regex. No ML. No API calls.
 
 ## Limitations
 
@@ -127,7 +194,7 @@ Deterministic regex. No ML. No API calls. Microseconds per scan.
 - For full privacy, use a local model
 
 ---
-**Pastewatch MCP v1.1**
+**Pastewatch MCP v1.2**
 Author: ppiankov
 Copyright © 2026 ppiankov
 Canonical source: https://github.com/ppiankov/pastewatch
