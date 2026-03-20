@@ -3,9 +3,15 @@
   "slug": "sslgen",
   "displayName": "Sslgen",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1773664185651,
-    "commit": "https://github.com/openclaw/skills/commit/25e99b2b7f1a0ec5bf52ddf9dbe850b6d126715d"
+    "version": "3.0.0",
+    "publishedAt": 1773916903096,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1773664185651,
+      "commit": "https://github.com/openclaw/skills/commit/25e99b2b7f1a0ec5bf52ddf9dbe850b6d126715d"
+    }
+  ]
 }
