@@ -3,11 +3,16 @@
   "slug": "wechat-article-typeset",
   "displayName": "公众号文章排版",
   "latest": {
-    "version": "1.0.5",
-    "publishedAt": 1773535344087,
-    "commit": "https://github.com/openclaw/skills/commit/ce5688497521a55db5575dda89c9ebbc86acf1fc"
+    "version": "1.0.7",
+    "publishedAt": 1773739270327,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.5",
+      "publishedAt": 1773535344087,
+      "commit": "https://github.com/openclaw/skills/commit/ce5688497521a55db5575dda89c9ebbc86acf1fc"
+    },
     {
       "version": "1.0.4",
       "publishedAt": 1773227832272,

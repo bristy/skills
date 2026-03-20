@@ -9,8 +9,8 @@
 
 import { getFullHtml } from './lib/utils/markdown.js'
 import { resolveOptions } from './opts.js'
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { readFileSync, writeFileSync } from 'fs'
+import { dirname, isAbsolute, join, resolve as resolvePath } from 'path'
 
 const opts = resolveOptions()
 if (opts.exit) process.exit(0)
@@ -21,7 +21,9 @@ if (!fileArg) {
   console.error('  例: node wechat-copy.js --preset 墨色下划线 article.md')
   process.exit(1)
 }
-const content = readFileSync(join(process.cwd(), fileArg), 'utf8')
+const mdPath = isAbsolute(fileArg) ? fileArg : resolvePath(process.cwd(), fileArg)
+const content = readFileSync(mdPath, 'utf8')
+const outDir = dirname(mdPath)
 
 const html = getFullHtml(content, opts.themeId, opts.imageStyleId, opts.layoutId, null, opts.codeThemeId)
 
@@ -33,7 +35,17 @@ const res = await fetch('https://edit.shiker.tech/api/copy', {
 
 const data = await res.json()
 if (data.success && data.data?.url) {
-  console.log(data.data.url)
+  const url = data.data.url
+  console.log(url)
+  // 必交产物：将预设主题 HTML 与预览链接写入 md 同目录，避免 AI 转述或漏数字
+  try {
+    const htmlFile = join(outDir, 'article.preset.html')
+    writeFileSync(htmlFile, html + '\n', 'utf8')
+  } catch {}
+  try {
+    const urlFile = join(outDir, 'wechat-preview-url.txt')
+    writeFileSync(urlFile, url + '\n', 'utf8')
+  } catch {}
 } else {
   console.error('请求失败:', data.message || res.status)
   process.exit(1)
