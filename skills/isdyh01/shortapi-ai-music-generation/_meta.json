@@ -3,9 +3,15 @@
   "slug": "shortapi-ai-music-generation",
   "displayName": "Al Music Generation",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773393527828,
-    "commit": "https://github.com/openclaw/skills/commit/99f9f1a2b37ce87940761edc2537e7d004ca071e"
+    "version": "1.0.3",
+    "publishedAt": 1773989500112,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773393527828,
+      "commit": "https://github.com/openclaw/skills/commit/99f9f1a2b37ce87940761edc2537e7d004ca071e"
+    }
+  ]
 }

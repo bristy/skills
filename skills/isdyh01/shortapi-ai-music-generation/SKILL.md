@@ -95,16 +95,20 @@ curl --request GET \
   --header "Authorization: Bearer $SHORTAPI_KEY"
 ```
 
-## Security & Privacy Compliance
+## Security, Privacy & Safety Disclosure
 
 - **Endpoint Isolation**: This skill only communicates with `https://api.shortapi.ai`.
+- **Credential Safety**: The `SHORTAPI_KEY` is only used in the `Authorization` header to the official API endpoint and must never be included in any callback payload or exposed to third parties.
+- **Background Polling Policy**: To ensure resource safety, the Agent should poll the status endpoint for a maximum of **5 minutes** per job. If a job does not complete within this window, the Agent must inform the user and stop polling.
+- **State Management**: The Agent stores `job_id` and polling state exclusively within the current conversation context. No persistent external database is used for tracking job states by this skill.
+- **Content Sanitization**: Before rendering generated results (audio, images, or video) inline, the Agent **MUST** verify that the URLs point to authorized `shortapi.ai` or known CDN domains. The Agent is responsible for ensuring that the embedded HTML tags (`<audio>`, `<video>`, `<img>`) do not contain malicious attributes or scripts.
 - **Callback Lockdown**: The `callback_url` parameter is strictly user-defined. The Agent is prohibited from auto-generating or hallucinating this value.
-- **Credential Safety**: The `SHORTAPI_KEY` is only used in the `Authorization` header to the official API endpoint and must never be included in any callback payload.
 
 **CRITICAL BEHAVIOR FOR AGENTS:**
 
-1. Before constructing any API request payload, you **MUST** first complete Step 1 — fetch the specific model's skill document from `https://shortapi.ai/api/skill/<model_id>`. **DO NOT** skip this step. **DO NOT** guess or hallucinate parameters. The document returned in Step 1 is the sole source of truth for the model's input schema.
-2. Music generation takes time. Once you receive the `job_id` from Step 3, you **MUST** immediately inform the user that the task has started and release them so they can ask other questions or start new conversations.
-3. You **MUST** continue to poll the status endpoint in the background silently.
-4. Once the polling returns a completed state (`status: "succeeded"`), you must proactively message the user with the final generation results (e.g., displaying the generated audio URLs returned in the response payload).
-5. When presenting results, you **MUST** not only provide the raw URL but also render the content inline for direct preview in the chat. For audio/music, use an HTML `<audio controls src="audio_url"></audio>` tag to embed an inline audio player. For images, use markdown image syntax `![description](image_url)`. For videos, use an HTML `<video controls src="video_url"></video>` tag. The user should be able to see and play the generated result immediately without needing to open a separate browser tab.
+1.  **Authentication First (SHORTAPI_KEY)**: Before any other step, you **MUST** verify if the user has a `SHORTAPI_KEY`. If it is missing, you **MUST** proactively direct the user to [https://shortapi.ai](https://shortapi.ai) to obtain their API key. **DO NOT** ask for or accept any other type of API key (e.g., OpenAI, Anthropic, etc.); the only valid key is the `SHORTAPI_KEY` from ShortAPI.ai.
+2.  Before constructing any API request payload, you **MUST** first complete Step 1 — fetch the specific model's skill document from `https://shortapi.ai/api/skill/<model_id>`. **DO NOT** skip this step. **DO NOT** guess or hallucinate parameters. The document returned in Step 1 is the sole source of truth for the model's input schema.
+3.  Music generation takes time. Once you receive the `job_id` from Step 3, you **MUST** immediately inform the user that the task has started and release them so they can ask other questions or start new conversations.
+4.  You **MUST** continue to poll the status endpoint in the background silently.
+5.  Once the polling returns a completed state (`status: "succeeded"`), you must proactively message the user with the final generation results (e.g., displaying the generated audio URLs returned in the response payload).
+6.  When presenting results, you **MUST** not only provide the raw URL but also render the content inline for direct preview in the chat. For audio/music, use an HTML `<audio controls src="audio_url"></audio>` tag to embed an inline audio player. For images, use markdown image syntax `![description](image_url)`. For videos, use an HTML `<video controls src="video_url"></video>` tag. The user should be able to see and play the generated result immediately without needing to open a separate browser tab.
