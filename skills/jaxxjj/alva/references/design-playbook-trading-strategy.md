@@ -1,12 +1,13 @@
 # Trading Strategy Playbook
 
-> **This is the authoritative spec for all trading strategy playbooks.**
-> When generating or modifying a trading strategy playbook, follow this document
-> strictly — page structure, tab layout, module order, component references,
-> and data schema must all match exactly. Do not invent alternative layouts.
+> **This is the authoritative spec for all trading strategy playbooks.** When
+> generating or modifying a trading strategy playbook, follow this document
+> strictly — page structure, tab layout, module order, component references, and
+> data schema must all match exactly. Do not invent alternative layouts.
 >
-> Depends on `alva-design` skill for design tokens; this spec covers page-specific
-> structure and interactions only.
+> Use [design-system.md](./design-system.md) as the global design entry point.
+> This document only adds trading-strategy-specific page structure,
+> interactions, and UI data requirements.
 
 ---
 
@@ -23,8 +24,8 @@
 └────────────────────────────────────────┘
 ```
 
-The Tab Bar is a **fixed structure shared by all 4 tabs**.
-The Tab Content Area switches content based on the active tab.
+The Tab Bar is a **fixed structure shared by all 4 tabs**. The Tab Content Area
+switches content based on the active tab.
 
 ---
 
@@ -32,16 +33,48 @@ The Tab Content Area switches content based on the active tab.
 
 ### Page Container (`.main-wrapper`)
 
-| Property | Value                                                        |
-| -------- | ------------------------------------------------------------ |
-| Padding  | `0 var(--spacing-xxl) var(--spacing-xxl)` (0 top, 28px rest) |
-| Layout   | `display: flex; flex-direction: column; flex: 1`             |
+| Property | Value                                            |
+| -------- | ------------------------------------------------ |
+| Padding  | `0`                                              |
+| Layout   | `display: flex; flex-direction: column; flex: 1` |
 
-The **top padding is intentionally 0** on `.main-wrapper` because it is owned by `.tab-bar-wrapper` (see §1.1). This ensures the 28px top gap scrolls with the sticky tab bar instead of being left behind. Left / right / bottom padding remains 28px. No content should break out of this padding.
+`.main-wrapper` has **no padding of its own** — all page-edge spacing comes from
+the parent `.playbook-container` (28px left/right on web, 16px on mobile). The
+**top padding is intentionally 0** because it is owned by `.tab-bar-wrapper`
+(see §1.1), which ensures the 24px top gap scrolls with the sticky tab bar.
+
+#### Mobile Override (≤ 768px)
+
+Only the tab bar top padding needs to be reduced on mobile:
+
+```css
+@media (max-width: 768px) {
+  .tab-bar-wrapper {
+    padding-top: var(--spacing-m); /* 16px */
+  }
+}
+```
+
+**Result**: Web = 28px (from `.playbook-container`), Mweb = 16px (from
+`.playbook-container`).
 
 ### Module Spacing
 
-All modules stack vertically with **24px** gap (`--spacing-xl`).
+All modules **inside each tab panel** stack vertically with **24px** gap
+(`--spacing-xl`).
+
+```css
+.tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl); /* 24px between sibling modules */
+  padding-top: var(--spacing-xl); /* 24px from tab bar to first module */
+}
+```
+
+The `padding-top` on `.tab-panel` is the **only** spacing between the tab bar
+and the first module (e.g. Meta Info Bar). Do not add extra `margin-top` on the
+first child or extra `margin-bottom`/`padding-bottom` on `.tab-bar-wrapper`.
 
 ### Widget Title Size
 
@@ -52,22 +85,22 @@ All modules stack vertically with **24px** gap (`--spacing-xl`).
 
 ### 1.1 Tab Bar
 
-| Property       | Value                                                                                                                                                                                                                                |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Items          | Overview · Analytics · Strategy · Feed                                                                                                                                                                                               |
-| Style          | [Underline M](./design-components.md#tab) — class `.tab .tab-underline`                                                                                                                                                             |
-| Position       | `.tab-bar-wrapper`: `position: sticky`, `top: 0`, `z-index: 100`, `background: var(--b0-page)`, `padding-top: var(--spacing-xxl)` (28px) — the wrapper **owns the top padding** so it travels with the sticky element; when pinned at `top: 0` the 28px gap above the tabs is preserved |
-| Bottom Divider | 1px solid var(--line-l07) on `.tab-bar-wrapper`. Active indicator and container border sit on the **same line** — apply `margin-bottom: -1px` to `.tab-item` so the 2px indicator overlaps the 1px border                            |
-| URL Routing    | Each tab has a unique URL hash (`#overview`, `#analytics`, `#strategy`, `#feed`); on load, activate tab matching hash. Use `history.replaceState()` (not `window.location.hash`) to update the hash without triggering a scroll jump |
+| Property       | Value                                                                                                                                                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Items          | Overview · Analytics · Strategy · Feed                                                                                                                                                                                                                                                 |
+| Style          | [Underline M](./design-components.md#tab) — class `.tab .tab-underline`                                                                                                                                                                                                                |
+| Position       | `.tab-bar-wrapper`: `position: sticky`, `top: 0`, `z-index: 100`, `background: var(--b0-page)`, `padding-top: var(--spacing-xl)` (24px) — the wrapper **owns the top padding** so it travels with the sticky element; when pinned at `top: 0` the 24px gap above the tabs is preserved |
+| Bottom Divider | 1px solid var(--line-l07) on `.tab-bar-wrapper`. Active indicator and container border sit on the **same line** — apply `margin-bottom: -1px` to `.tab-item` so the 2px indicator overlaps the 1px border                                                                              |
+| URL Routing    | Each tab has a unique URL hash (`#overview`, `#analytics`, `#strategy`, `#feed`); on load, activate tab matching hash. Use `history.replaceState()` (not `window.location.hash`) to update the hash without triggering a scroll jump                                                   |
 
 #### Tab Item Spec (Underline M)
 
-| Element        | Spec                                                                   |
-| -------------- | ---------------------------------------------------------------------- |
-| Gap            | 16px between items                                                     |
-| Font           | 14px, line-height 22px, letter-spacing 0.14px                          |
-| Inactive color | `--text-n7`, `border-bottom: 2px solid transparent`                    |
-| Active color   | `--text-n9`, `font-weight: 500`, `border-bottom-color: var(--main-m1)` |
+| Element        | Spec                                                                                                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gap            | 16px between items                                                                                                                                                                        |
+| Font           | 14px, line-height 22px, letter-spacing 0.14px                                                                                                                                             |
+| Inactive color | `--text-n7`, `border-bottom: 2px solid transparent`                                                                                                                                       |
+| Active color   | `--text-n9`, `font-weight: 500`, `border-bottom-color: var(--main-m1)`                                                                                                                    |
 | Width-jump fix | Each `.tab-item` needs `data-text` attribute matching its label; a hidden `::after` pseudo-element with `font-weight: 500` reserves the bold width so the tab doesn't shift on activation |
 
 ```html
@@ -83,7 +116,9 @@ All modules stack vertically with **24px** gap (`--spacing-xl`).
 
 ### 1.2 Meta Info Bar
 
-Sits directly below the Tab Bar; **fields vary per tab**.
+Sits directly below the Tab Bar; **fields vary per tab**. The gap between the
+tab bar and the meta bar is already provided by `.tab-panel`'s `padding-top` —
+do **not** add any `padding-top` or `margin-top` to `.meta-bar`.
 
 | Property         | Value                                                                    |
 | ---------------- | ------------------------------------------------------------------------ |
@@ -106,11 +141,20 @@ Sits directly below the Tab Bar; **fields vary per tab**.
 
 Displays all tickers ever traded by the strategy.
 
+The page reads symbol-level UI data from the active item in `tradedSymbols[]`:
+summary fields render the name/price row, `candles[]` powers the candlestick
+chart, and `tradeLog[]` powers both trade markers and the Trade Log modal. This
+is a UI projection contract, not a direct dump of Altra's raw ALFS directories.
+
 #### Layout
 
-Title, Symbol Pills, selected symbol price, and chart stack vertically with gap = 16px (`--spacing-m`).
+Title, Symbol Pills, selected symbol price, and chart stack vertically with gap
+= 16px (`--spacing-m`).
 
-Title row includes a Trade Log icon on the right: `order-l.svg` 16×16px, `--text-n9`; clicking opens a [Modal](./design-components.md#modal) containing a [Table](./design-widgets.md#table-card) of trade records.
+Title row includes a Trade Log icon on the right:
+`https://alva-ai-static.b-cdn.net/icons/order-l.svg` 16×16px, `--text-n9`;
+clicking opens a [Modal](./design-components.md#modal) containing a
+[Table](./design-widgets.md#table-card) of trade records.
 
 #### Symbol Pills Row
 
@@ -118,10 +162,10 @@ Hide entirely when there is only one symbol.
 
 Uses [Pill S](./design-components.md#tab) style. Each pill contains:
 
-| Element      | Spec                                                                            |
-| ------------ | ------------------------------------------------------------------------------- |
-| Ticker Logo  | 14×14px, border-radius 50%, left of text                                        |
-| Position Dot | 5×5px, border-radius 50%, `--main-m1`, right of text; only for active positions |
+| Element      | Spec                                                                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ticker Logo  | 14×14px, border-radius 50%, left of text; fallback when no image: first letter of ticker in a colored circle (`--b-r07` bg, `--text-n7` text, 10px font) |
+| Position Dot | 5×5px, border-radius 50%, `--main-m1`, right of text; only for active positions                                                                          |
 
 #### Selected Symbol Price
 
@@ -140,7 +184,9 @@ Row uses `align-items: baseline`, gap = 4px (`--spacing-xxs`).
 
 #### Candlestick Chart (ECharts)
 
-Follows [Chart Card](./design-widgets.md#chart-card) spec. Candlestick is a Chart Card — must use `.chart-dotted-background` + `.chart-body` wrapper per Chart Card spec. Business overrides:
+Follows [Chart Card](./design-widgets.md#chart-card) spec. Candlestick is a
+Chart Card — must use `.chart-dotted-background` + `.chart-body` wrapper per
+Chart Card spec. Business overrides:
 
 | Property    | Value                        |
 | ----------- | ---------------------------- |
@@ -150,7 +196,10 @@ Follows [Chart Card](./design-widgets.md#chart-card) spec. Candlestick is a Char
 | barMaxWidth | 16px                         |
 | DataZoom    | `inside` + `slider` (bottom) |
 
-> **Data source note**: OHLCV candlestick data is NOT included in Altra backtest output. After running the backtest, you must separately fetch the traded symbols' OHLCV data (e.g. from exchange API or OHLCV provider) for the same date range. Do not skip the candlestick chart.
+> **Data source note**: OHLCV candlestick data is NOT included in Altra backtest
+> output. After running the backtest, separately fetch the traded symbols' OHLCV
+> data (e.g. from exchange API or OHLCV provider), then project it into each
+> symbol's `candles[]`. Do not skip the candlestick chart.
 
 #### Trade Log Markers
 
@@ -220,12 +269,26 @@ markPoint: {
 └──────────────────────────────┘
 ```
 
+```html
+<div style="display:flex;flex-direction:column;gap:4px;">
+  <div
+    style="font-size:11px;color:var(--text-n7);letter-spacing:0.12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+  >
+    Label
+  </div>
+  <div style="font-size:18px;letter-spacing:0.2px;color:var(--main-m3);">
+    +18.4%
+  </div>
+  <div id="sparkline-xxx" style="width:100%;height:52px;"></div>
+</div>
+```
+
 | Element         | Spec                                                                                         |
 | --------------- | -------------------------------------------------------------------------------------------- |
 | Label           | 11px, Regular 400, `--text-n7`, letter-spacing 0.12px, single-line ellipsis                  |
 | Value           | 18px, Regular 400, letter-spacing 0.2px                                                      |
 | Value Color     | Positive `--main-m3`, negative `--main-m4`                                                   |
-| Sparkline       | Mini line chart, height 52px, full-width, no axis/labels                                     |
+| Sparkline       | ECharts mini line chart, height 52px, full-width, no axis/labels/grid/tooltip                |
 | Sparkline Color | Positive `--main-m3`, negative `--main-m4`                                                   |
 | Sparkline Fill  | `areaStyle.origin: 0`, gradient 0%→15% from zero axis toward the line; both sides when mixed |
 
@@ -265,9 +328,15 @@ Benchmark Attribution:  Alpha {computed}%  Beta {computed}
 | Chart height     | chart-body total 280px (padding 16×2 + legend 16+8, ECharts canvas 224px)               |
 | Y-axis range     | Dynamic: min/max of all series, expanded 10% each side (data range × 120%)              |
 
-> **Benchmark** is data-driven: read from `equityCurve.benchmark.label` (e.g. "BTC" for crypto, "NASDAQ" for equities).
+> **Benchmark** is data-driven: read from `equityCurve.benchmark.label` (e.g.
+> "BTC" for crypto, "NASDAQ" for equities).
 
-> **Data source note**: Benchmark price data is NOT included in Altra backtest output. After running the backtest, you must separately fetch the benchmark asset's historical prices (e.g. from OHLCV provider) for the same date range and normalize to the initial amount. Do not skip the benchmark series.
+> **Data source note**: Benchmark price data is NOT included in Altra backtest
+> output. After running the backtest, separately fetch the benchmark asset's
+> historical prices (e.g. from an OHLCV provider), normalize them to the initial
+> amount, and project the result into
+> `overview.equityCurve.series.benchmark.data`. Do not skip the benchmark
+> series.
 
 #### Chart Spec
 
@@ -280,18 +349,19 @@ Follows [Chart Card](./design-widgets.md#chart-card) spec. Business overrides:
 
 ### 2.3 Current Positions Table
 
-Follows [Table Card](./design-widgets.md#table-card) spec. Title-to-table gap: 16px.
+Follows [Table Card](./design-widgets.md#table-card) spec. Title-to-table gap:
+16px.
 
 #### Columns
 
-| Column       | Width     | Style                                                                                             |
-| ------------ | --------- | ------------------------------------------------------------------------------------------------- |
-| Symbol       | flex: 1.2 | 13px `--text-n9`                                                                                  |
-| Side         | flex: 1   | Tag: LONG = `--main-m3` bg + white; SHORT = `--main-m4` bg + white; CASH = `--text-n3` bg + white |
-| Quantity     | flex: 1.2 | Default text                                                                                      |
-| Market Value | flex: 1.2 | Prefixed with $                                                                                   |
-| Allocation   | flex: 1.2 | Percentage                                                                                        |
-| P&L          | flex: 1   | Positive `--main-m3` (+$); negative `--main-m4` (-$)                                              |
+| Column       | Width     | Style                                                                                                   |
+| ------------ | --------- | ------------------------------------------------------------------------------------------------------- |
+| Symbol       | flex: 1.2 | 13px `--text-n9`                                                                                        |
+| Side         | flex: 1   | [Tag](./design-components.md#tag): LONG = `.tag-bullish`; SHORT = `.tag-bearish`; CASH = `.tag-neutral` |
+| Quantity     | flex: 1.2 | Default text                                                                                            |
+| Market Value | flex: 1.2 | Prefixed with $                                                                                         |
+| Allocation   | flex: 1.2 | Percentage                                                                                              |
+| P&L          | flex: 1   | Positive `--main-m3` (+$); negative `--main-m4` (-$)                                                    |
 
 ### 2.4 Daily P&L Chart
 
@@ -303,6 +373,7 @@ Follows [Chart Card](./design-widgets.md#chart-card) spec. Business overrides:
 | Positive bar | `--main-m3`                                                                          |
 | Negative bar | `--main-m4`                                                                          |
 | Chart height | 224px (incl. padding, ECharts canvas 192px)                                          |
+| Y-axis range | auto (ECharts default min/max)                                                       |
 | DataZoom     | `inside` only (no slider); enables mouse wheel zoom and drag pan when data > 90 bars |
 
 ### 2.5 Drawdown Chart
@@ -326,13 +397,21 @@ All charts follow [Chart Card](./design-widgets.md#chart-card) spec.
 
 ### Chart Selection Logic
 
-| Data Type              | Chart Format         | Examples                                         |
-| ---------------------- | -------------------- | ------------------------------------------------ |
-| Time-series            | Line Chart           | Cumulative return, portfolio value, drawdown     |
-| Categorical comparison | Bar Chart            | Returns by sector, factor contribution, win rate |
-| Distribution           | Histogram / Box Plot | Return distribution, holding period distribution |
-| Relationship           | Scatter Plot         | Factor score vs future return                    |
-| Screening / ranking    | Table (Screener)     | Top stocks, factor rankings                      |
+> **Supported chart types**: Line and Bar have full specs in
+> [design-widgets.md](./design-widgets.md#chart-card) (axis, tooltip, legend,
+> colors, hover). Table has full specs in
+> [design-widgets.md](./design-widgets.md#table-card). Use these three as
+> primary chart types. Histogram, Box Plot, and Scatter Plot may be used when
+> the data clearly requires them, but they lack detailed interaction specs —
+> apply the shared Chart Card axis/tooltip/color rules and keep styling minimal.
+
+| Data Type              | Chart Format                  | Examples                                         |
+| ---------------------- | ----------------------------- | ------------------------------------------------ |
+| Time-series            | **Line Chart** (fully spec'd) | Cumulative return, portfolio value, drawdown     |
+| Categorical comparison | **Bar Chart** (fully spec'd)  | Returns by sector, factor contribution, win rate |
+| Distribution           | Histogram / Box Plot (basic)  | Return distribution, holding period distribution |
+| Relationship           | Scatter Plot (basic)          | Factor score vs future return                    |
+| Screening / ranking    | **Table** (fully spec'd)      | Top stocks, factor rankings                      |
 
 ### Layout
 
@@ -341,12 +420,14 @@ All charts follow [Chart Card](./design-widgets.md#chart-card) spec.
 | ≥ 1280px   | 2 cards per row (`grid-template-columns: repeat(2, 1fr)`, gap: 24px) |
 | < 1280px   | 1 card per row (single column stack, gap: 24px)                      |
 
-> Analytics container uses `flex: none` to prevent parent flex stretching. Cards keep intrinsic height (`align-items: start`).
+> Analytics container uses `flex: none` to prevent parent flex stretching. Cards
+> keep intrinsic height (`align-items: start`).
 
 ### Requirements
 
 - Use **actual computed strategy data**, not placeholders.
-- Each chart must include: title, axis labels, legend (if applicable), and a brief interpretation.
+- Each chart must include: title, axis labels, legend (if applicable), and a
+  brief interpretation.
 
 ---
 
@@ -374,15 +455,20 @@ Explains the core idea and implementation logic of the trading strategy.
 
 ### 4.2 Objective Section
 
-Plain text paragraph: 16px, Regular 400, `--text-n9`, line-height 26px, letter-spacing 0.16px.
+Plain text paragraph: 16px, Regular 400, `--text-n9`, line-height 26px,
+letter-spacing 0.16px.
 
 ### 4.3 Strategy Section
 
-Content follows [Free Text Card](./design-widgets.md#free-text-card) spec (Markdown component + `.free-text-body` padding).
+Content follows [Free Text Card](./design-widgets.md#free-text-card) spec
+(Markdown component + `.free-text-body` padding).
 
-Summarize the strategy logic and render using the **Large (default)** Markdown size (`.markdown-container` without size modifier). See [Markdown sizes](./design-components.md#markdown).
+Summarize the strategy logic and render using the **Large (default)** Markdown
+size (`.markdown-container` without size modifier). See
+[Markdown sizes](./design-components.md#markdown).
 
-> **Heading restriction**: Only H4–H6. H1–H3 are reserved for page-level structure.
+> **Heading restriction**: Only H4–H6. H1–H3 are reserved for page-level
+> structure.
 
 ---
 
@@ -401,9 +487,11 @@ Summarize the strategy logic and render using the **Large (default)** Markdown s
 └────────────────────────────────────────────────────┘
 ```
 
-Reuses §1.3 Traded Symbols component, but without the title row — starts directly from Pills.
+Reuses §1.3 Traded Symbols component, but without the title row — starts
+directly from Pills.
 
-> **Layout**: Same as Strategy tab — `max-width: 960px`, horizontally centered (`margin: 0 auto`).
+> **Layout**: Same as Strategy tab — `max-width: 960px`, horizontally centered
+> (`margin: 0 auto`).
 
 ### 5.1 Signal Feed Card
 
@@ -453,7 +541,7 @@ Displays individual trading signals from the strategy.
 <div class="feed-signal">
   <img class="signal-ticker-logo" src="{ticker_logo_url}" alt="AAPL" />
   <span class="signal-action">Increase</span>
-  <a class="signal-ticker">AAPL</a>
+  <a class="signal-ticker" target="_blank" rel="noopener noreferrer">AAPL</a>
   <span class="signal-detail">allocation 4.5% → 8.0%</span>
   <span class="signal-trend up"></span>
 </div>
@@ -461,14 +549,14 @@ Displays individual trading signals from the strategy.
 
 All text in the signal card uses `--text-n9` except the ticker link.
 
-| Element     | Spec                                                                                                        |
-| ----------- | ----------------------------------------------------------------------------------------------------------- |
-| Row height  | 28px                                                                                                        |
-| Ticker Logo | 20×20px, border-radius: 50%, flex-shrink: 0; from `tickerLogoUrl` in data                                   |
-| Action      | 16px, Regular 400, `--text-n9`, line-height: 26px                                                           |
-| Ticker link | 16px, Medium 500, `--main-m1`, cursor pointer, line-height: 26px                                            |
-| Detail      | 16px, `--text-n9`, line-height: 26px                                                                        |
-| Trend icon  | 14×14px, CSS mask, flex-shrink: 0; up = `bullish-l.svg` + `--main-m3`, down = `bearish-l.svg` + `--main-m4` |
+| Element     | Spec                                                                                                                                                                                      |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Row height  | 28px                                                                                                                                                                                      |
+| Ticker Logo | 20×20px, border-radius: 50%, flex-shrink: 0; from `tickerLogoUrl` in data (optional — fallback: first letter of ticker in a colored circle, `--b-r07` bg, `--text-n7` text, 12px font)    |
+| Action      | 16px, Regular 400, `--text-n9`, line-height: 26px                                                                                                                                         |
+| Ticker link | 16px, Medium 500, `--main-m1`, cursor pointer, line-height: 26px                                                                                                                          |
+| Detail      | 16px, `--text-n9`, line-height: 26px                                                                                                                                                      |
+| Trend icon  | 18×18px, CSS mask, flex-shrink: 0; up = `https://alva-ai-static.b-cdn.net/icons/bullish-l.svg` + `--main-m3`, down = `https://alva-ai-static.b-cdn.net/icons/bearish-l.svg` + `--main-m4` |
 
 **Signal format variants:**
 
@@ -504,14 +592,19 @@ All text in the signal card uses `--text-n9` except the ticker link.
 
 | Breakpoint | Behavior                                                                  |
 | ---------- | ------------------------------------------------------------------------- |
-| ≥ 1200px   | Performance Metrics: 6 columns                                            |
-| 900–1199px | Performance Metrics: 3×2 grid                                             |
-| < 900px    | Performance Metrics: 2×3; chart height reduced                            |
-| < 600px    | Metrics: single column; Symbol Pills: horizontal scroll; Feed: full width |
+| ≥ 1280px   | Performance Metrics: 6 columns (1 row)                                    |
+| 900–1279px | Performance Metrics: 3 columns × 2 rows (3 per row)                       |
+| < 900px    | Performance Metrics: 2 columns × 3 rows; chart height reduced             |
+| < 768px    | Metrics: single column; Symbol Pills: horizontal scroll; Feed: full width |
 
 ---
 
 ## 7. Data Schema (JSON)
+
+This schema is the UI-facing projection consumed by the playbook page. Build it
+from Altra outputs plus any required enrichments (for example benchmark history
+or traded-symbol OHLCV). Do not pass raw ALFS directory trees directly to the
+page.
 
 ```jsonc
 {
@@ -530,10 +623,27 @@ All text in the signal card uses `--text-n9` except the ticker link.
       "changePct": 1.84,
       "changeAbs": 1427.46,
       "source": "Binance",
+      "candles": [
+        {
+          "time": "2025-11-18",
+          "open": 89200.1,
+          "high": 91020.4,
+          "low": 88780.3,
+          "close": 90634.34,
+        },
+      ],
+      "tradeLog": [
+        {
+          "time": "2025-11-18",
+          "side": "BUY",
+          "price": 89880.0,
+          "quantity": 0.8,
+        },
+      ],
     },
-    { "symbol": "ETH" },
-    { "symbol": "SOL" },
-    { "symbol": "BNB" },
+    { "symbol": "ETH", "candles": [], "tradeLog": [] },
+    { "symbol": "SOL", "candles": [], "tradeLog": [] },
+    { "symbol": "BNB", "candles": [], "tradeLog": [] },
   ],
 
   // === Overview ===
@@ -635,6 +745,7 @@ All text in the signal card uses `--text-n9` except the ticker link.
           { "name": "Xxxxxx", "color": "#76b900", "yAxisIndex": 0, "data": [] },
         ],
         "areaFill": true,
+        "interpretation": "Explain what this chart means in one concise sentence.",
       },
       {
         "type": "multi-lines",
@@ -648,6 +759,7 @@ All text in the signal card uses `--text-n9` except the ticker link.
         ],
         "dualYAxis": { "left": "Price (USD)", "right": "Vol / Drawdown (%)" },
         "areaFill": false,
+        "interpretation": "Explain the relationship between the plotted series.",
       },
     ],
   },
@@ -685,8 +797,7 @@ All text in the signal card uses `--text-n9` except the ticker link.
   "feed": {
     "signals": [
       {
-        "user": { "avatar": "...", "name": "YLLYGG" },
-        "strategy": { "name": "NASDAQ Ultimate AI Trader", "icon": "📈" },
+        "strategy": { "name": "NASDAQ Ultimate AI Trader" },
         "timestamp": "11/22/2025 16:30",
         "actions": [
           {
@@ -737,8 +848,10 @@ All text in the signal card uses `--text-n9` except the ticker link.
 
 - Meta Info Bar (4 fields)
 - Performance Metrics Row (6 KPI-Sparkline cards, correct colors)
-- Equity Curve Chart (3 lines + Alpha/Beta + legend) — benchmark series requires separate price data fetch; do not skip if backtest output lacks it
-- Traded Symbols (Pills + Candlestick + Trade Markers)
+- Equity Curve Chart (3 lines + Alpha/Beta + legend) — benchmark series requires
+  separate price data fetch; do not skip if backtest output lacks it
+- Traded Symbols (Pills + Candlestick + Trade Markers) — uses
+  `tradedSymbols[].candles` and `tradedSymbols[].tradeLog`
 - Current Positions Table (LONG/SHORT/CASH tags + P&L coloring)
 - Daily P&L Chart (positive/negative dual-color bars)
 - Drawdown Chart (all-negative red bars)
@@ -747,6 +860,7 @@ All text in the signal card uses `--text-n9` except the ticker link.
 
 - Meta Info Bar (2 fields)
 - Charts auto-selected by data type
+- Each chart includes a short `interpretation`
 - ≥1280px: 2-column grid; <1280px: single column
 - Alva watermark bottom-left
 
@@ -760,9 +874,11 @@ All text in the signal card uses `--text-n9` except the ticker link.
 ### Feed Tab
 
 - No Meta Bar
-- Traded Symbols — reuses §1.3 without title row (Pills + Selected Symbol Price + Candlestick Chart with Trade Markers)
+- Traded Symbols — reuses §1.3 without title row (Pills + Selected Symbol
+  Price + Candlestick Chart with Trade Markers)
 - Signal Feed Cards ×N
 - Each card: strategy name + timestamp header
-- Signal row: ticker logo (20×20) + action + ticker link (`--main-m1`) + detail + trend icon
+- Signal row: ticker logo (20×20) + action + ticker link (`--main-m1`) +
+  detail + trend icon
 - Description + bullet indicators
 - Cards separated by border-bottom

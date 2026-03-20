@@ -5,10 +5,11 @@
 - [Dropdown](#dropdown)
 - [Markdown](#markdown)
 - [Button](#button)
-- [Switch](#switch)
-- [Tab](#tab)
 - [Tag](#tag)
-- [Tooltip](#tooltip)
+- [Switch](#switch)
+- [Modal](#modal)
+- [Select](#select)
+- [Tab](#tab)
 
 ---
 
@@ -61,7 +62,11 @@
 
 .list-item-text {
   flex: 1 0 0;
-  font-family: "Delight", "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-style: normal;
   font-size: 14px;
   line-height: 22px;
@@ -134,9 +139,16 @@ document.querySelectorAll(".list-item").forEach((item) => {
 
 ## Markdown
 
-> For font specification, see [design-system.md - Typography & Font](./design-system.md#typography--font). Headings and body text use Delight; code uses JetBrains Mono.
+> For font specification, see
+> [design-system.md - Typography & Font](./design-system.md#typography--font).
+> Headings and body text use Delight with `-apple-system`, `BlinkMacSystemFont`,
+> `sans-serif` fallbacks; code uses JetBrains Mono.
 
-Uses [markdown-it](https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js) for automatic rendering. Write raw markdown inside `<script type="text/markdown">`, the init script parses it into standard HTML tags, and scoped CSS maps them to the Alva design spec.
+Uses
+[markdown-it](https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js)
+for automatic rendering. Write raw markdown inside
+`<script type="text/markdown">`, the init script parses it into standard HTML
+tags, and scoped CSS maps them to the Alva design spec.
 
 ### Usage
 
@@ -144,19 +156,19 @@ Uses [markdown-it](https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min
 <!-- 1. Container with optional size modifier -->
 <div class="markdown-container">
   <script type="text/markdown">
-# Heading 1
+    # Heading 1
 
-Paragraph with `inline code`.
+    Paragraph with `inline code`.
 
-- Bullet item
-- Another item
+    - Bullet item
+    - Another item
 
-1. Ordered item
-2. Another item
+    1. Ordered item
+    2. Another item
 
-| Col A | Col B |
-| --- | --- |
-| Cell | Cell |
+    | Col A | Col B |
+    | ----- | ----- |
+    | Cell  | Cell  |
   </script>
 </div>
 
@@ -169,10 +181,20 @@ Paragraph with `inline code`.
 <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
 <script>
   const md = window.markdownit();
-  document.querySelectorAll('script[type="text/markdown"]').forEach(el => {
+  const defaultRender =
+    md.renderer.rules.link_open ||
+    function (tokens, idx, options, env, self) {
+      return self.renderToken(tokens, idx, options);
+    };
+  md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+    tokens[idx].attrSet("target", "_blank");
+    tokens[idx].attrSet("rel", "noopener noreferrer");
+    return defaultRender(tokens, idx, options, env, self);
+  };
+  document.querySelectorAll('script[type="text/markdown"]').forEach((el) => {
     const container = el.parentElement;
     el.remove();
-    container.insertAdjacentHTML('beforeend', md.render(el.textContent));
+    container.insertAdjacentHTML("beforeend", md.render(el.textContent));
   });
 </script>
 ```
@@ -187,7 +209,9 @@ Paragraph with `inline code`.
   flex-direction: column;
   gap: 16px;
 }
-.markdown-container * { box-sizing: border-box; }
+.markdown-container * {
+  box-sizing: border-box;
+}
 
 /* ── Headings ── */
 .markdown-container h1,
@@ -196,7 +220,11 @@ Paragraph with `inline code`.
 .markdown-container h4,
 .markdown-container h5,
 .markdown-container h6 {
-  font-family: "Delight", "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-weight: 500;
   font-style: normal;
   color: var(--text-n9);
@@ -204,83 +232,174 @@ Paragraph with `inline code`.
   width: 100%;
 }
 .markdown-container h1,
-.markdown-container h2 { font-size: 20px; line-height: 30px; letter-spacing: 0.2px; padding-top: 8px; }
-.markdown-container h3 { font-size: 18px; line-height: 28px; letter-spacing: 0.18px; padding-top: 4px; }
+.markdown-container h2 {
+  font-size: 20px;
+  line-height: 30px;
+  letter-spacing: 0.2px;
+  padding-top: 8px;
+}
+.markdown-container h3 {
+  font-size: 18px;
+  line-height: 28px;
+  letter-spacing: 0.18px;
+  padding-top: 4px;
+}
 .markdown-container h4,
 .markdown-container h5,
-.markdown-container h6 { font-size: 16px; line-height: 26px; letter-spacing: 0.16px; }
+.markdown-container h6 {
+  font-size: 16px;
+  line-height: 26px;
+  letter-spacing: 0.16px;
+}
 
 /* ── Paragraph ── */
 .markdown-container p {
-  font-family: "Delight", "Helvetica Neue", Arial, sans-serif;
-  font-size: 16px; line-height: 26px; letter-spacing: 0.16px;
-  color: var(--text-n9); margin: 0; white-space: pre-wrap;
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-size: 16px;
+  line-height: 26px;
+  letter-spacing: 0.16px;
+  color: var(--text-n9);
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 /* ── Lists ── */
 .markdown-container ul,
 .markdown-container ol {
-  display: flex; flex-direction: column; gap: 8px;
-  list-style: none; margin: 0; padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 .markdown-container li {
-  font-family: "Delight", "Helvetica Neue", Arial, sans-serif;
-  font-size: 16px; line-height: 26px; letter-spacing: 0.16px;
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-size: 16px;
+  line-height: 26px;
+  letter-spacing: 0.16px;
   color: var(--text-n9);
-  position: relative; padding-left: 24px;
+  position: relative;
+  padding-left: 24px;
 }
 .markdown-container ul > li::before {
   content: "";
-  width: 5px; height: 5px; border-radius: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
   background: var(--text-n9);
-  position: absolute; left: 0; top: 10.5px;
+  position: absolute;
+  left: 0;
+  top: 10.5px;
 }
-.markdown-container ol { counter-reset: md-ol; }
-.markdown-container ol > li { counter-increment: md-ol; }
+.markdown-container ol {
+  counter-reset: md-ol;
+}
+.markdown-container ol > li {
+  counter-increment: md-ol;
+}
 .markdown-container ol > li::before {
   content: counter(md-ol) ".";
-  position: absolute; left: 0; top: 0;
-  width: 24px; text-align: center;
-  font-size: 16px; line-height: 26px; color: var(--text-n9);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  text-align: center;
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--text-n9);
 }
 
 /* ── Code ── */
 .markdown-container code,
 .markdown-container pre {
-  background: var(--b-r02); border: 1px solid var(--line-l07);
-  border-radius: 2px; font-family: "JetBrains Mono", monospace; color: var(--text-n7);
+  background: var(--b-r02);
+  border-radius: 2px;
+  font-family: "JetBrains Mono", monospace;
+  color: var(--text-n7);
 }
 .markdown-container code {
-  display: inline-block; vertical-align: middle; font-size: 12px; line-height: 20px; letter-spacing: 0.12px; padding: 2px 8px; margin: 0 4px;
+  display: inline-block;
+  vertical-align: middle;
+  box-shadow: inset 0 0 0 1px var(--line-l07);
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+  padding: 2px 8px;
+  margin: 0 4px;
 }
 .markdown-container pre {
-  font-size: 14px; line-height: 22px; letter-spacing: 0.14px;
-  padding: 12px 16px; margin: 0; overflow-x: auto;
+  border: 1px solid var(--line-l07);
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.14px;
+  padding: 12px 16px;
+  margin: 0;
+  overflow-x: auto;
 }
-.markdown-container pre code { font-size: inherit; line-height: inherit; letter-spacing: inherit; border: none; padding: 0; background: none; }
+.markdown-container pre code {
+  display: inline;
+  vertical-align: baseline;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
 
 /* ── Divider ── */
 .markdown-container hr {
-  height: 1px; background: var(--line-l07);
-  border: none; margin: 4px 0;
+  height: 1px;
+  background: var(--line-l07);
+  border: none;
+  margin: 4px 0;
 }
 
-/* ── Table ── */
-.markdown-container table { width: 100%; border-collapse: collapse; }
+/* ── Table ── follows Table Card rules (design-widgets.md) */
+.markdown-container table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 16px 0;
+  margin: 0 -16px;
+}
 .markdown-container th,
 .markdown-container td {
-  padding: 12px; min-height: 180px;
-  border-bottom: 1px solid rgba(0,0,0,0.07);
-  font-family: "Delight", "Helvetica Neue", Arial, sans-serif;
-  font-size: 14px; line-height: 22px; letter-spacing: 0.14px;
-  color: var(--text-n9); text-align: left;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-l07);
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.14px;
+  color: var(--text-n9);
+  text-align: left;
+  max-height: 180px;
 }
-.markdown-container th { font-weight: 500; padding-top: 0; }
-.markdown-container th:first-child,
-.markdown-container td:first-child { padding-left: 0; }
-.markdown-container th:last-child,
-.markdown-container td:last-child { padding-right: 0; }
-.markdown-container td code { margin: 0; }
+.markdown-container th {
+  color: var(--text-n7);
+  padding-top: 0;
+  padding-bottom: 12px;
+}
+.markdown-container tr:last-child td {
+  border-bottom: none;
+}
+.markdown-container td code {
+  margin: 0;
+}
 
 /* ── Link ── */
 .markdown-container a {
@@ -293,12 +412,17 @@ Paragraph with `inline code`.
   text-decoration-skip-ink: none;
   transition: color 0.15s ease;
 }
-.markdown-container a:hover { color: var(--main-m1); text-decoration-color: var(--main-m1); }
+.markdown-container a:hover {
+  color: var(--main-m1);
+  text-decoration-color: var(--main-m1);
+}
 .markdown-container a::after {
   content: "";
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
   background: currentColor;
-  mask: url("https://alva-ai-static.b-cdn.net/icons/go-l.svg") center / contain no-repeat;
+  mask: url("https://alva-ai-static.b-cdn.net/icons/go-l.svg") center / contain
+    no-repeat;
   display: inline-block;
   vertical-align: middle;
   margin-left: 4px;
@@ -306,49 +430,150 @@ Paragraph with `inline code`.
 }
 
 /* ── Medium ── */
-.markdown-container--m { gap: 8px; }
-.markdown-container--m h1 { font-size: 18px; line-height: 28px; letter-spacing: 0.18px; padding-top: 2px; }
-.markdown-container--m h2 { font-size: 16px; line-height: 26px; letter-spacing: 0.16px; padding-top: 2px; }
-.markdown-container--m h3 { font-size: 14px; line-height: 22px; letter-spacing: 0.14px; padding-top: 0; }
+.markdown-container--m {
+  gap: 8px;
+}
+.markdown-container--m h1 {
+  font-size: 18px;
+  line-height: 28px;
+  letter-spacing: 0.18px;
+  padding-top: 2px;
+}
+.markdown-container--m h2 {
+  font-size: 16px;
+  line-height: 26px;
+  letter-spacing: 0.16px;
+  padding-top: 2px;
+}
+.markdown-container--m h3 {
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.14px;
+  padding-top: 0;
+}
 .markdown-container--m h4,
 .markdown-container--m h5,
-.markdown-container--m h6 { font-size: 14px; line-height: 22px; letter-spacing: 0.14px; }
+.markdown-container--m h6 {
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.14px;
+}
 .markdown-container--m p,
-.markdown-container--m li { font-size: 14px; line-height: 22px; letter-spacing: 0.14px; }
-.markdown-container--m ul > li::before { top: 8.5px; }
-.markdown-container--m ol > li::before { font-size: 14px; line-height: 22px; }
+.markdown-container--m li {
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.14px;
+}
+.markdown-container--m ul > li::before {
+  top: 8.5px;
+}
+.markdown-container--m ol > li::before {
+  font-size: 14px;
+  line-height: 22px;
+}
 .markdown-container--m ul,
-.markdown-container--m ol { gap: 4px; }
+.markdown-container--m ol {
+  gap: 4px;
+}
 .markdown-container--m th,
-.markdown-container--m td { font-size: 12px; line-height: 20px; letter-spacing: 0.12px; padding: 8px; min-height: 176px; }
-.markdown-container--m code { padding: 1px 8px; }
-.markdown-container--m pre { font-size: 12px; line-height: 20px; letter-spacing: 0.12px; }
-.markdown-container--m a::after { width: 14px; height: 14px; }
+.markdown-container--m td {
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+  padding: 8px;
+  min-height: 176px;
+}
+.markdown-container--m code {
+  padding: 1px 8px;
+}
+.markdown-container--m pre {
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+}
+.markdown-container--m a::after {
+  width: 14px;
+  height: 14px;
+}
 
 /* ── Small ── */
-.markdown-container--s { gap: 4px; }
-.markdown-container--s h1 { font-size: 14px; line-height: 22px; letter-spacing: 0.14px; padding-top: 2px; }
-.markdown-container--s h2 { font-size: 12px; line-height: 20px; letter-spacing: 0.12px; padding-top: 0; }
-.markdown-container--s h3 { font-size: 12px; line-height: 20px; letter-spacing: 0.12px; padding-top: 0; }
+.markdown-container--s {
+  gap: 4px;
+}
+.markdown-container--s h1 {
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.14px;
+  padding-top: 2px;
+}
+.markdown-container--s h2 {
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+  padding-top: 0;
+}
+.markdown-container--s h3 {
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+  padding-top: 0;
+}
 .markdown-container--s h4,
 .markdown-container--s h5,
-.markdown-container--s h6 { font-size: 12px; line-height: 20px; letter-spacing: 0.12px; }
+.markdown-container--s h6 {
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+}
 .markdown-container--s p,
-.markdown-container--s li { font-size: 12px; line-height: 20px; letter-spacing: 0.12px; }
-.markdown-container--s a::after { width: 12px; height: 12px; }
-.markdown-container--s ul > li::before { top: 7.5px; }
-.markdown-container--s ol > li::before { font-size: 12px; line-height: 20px; }
+.markdown-container--s li {
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+}
+.markdown-container--s a::after {
+  width: 12px;
+  height: 12px;
+}
+.markdown-container--s ul > li::before {
+  top: 7.5px;
+}
+.markdown-container--s ol > li::before {
+  font-size: 12px;
+  line-height: 20px;
+}
 .markdown-container--s ul,
-.markdown-container--s ol { gap: 4px; }
-.markdown-container--s code { font-size: 10px; line-height: 16px; padding: 2px 6px; }
-.markdown-container--s pre { font-size: 10px; line-height: 16px; padding: 8px 12px; }
+.markdown-container--s ol {
+  gap: 4px;
+}
+.markdown-container--s code {
+  font-size: 10px;
+  line-height: 16px;
+  padding: 2px 6px;
+}
+.markdown-container--s pre {
+  font-size: 10px;
+  line-height: 16px;
+  padding: 8px 12px;
+}
 .markdown-container--s th,
-.markdown-container--s td { font-size: 12px; line-height: 20px; letter-spacing: 0.12px; padding: 8px; min-height: 176px; }
+.markdown-container--s td {
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+  padding: 8px;
+  min-height: 176px;
+}
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .markdown-container { max-width: 100%; padding: 0 16px; }
-  .markdown-container table { overflow-x: scroll; }
+  .markdown-container {
+    max-width: 100%;
+    padding: 0 16px;
+  }
+  .markdown-container table {
+    overflow-x: scroll;
+  }
 }
 ```
 
@@ -356,7 +581,8 @@ Paragraph with `inline code`.
 
 ### 1. Overview
 
-The button component system contains **2 types** x **4 sizes** x **4 states** = 32 combinations
+The button component system contains **2 types** x **4 sizes** x **4 states** =
+32 combinations
 
 - **Primary Button**: for primary actions (submit, confirm, save)
 - **Secondary Button**: for secondary actions (cancel, back, view)
@@ -401,7 +627,11 @@ The button component system contains **2 types** x **4 sizes** x **4 states** = 
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: "Delight", "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-weight: 500;
   font-style: normal;
   -webkit-font-smoothing: antialiased;
@@ -416,7 +646,7 @@ The button component system contains **2 types** x **4 sizes** x **4 states** = 
 /* Primary Button */
 .btn-primary {
   background-color: var(--main-m1);
-  color: white;
+  color: var(--b-common-white);
 }
 
 .btn-primary:hover:not(.btn-disabled) {
@@ -428,7 +658,7 @@ The button component system contains **2 types** x **4 sizes** x **4 states** = 
 }
 
 .btn-primary.btn-disabled {
-  background-color: white;
+  background-color: var(--b0-container);
   color: var(--text-n2);
   cursor: not-allowed;
   border: 0.5px solid var(--line-l3);
@@ -522,7 +752,7 @@ The button component system contains **2 types** x **4 sizes** x **4 states** = 
   left: 50%;
   margin-left: -7px;
   margin-top: -7px;
-  border: 1px solid white;
+  border: 1px solid var(--b-common-white);
   border-radius: 50%;
   border-top-color: transparent;
   animation: btn-spin 0.6s linear infinite;
@@ -541,68 +771,251 @@ The button component system contains **2 types** x **4 sizes** x **4 states** = 
 
 /* Focus State */
 .btn:focus-visible {
-  outline: 2px solid #49a3a6;
+  outline: 2px solid var(--main-m1);
   outline-offset: 2px;
 }
 ```
 
 ---
 
-## Switch
+## Tag
 
 ### 1. Overview
 
-Switch is a sliding toggle component used to represent boolean state (on/off). The system contains **3 sizes** x **4 states** = 12 combinations
+Tags are compact labels used to display status, category, or classification.
+They come in **3 sizes** and **2 style modes**. Colors are not predefined — the
+agent picks the appropriate `--main-mX` color token based on semantic context
+(m1 Theme, m2 Link, m3 Bullish, m4 Bearish, m5 Alert, m6 Emphasize). Every
+`--main-mX` has a matching `--main-mX-10` (10 % opacity) variant for the tinted
+style.
+
+### 2. CSS
+
+```css
+/* Base (default size = Small) */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-weight: 400;
+  white-space: nowrap;
+  border-radius: var(--radius-ct-s);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 22px;
+  padding: 1px 6px;
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+  /* Default color (no semantic meaning) */
+  background-color: var(--b-r05);
+  color: var(--text-n9);
+}
+
+/* Size — Medium */
+.tag-md {
+  height: 26px;
+  padding: 2px 8px;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.14px;
+}
+
+/* Size — Extra Small */
+.tag-xs {
+  height: 18px;
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 16px;
+  letter-spacing: 0.1px;
+  border-radius: var(--radius-ct-xs);
+}
+
+/*
+ * Style — Tinted
+ * Light transparent background + colored text.
+ *   background-color: var(--main-mX-10);
+ *   color: var(--main-mX);
+ *
+ * Style — Solid
+ * Full-color background + white text.
+ *   background-color: var(--main-mX);
+ *   color: var(--b-common-white);
+ */
+```
+
+### 3. HTML
+
+```html
+<!-- Tinted — agent chooses color by meaning -->
+<span class="tag" style="background:var(--main-m3-10);color:var(--main-m3)"
+  >BULLISH</span
+>
+<span class="tag" style="background:var(--main-m4-10);color:var(--main-m4)"
+  >BEARISH</span
+>
+<span class="tag" style="background:var(--main-m5-10);color:var(--main-m5)"
+  >MODERATE</span
+>
+<span class="tag">Label</span>
+
+<!-- Solid -->
+<span class="tag" style="background:var(--main-m3);color:var(--b-common-white)"
+  >LONG</span
+>
+<span class="tag" style="background:var(--main-m4);color:var(--b-common-white)"
+  >SHORT</span
+>
+
+<!-- Sizes -->
+<span
+  class="tag tag-md"
+  style="background:var(--main-m3-10);color:var(--main-m3)"
+  >BULLISH</span
+>
+<span
+  class="tag tag-xs"
+  style="background:var(--main-m4-10);color:var(--main-m4)"
+  >BEARISH</span
+>
+```
 
 ---
 
-### 2. Props
+## Switch
 
-| Prop       | Type                         | Default | Description           |
-| ---------- | ---------------------------- | ------- | --------------------- |
-| `size`     | `'sm'` \| `'md'` \| `'lg'`   | `'md'`  | Switch size           |
-| `checked`  | `boolean`                    | `false` | Whether on            |
-| `disabled` | `boolean`                    | `false` | Whether disabled      |
-| `onChange` | `(checked: boolean) => void` | —       | State toggle callback |
+Sliding toggle for boolean state (on/off). **3 sizes** × **4 states** = 12
+combinations. Ratio rule: thumb diameter = track height × 2/3, thumb spacing =
+track height × 1/6.
 
----
+### CSS
 
-### 3. Color Token
+```css
+.switch {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
 
-#### Colors
+/* Track — Off */
+.switch {
+  background-color: var(--b-r1);
+}
 
-| Token       | Value            | Description                |
-| ----------- | ---------------- | -------------------------- |
-| `track-off` | `var(--b-r1)`    | Off state track background |
-| `track-on`  | `var(--main-m1)` | On state track background  |
-| `thumb`     | `#FFFFFF`        | Thumb color (fixed)        |
+/* Track — On */
+.switch.on {
+  background-color: var(--main-m1);
+}
 
-#### Sizes
+/* Thumb */
+.switch-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--b-common-white);
+  border-radius: 50%;
+  transition: left 0.2s ease;
+}
 
-| Size | Track (W x H) | Thumb Diameter | Thumb Spacing | Track Border Radius |
-| ---- | ------------- | -------------- | ------------- | ------------------- |
-| `sm` | 24 x 12 px    | 8 px           | 2 px          | 100 px              |
-| `md` | 32 x 16 px    | 10.67 px       | 2.67 px       | 1000 px             |
-| `lg` | 40 x 20 px    | 13.33 px       | 3.33 px       | 166.67 px           |
+/* Disabled */
+.switch.disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.switch.disabled:not(.on) {
+  opacity: 0.4;
+}
+.switch.disabled.on {
+  opacity: 0.3;
+}
 
----
+/* Size — Medium (default) */
+.switch {
+  width: 32px;
+  height: 16px;
+  border-radius: 1000px;
+}
+.switch .switch-thumb {
+  width: 10.67px;
+  height: 10.67px;
+  left: 2.67px;
+}
+.switch.on .switch-thumb {
+  left: calc(100% - 10.67px - 2.67px);
+}
 
-> **Ratio rule**: Thumb diameter = Track height x 2/3, Thumb spacing = Track height x 1/6.
+/* Size — Small */
+.switch-sm {
+  width: 24px;
+  height: 12px;
+  border-radius: 100px;
+}
+.switch-sm .switch-thumb {
+  width: 8px;
+  height: 8px;
+  left: 2px;
+}
+.switch-sm.on .switch-thumb {
+  left: calc(100% - 8px - 2px);
+}
 
-#### States and Opacity
+/* Size — Large */
+.switch-lg {
+  width: 40px;
+  height: 20px;
+  border-radius: 166.67px;
+}
+.switch-lg .switch-thumb {
+  width: 13.33px;
+  height: 13.33px;
+  left: 3.33px;
+}
+.switch-lg.on .switch-thumb {
+  left: calc(100% - 13.33px - 3.33px);
+}
+```
 
-| State          | Track Color | Thumb Position | opacity |
-| -------------- | ----------- | -------------- | ------- |
-| Off + Default  | `track-off` | Left           | `1`     |
-| Off + Disabled | `track-off` | Left           | `0.4`   |
-| On + Default   | `track-on`  | Right          | `1`     |
-| On + Disabled  | `track-on`  | Right          | `0.3`   |
+### HTML
 
-### 4. Structure
+```html
+<!-- Medium (default), off -->
+<div class="switch" role="switch" aria-checked="false">
+  <div class="switch-thumb"></div>
+</div>
 
-```text
-[Track]                  — Track container, overflow: hidden, pill-shaped border radius
-  └─ [Thumb]             — Thumb, absolutely positioned, vertically centered (top:50% + translateY(-50%))
+<!-- Medium, on -->
+<div class="switch on" role="switch" aria-checked="true">
+  <div class="switch-thumb"></div>
+</div>
+
+<!-- Small, disabled -->
+<div
+  class="switch switch-sm disabled"
+  role="switch"
+  aria-checked="false"
+  aria-disabled="true"
+>
+  <div class="switch-thumb"></div>
+</div>
+```
+
+### JS Interaction
+
+```js
+document.querySelectorAll(".switch:not(.disabled)").forEach(function (sw) {
+  sw.addEventListener("click", function () {
+    var isOn = sw.classList.toggle("on");
+    sw.setAttribute("aria-checked", isOn);
+  });
+});
 ```
 
 ---
@@ -656,13 +1069,6 @@ Modal                        ← Overlay
 
 ### Close Icon
 
-| Property       | Value                                                 |
-| -------------- | ----------------------------------------------------- |
-| Icon Name      | `close-l1`                                            |
-| Container Size | `18 x 18px`                                           |
-| Icon URL       | `https://alva-ai-static.b-cdn.net/icons/close-l1.svg` |
-| Fill Color     | `var(--text-n9)`                                      |
-
 **CSS**
 
 ```css
@@ -697,14 +1103,16 @@ Modal                        ← Overlay
 | Flex     | `1 0 0` (fills remaining space) |
 | Width    | `100%`                          |
 
-> Placeholder is a reserved area; replace with actual business content (forms, lists, confirmation messages, etc.) when used.
+> Placeholder is a reserved area; replace with actual business content (forms,
+> lists, confirmation messages, etc.) when used.
 
 ### Interaction
 
 - Clicking the overlay can close the modal (configurable)
 - Clicking the close icon (x) in the top-right corner closes the modal
 - When the modal is open, background content is not scrollable
-- When modal content exceeds available height, the content area scrolls internally
+- When modal content exceeds available height, the content area scrolls
+  internally
 - Responsive: `16px` safe margin horizontally, `48px` safe margin vertically
 
 ### Responsive
@@ -716,22 +1124,101 @@ Modal                        ← Overlay
 
 ## Select
 
-### Basic Information
+Clicking the Select container triggers the associated [Dropdown](#dropdown).
+Dropdown width defaults to the same width as the Select. Dropdown list item text
+size follows the Select size. Clicking again or clicking outside closes the
+Dropdown. Arrow icon always points down and does not rotate.
 
-| Property         | Value                               |
-| ---------------- | ----------------------------------- |
-| Background Color | `#var(--b0-container)`              |
-| Font             | `Delight`                           |
-| Font Weight      | `400`                               |
-| Border Style     | `0.5px solid`                       |
-| Icon viewBox     | `0 0 20 20`                         |
-| Text Overflow    | `text-ellipsis + whitespace-nowrap` |
-
-### Arrow Icon
-
-**CSS**
+### CSS
 
 ```css
+.select {
+  display: flex;
+  align-items: center;
+  background-color: var(--b0-container);
+  cursor: pointer;
+  position: relative;
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-weight: 400;
+  transition: border-color 0.12s ease;
+}
+
+.select-border {
+  position: absolute;
+  inset: 0;
+  border: 0.5px solid var(--line-l3);
+  border-radius: inherit;
+  pointer-events: none;
+  transition: border-color 0.12s ease;
+}
+
+.select:hover .select-border {
+  border-color: var(--text-n9);
+}
+
+.select-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-n3);
+}
+
+/* Filled state — has a selected value */
+.select.filled .select-text {
+  color: var(--text-n9);
+}
+
+.select:hover .select-text {
+  color: var(--text-n9);
+}
+
+.select.filled .select-icon {
+  opacity: 0.2;
+}
+
+/* Size — Large */
+.select-lg {
+  height: 48px;
+  padding: 11px 16px;
+  gap: 8px;
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 26px;
+  letter-spacing: 0.16px;
+}
+
+/* Size — Medium (default) */
+.select {
+  height: 40px;
+  padding: 8px 12px;
+  gap: 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: 0.14px;
+}
+
+/* Size — Small */
+.select-sm {
+  height: 28px;
+  padding: 4px 8px;
+  gap: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.12px;
+}
+.select-sm .select-text {
+  width: 70px;
+  flex: none;
+}
+
+/* Arrow Icon */
 .select-icon {
   flex-shrink: 0;
   display: flex;
@@ -753,97 +1240,92 @@ Modal                        ← Overlay
 }
 ```
 
-**HTML**
+### HTML Template
 
 ```html
-<!-- Large / Medium: 14x14 -->
-<div class="select-icon" style="width:14px;height:14px;">
-  <img src="https://alva-ai-static.b-cdn.net/icons/arrow-down-f2.svg" alt="" />
+<!-- Medium Select (default, placeholder state) -->
+<div class="select" data-select="demo">
+  <div class="select-border"></div>
+  <span class="select-text">Select option</span>
+  <div class="select-icon" style="width:14px;height:14px;">
+    <img
+      src="https://alva-ai-static.b-cdn.net/icons/arrow-down-f2.svg"
+      alt=""
+    />
+  </div>
 </div>
 
-<!-- Small: 12x12 -->
-<div class="select-icon" style="width:12px;height:12px;">
-  <img src="https://alva-ai-static.b-cdn.net/icons/arrow-down-f2.svg" alt="" />
+<!-- Medium Select (filled state) -->
+<div class="select filled" data-select="demo">
+  <div class="select-border"></div>
+  <span class="select-text">Selected Value</span>
+  <div class="select-icon" style="width:14px;height:14px;">
+    <img
+      src="https://alva-ai-static.b-cdn.net/icons/arrow-down-f2.svg"
+      alt=""
+    />
+  </div>
+</div>
+
+<!-- Associated Dropdown (hidden by default, shown on click) -->
+<div class="dropdown" style="display:none;" data-dropdown="demo">
+  <div class="dropdown-border"></div>
+  <div class="list-item" data-value="opt1">
+    <div class="list-item-inner">
+      <span class="list-item-text">Option 1</span>
+      <span class="list-item-check"></span>
+    </div>
+  </div>
+  <div class="list-item" data-value="opt2">
+    <div class="list-item-inner">
+      <span class="list-item-text">Option 2</span>
+      <span class="list-item-check"></span>
+    </div>
+  </div>
 </div>
 ```
 
-### Size Variants
+### JS Interaction
 
-| Property       | Large                | Medium               | Small                |
-| -------------- | -------------------- | -------------------- | -------------------- |
-| Height         | `48px`               | `40px`               | `28px`               |
-| Padding        | `16px / 11px`        | `12px / 8px`         | `8px / 4px`          |
-| Border Radius  | `6px`                | `4px`                | `4px`                |
-| Font Size      | `16px`               | `14px`               | `12px`               |
-| Line Height    | `26px`               | `22px`               | `20px`               |
-| Letter Spacing | `0.16px`             | `0.14px`             | `0.12px`             |
-| Gap            | `8px`                | `8px`                | `4px`                |
-| Icon Size      | `14px`               | `14px`               | `12px`               |
-| Text Width     | `flex: 1 (adaptive)` | `flex: 1 (adaptive)` | `flex: 1 (adaptive)` |
+```js
+// Select + Dropdown toggle
+document.querySelectorAll("[data-select]").forEach(function (sel) {
+  var name = sel.dataset.select;
+  var dd = document.querySelector('[data-dropdown="' + name + '"]');
+  if (!dd) return;
 
----
+  sel.addEventListener("click", function (e) {
+    e.stopPropagation();
+    var isOpen = dd.style.display !== "none";
+    dd.style.display = isOpen ? "none" : "";
+    sel.classList.toggle("open", !isOpen);
+  });
 
-### Click Behavior
+  dd.querySelectorAll(".list-item").forEach(function (item) {
+    item.addEventListener("click", function () {
+      dd.querySelectorAll(".list-item").forEach(function (i) {
+        i.classList.remove("selected");
+      });
+      item.classList.add("selected");
+      var text = item.querySelector(".list-item-text").textContent;
+      sel.querySelector(".select-text").textContent = text;
+      sel.classList.add("filled");
+      dd.style.display = "none";
+      sel.classList.remove("open");
+    });
+  });
+});
 
-Clicking the Select container triggers the associated **Dropdown Menu** (see [Dropdown Menu](#dropdown-menu)).
-
-- Dropdown width defaults to the same width as the Select container
-- Dropdown list item text size follows the Select size (see table below)
-- Clicking again or clicking outside the area closes the Dropdown
-- Arrow icon always points down and does not rotate with toggle state
-
----
-
-### Interaction States
-
-Each size includes 3 states.
-
-#### Default
-
-- Border color: `var(--line-l3)`
-- Text color: `var(--text-n3)`
-- Arrow color: `var(--text-n2)`
-
-#### Hover
-
-- Border color: `var(--text-n9)`
-- Text color: `var(--text-n9)`
-- Arrow color: `var(--text-n9)`
-
-#### Filled
-
-- Border color: `var(--line-l3)`
-- Text color: `var(--text-n9)`
-- Icon opacity: `0.2`
-
----
-
-### Layout Structure
-
+// Close on outside click
+document.addEventListener("click", function () {
+  document.querySelectorAll("[data-dropdown]").forEach(function (dd) {
+    dd.style.display = "none";
+  });
+  document.querySelectorAll("[data-select]").forEach(function (sel) {
+    sel.classList.remove("open");
+  });
+});
 ```
-Select Container (flex, items-center)
-├── Border Overlay (absolute inset-0, pointer-events-none)
-├── Text Label (flex: 1, ellipsis overflow)
-└── Icon Wrapper (shrink-0, flex, items-center, justify-center)
-    └── Arrow Down SVG
-```
-
-- Container uses `flex + items-center` for horizontal layout
-- Border is implemented via an `absolute inset-0` overlay with `pointer-events-none`
-- Text area uses `flex: 1` for adaptive width (except Small size, which is fixed at 70px)
-- Icon area uses `shrink-0` to prevent being compressed
-
----
-
-### Dropdown List Item Text Specification
-
-The font size, line height, and letter spacing of Dropdown list items match the triggering Select size.
-
-| Property       | Large    | Medium   | Small    |
-| -------------- | -------- | -------- | -------- |
-| Font Size      | `16px`   | `14px`   | `12px`   |
-| Line Height    | `26px`   | `22px`   | `20px`   |
-| Letter Spacing | `0.16px` | `0.14px` | `0.12px` |
 
 ---
 
@@ -871,7 +1353,11 @@ border through their transparent border.
   align-items: center;
 }
 .tab-item {
-  font-family: "Delight", sans-serif;
+  font-family:
+    "Delight",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -948,27 +1434,70 @@ border through their transparent border.
 
 ```html
 <!-- Pill M -->
-<div class="tab tab-pill">
-  <div class="tab-item active" data-text="Tab 1">Tab 1</div>
-  <div class="tab-item" data-text="Tab 2">Tab 2</div>
-  <div class="tab-item" data-text="Tab 3">Tab 3</div>
+<div class="tab tab-pill" data-tab-group="demo">
+  <div class="tab-item active" data-tab="tab1" data-text="Tab 1">Tab 1</div>
+  <div class="tab-item" data-tab="tab2" data-text="Tab 2">Tab 2</div>
+  <div class="tab-item" data-tab="tab3" data-text="Tab 3">Tab 3</div>
 </div>
 
-<!-- Underline S -->
-<div class="tab tab-underline tab-s">
-  <div class="tab-item active" data-text="Tab 1">Tab 1</div>
-  <div class="tab-item" data-text="Tab 2">Tab 2</div>
+<!-- Tab panels — data-tab-panel value must match data-tab on the trigger -->
+<div data-tab-panel="tab1" data-tab-group="demo">Panel 1</div>
+<div data-tab-panel="tab2" data-tab-group="demo" style="display:none;">
+  Panel 2
+</div>
+<div data-tab-panel="tab3" data-tab-group="demo" style="display:none;">
+  Panel 3
 </div>
 ```
 
-## Input
+### JS Interaction
 
-TBD
+```js
+// Tab switching — handles active state, panel visibility, and ECharts resize.
+// Include once per page. Works for all .tab groups via data-tab-group.
+document.querySelectorAll(".tab").forEach(function (tab) {
+  tab.addEventListener("click", function (e) {
+    var item = e.target.closest(".tab-item");
+    if (!item || item.classList.contains("active")) return;
 
-## Tag
+    var group = tab.dataset.tabGroup;
 
-TBD
+    // Update active tab
+    tab.querySelectorAll(".tab-item").forEach(function (i) {
+      i.classList.remove("active");
+    });
+    item.classList.add("active");
 
-## Tooltip
+    // Switch panels
+    var panels = group
+      ? document.querySelectorAll(
+          '[data-tab-panel][data-tab-group="' + group + '"]',
+        )
+      : [];
+    panels.forEach(function (p) {
+      p.style.display = p.dataset.tabPanel === item.dataset.tab ? "" : "none";
+    });
 
-TBD
+    // Resize ECharts instances inside the newly visible panel
+    // (hidden containers report 0×0, so charts need a resize after show)
+    var active = group
+      ? document.querySelector(
+          '[data-tab-panel="' +
+            item.dataset.tab +
+            '"][data-tab-group="' +
+            group +
+            '"]',
+        )
+      : null;
+    if (active) {
+      active.querySelectorAll("[_echarts_instance_]").forEach(function (el) {
+        var inst = echarts.getInstanceByDom(el);
+        if (inst) inst.resize();
+      });
+      active.querySelectorAll(".table-card").forEach(function (el) {
+        if (typeof initTableAlignment === "function") initTableAlignment(el);
+      });
+    }
+  });
+});
+```
