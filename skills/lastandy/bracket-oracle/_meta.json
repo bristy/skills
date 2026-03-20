@@ -3,9 +3,15 @@
   "slug": "bracket-oracle",
   "displayName": "Bracket Oracle",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773255716985,
-    "commit": "https://github.com/openclaw/skills/commit/f3dce307b61ca866badfe8af8c507163f0e7bd74"
+    "version": "1.0.2",
+    "publishedAt": 1773683919170,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773255716985,
+      "commit": "https://github.com/openclaw/skills/commit/f3dce307b61ca866badfe8af8c507163f0e7bd74"
+    }
+  ]
 }
