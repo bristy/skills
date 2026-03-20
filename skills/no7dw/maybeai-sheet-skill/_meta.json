@@ -1,11 +1,17 @@
 {
   "owner": "no7dw",
   "slug": "maybeai-sheet-skill",
-  "displayName": "Maybeai Sheet",
+  "displayName": "Maybeai Sheet Skill",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1773404575804,
-    "commit": "https://github.com/openclaw/skills/commit/7b398717aba68ddcf145db53f54a3fcd3e5d51cf"
+    "version": "0.1.3",
+    "publishedAt": 1773732587970,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1773404575804,
+      "commit": "https://github.com/openclaw/skills/commit/7b398717aba68ddcf145db53f54a3fcd3e5d51cf"
+    }
+  ]
 }

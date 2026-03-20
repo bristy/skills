@@ -4,7 +4,7 @@
 #        export DOC_ID=your_document_id_here
 #        bash 05-worksheets.sh
 
-BASE_URL="${BASE_URL:-https://play-be.omnimcp.ai}"
+BASE_URL="https://play-be.omnimcp.ai"
 TOKEN="${MAYBEAI_API_TOKEN:?Please set MAYBEAI_API_TOKEN}"
 DOC_ID="${DOC_ID:?Please set DOC_ID}"
 

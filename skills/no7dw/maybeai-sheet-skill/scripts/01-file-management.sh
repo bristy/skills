@@ -4,7 +4,7 @@
 #        export BASE_URL=https://play-be.omnimcp.ai   (or your self-hosted URL)
 #        bash 01-file-management.sh
 
-BASE_URL="${BASE_URL:-https://play-be.omnimcp.ai}"
+BASE_URL="https://play-be.omnimcp.ai"
 TOKEN="${MAYBEAI_API_TOKEN:?Please set MAYBEAI_API_TOKEN}"
 
 # ── Upload Excel File ────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 ---
 name: maybeai-sheet
 description: "MaybeAI Sheet skill for full Excel/spreadsheet lifecycle management. Upload, read, edit, and analyze Excel files via the MaybeAI platform. Use when the user wants to: upload or import an Excel file, read spreadsheet data, update cell ranges, insert/delete rows or columns, manage worksheets, add charts or images, apply filters or conditional formatting, calculate formulas, export files, manage versions, or perform any Excel data operation."
-version: 1.0.0
+version: 0.1.3
 metadata:
   openclaw:
     requires:
@@ -22,7 +22,6 @@ Ready-to-run curl examples are in the [`scripts/`](./scripts/) folder. Each scri
 
 ```bash
 export MAYBEAI_API_TOKEN=your_token_here
-export BASE_URL=https://play-be.omnimcp.ai   # optional, this is the default
 export DOC_ID=your_document_id_here          # needed by most scripts
 
 bash scripts/01-file-management.sh   # upload, import, list, rename, delete, export
@@ -42,11 +41,22 @@ bash scripts/09-end-to-end.sh        # 3 complete workflow examples (upload→ed
 
 ## Setup
 
+### Get your API token
+
+1. Go to **[https://maybe.ai/user/my-plan](https://maybe.ai/user/my-plan)** in your browser.
+   *(Or click your avatar / name at the bottom-left of the app → **My Plan**.)*
+2. Find the **API Token** card below the plan summary — it shows a masked Bearer token with copy and reveal buttons.
+3. Copy the token and set it as an environment variable:
+
+```bash
+export MAYBEAI_API_TOKEN=your_token_here
+```
+
 ### Required environment variable
 
 | Variable | Description |
 |---|---|
-| `MAYBEAI_API_TOKEN` | Your MaybeAI Bearer token for authenticated API calls. |
+| `MAYBEAI_API_TOKEN` | Your MaybeAI Bearer token. Get it from [maybe.ai/user/my-plan](https://maybe.ai/user/my-plan). |
 
 ### Base URL
 
@@ -666,4 +676,4 @@ Authorization: Bearer <token>
 - **Range format**: Use Excel-style ranges like `A1`, `A1:B10`, `A:A`.
 - **Row/column indexing**: Row numbers are 1-indexed (row 1 = first data row). Columns use Excel letters (`A`, `B`, ...).
 - **Authentication**: Endpoints marked `AUTH` require `Authorization: Bearer <MAYBEAI_API_TOKEN>`. Public endpoints work without a token.
-- **Spreadsheet viewer URL**: `https://play-be.omnimcp.ai/api/v1/excel/spreadsheets/d/{doc_id}` renders a live HTML preview of the file.
+- **Spreadsheet viewer URL**: `maybe.ai/docs/spreadsheets/d/{doc_id}` renders a live HTML preview of the file.

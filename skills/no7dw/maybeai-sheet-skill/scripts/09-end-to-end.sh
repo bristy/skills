@@ -10,7 +10,7 @@
 #   export MAYBEAI_API_TOKEN=your_token_here
 #   bash 09-end-to-end.sh
 
-BASE_URL="${BASE_URL:-https://play-be.omnimcp.ai}"
+BASE_URL="https://play-be.omnimcp.ai"
 TOKEN="${MAYBEAI_API_TOKEN:?Please set MAYBEAI_API_TOKEN}"
 
 echo "============================================================"
