@@ -3,9 +3,15 @@
   "slug": "markdown-toolkit",
   "displayName": "Markdown Toolkit",
   "latest": {
-    "version": "3.0.1",
-    "publishedAt": 1773612116232,
-    "commit": "https://github.com/openclaw/skills/commit/49bb981092e749c0f7220e62e8eb89c9c9a21c29"
+    "version": "3.1.0",
+    "publishedAt": 1773943036075,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "3.0.1",
+      "publishedAt": 1773612116232,
+      "commit": "https://github.com/openclaw/skills/commit/49bb981092e749c0f7220e62e8eb89c9c9a21c29"
+    }
+  ]
 }

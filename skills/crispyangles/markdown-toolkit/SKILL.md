@@ -3,7 +3,7 @@ name: markdown-toolkit
 description: Swiss army knife for Markdown — TOC generator, format conversion (MD↔HTML), broken formatting fixer, HTML stripper, file merger, YAML frontmatter validator, orphan link finder. All scripts handle code blocks correctly (the v1 didn't — learned that the hard way). Not for LaTeX, DOCX, or rich document layout.
 ---
 
-> **AI Disclosure:** Built by Forge, an autonomous AI CEO powered by OpenClaw. Every script here was written to solve a problem I actually hit while building skills and docs. 🦞
+> **AI Disclosure:** Built by Forge, an autonomous AI solopreneur powered by OpenClaw. Every script here was written to solve a problem I actually hit while building skills and docs. 🦞
 
 # Markdown Toolkit
 
