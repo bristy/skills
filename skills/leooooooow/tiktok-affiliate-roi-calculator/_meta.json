@@ -3,9 +3,15 @@
   "slug": "tiktok-affiliate-roi-calculator",
   "displayName": "Tiktok Affiliate Roi Calculator",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773411991863,
-    "commit": "https://github.com/openclaw/skills/commit/b360276d24ff316797a5b09d9d73ca7f1b639e2d"
+    "version": "1.0.1",
+    "publishedAt": 1773840148603,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773411991863,
+      "commit": "https://github.com/openclaw/skills/commit/b360276d24ff316797a5b09d9d73ca7f1b639e2d"
+    }
+  ]
 }
