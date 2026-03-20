@@ -1,7 +1,7 @@
 ---
 name: leads
-description: "Add and score sales leads, set follow-up reminders, track conversions, and view pipeline funnels."
-version: "3.2.0"
+description: "Manage sales leads locally. Use when adding prospects, scoring leads, setting follow-ups, tracking conversions, or viewing funnels."
+version: "3.4.0"
 author: BytesAgain
 homepage: https://bytesagain.com
 source: https://github.com/bytesagain/ai-skills
