@@ -3,11 +3,16 @@
   "slug": "doko",
   "displayName": "Read, Search & Extract Web Pages by Dokobot",
   "latest": {
-    "version": "1.2.5",
-    "publishedAt": 1773141149057,
-    "commit": "https://github.com/openclaw/skills/commit/e3789b476487e63fd2fc13ff602fc6ee40514884"
+    "version": "1.5.0",
+    "publishedAt": 1773749418018,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.5",
+      "publishedAt": 1773141149057,
+      "commit": "https://github.com/openclaw/skills/commit/e3789b476487e63fd2fc13ff602fc6ee40514884"
+    },
     {
       "version": "0.1.0",
       "publishedAt": 1772683433066,

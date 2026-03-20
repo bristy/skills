@@ -15,7 +15,7 @@ allowed-tools: Bash
 required-env: DOKO_API_KEY
 metadata:
   author: dokobot
-  version: "1.2.3"
+  version: "1.5.0"
   openclaw: {"requires": {"env": ["DOKO_API_KEY"], "bins": ["curl"]}, "primaryEnv": "DOKO_API_KEY"}
 ---
 
@@ -44,7 +44,7 @@ The `read` command connects to a Dokobot Chrome extension that captures the full
 
 Read a web page via the Chrome extension and return its content.
 
-**Usage**: `/doko read <url> [--screens N] [--timeout S] [--device ID] [sessionId]`
+**Usage**: `/doko read <url> [--screens N] [--timeout S] [--device ID] [--format text|chunks] [--reuse-tab] [sessionId]`
 
 **Requires**: Chrome browser open with Dokobot extension installed, logged in, and Remote Control enabled.
 
@@ -54,6 +54,8 @@ First non-flag argument is `url`, `sessionId`. Named flags:
 - `--screens N` → `screens`: Screens to collect (1 = no scroll, 3 = 3 screens) (default: 1)
 - `--timeout S` → `timeout`: Timeout in seconds (default: 300)
 - `--device ID` → `deviceId`: Target device ID (from `/doko dokos`)
+- `--format text|chunks` → `format`: Response format: `text` (default) returns only text; `chunks` returns full segmented data with `bounds` coordinates (default: text)
+- `--reuse-tab` → `reuseTab`: Reuse an existing tab with the same URL instead of opening a new one (default: false)
 
 ```bash
 curl -s --max-time 330 -X POST "https://dokobot.ai/api/tools/read" \
@@ -62,7 +64,18 @@ curl -s --max-time 330 -X POST "https://dokobot.ai/api/tools/read" \
   -d '{"url": "<URL>"}'
 ```
 
-**Response schema**:
+**Response schema** (default `format: "text"`):
+```typescript
+{
+  text?: string
+  sessionId: string
+  canContinue: unknown
+}
+```
+
+Pass `"format": "chunks"` in the request body to get segmented data with coordinates.
+
+**Response schema** (`format: "chunks"`):
 ```typescript
 {
   text?: string
@@ -77,7 +90,9 @@ curl -s --max-time 330 -X POST "https://dokobot.ai/api/tools/read" \
 }
 ```
 
-Adjust curl `--max-time` to `timeout + 30` when `--timeout` is specified. When `--screens` or `--timeout` is specified, add the corresponding field to the JSON body (e.g., `{"url": "...", "screens": 3, "timeout": 600}`). Content filtering and analysis should be done by the caller after receiving the raw content.
+Adjust curl `--max-time` to `timeout + 30` when `--timeout` is specified. When `--screens`, `--timeout`, `--format`, or `--reuse-tab` is specified, add the corresponding field to the JSON body (e.g., `{"url": "...", "screens": 3, "format": "chunks", "reuseTab": true}`). Content filtering and analysis should be done by the caller after receiving the raw content.
+
+**Tab reuse**: By default, a new tab is opened for each read. Use `--reuse-tab` to reuse an existing tab with the same URL (the tab will not be reloaded or closed after reading).
 
 **Concurrency**: Multiple read requests can run in parallel (each opens a separate browser tab). Recommended maximum: **5 concurrent calls**. Beyond that, returns diminish due to shared browser resources.
 
@@ -139,6 +154,7 @@ curl -s "https://dokobot.ai/api/tools/dokos" \
   dokos: Array<{
       id: string
       name: string | null
+      type: "extension" | "chrome"
       age: string | null
     }>
 }
@@ -148,6 +164,61 @@ Use `id` as `deviceId` in read-page when multiple browsers are connected:
 ```json
 {"url": "...", "screens": 3, "deviceId": "<device-id>"}
 ```
+
+### mcp_list_tools
+
+List available MCP tools on a browser doko.
+
+**Usage**: `/doko mcp_list_tools [--device ID]`
+
+**Requires**: A browser doko connected via dokobot-cli.
+
+**Args**: $ARGUMENTS[1] $ARGUMENTS[2] $ARGUMENTS[3] $ARGUMENTS[4] $ARGUMENTS[5] $ARGUMENTS[6] $ARGUMENTS[7] $ARGUMENTS[8] $ARGUMENTS[9]
+
+First non-flag argument is . Named flags:
+- `--device ID` → `deviceId`: Target device ID (from `/doko dokos`)
+
+```bash
+curl -s "https://dokobot.ai/api/tools/mcp-list-tools" \
+  -H "Authorization: Bearer $DOKO_API_KEY"
+```
+
+**Response schema**:
+```typescript
+{
+  deviceId: string
+  deviceName: string
+  tools: Array<{
+      name: string
+      description?: string
+      inputSchema?: unknown
+    }>
+}
+```
+
+When `--device` is specified, add `?deviceId=<ID>` to the URL. If only one browser doko is online, it is auto-selected.
+
+### mcp_call_tool
+
+Call an MCP tool on a browser doko.
+
+**Usage**: `/doko mcp_call_tool <tool> [--device ID]`
+
+**Requires**: A browser doko connected via dokobot-cli.
+
+**Args**: $ARGUMENTS[1] $ARGUMENTS[2] $ARGUMENTS[3] $ARGUMENTS[4] $ARGUMENTS[5] $ARGUMENTS[6] $ARGUMENTS[7] $ARGUMENTS[8] $ARGUMENTS[9]
+
+First non-flag argument is `tool`. Named flags:
+- `--device ID` → `deviceId`: Target device ID (from `/doko dokos`)
+
+```bash
+curl -s -X POST "https://dokobot.ai/api/tools/mcp-call-tool" \
+  -H "Authorization: Bearer $DOKO_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "<TOOL_NAME>", "arguments": {}}'
+```
+
+Use `/doko mcp_list_tools` first to discover available tools and their parameters. Pass tool arguments in the `arguments` field. When `--device` is specified, add `"deviceId": "<ID>"` to the JSON body.
 ## Error Handling
 - 401: Invalid API Key — ask user to check `DOKO_API_KEY`
 - 403: API Key scope insufficient
