@@ -3,9 +3,15 @@
   "slug": "using-data-cli",
   "displayName": "using-data-cli",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773368120868,
-    "commit": "https://github.com/openclaw/skills/commit/dc842df221c24f8b14c7d4144906a572af129668"
+    "version": "1.0.1",
+    "publishedAt": 1773973470326,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773368120868,
+      "commit": "https://github.com/openclaw/skills/commit/dc842df221c24f8b14c7d4144906a572af129668"
+    }
+  ]
 }

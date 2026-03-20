@@ -1,6 +1,6 @@
 ---
 name: using-data-cli
-description: Use when the user wants to use agent-data-cli as a local information center for news, social media, financial data, RSS feeds, or other multi-source content, and needs to discover, subscribe, sync, query, or interact with that content.
+description: Use when the user wants to discover, track, sync, or query news, RSS, social, financial, or other external sources through agent-data-cli and any configured source workspace such as agent-data-hub.
 ---
 
 # Using agent-data-cli
@@ -8,6 +8,8 @@ description: Use when the user wants to use agent-data-cli as a local informatio
 ## Overview
 
 `agent-data-cli` is a local information center for multi-source content.
+
+This skill is for discovering sources, searching channels, subscribing, syncing remote content, querying the local database, and running explicit interactions against news, RSS, social media, and financial data sources.
 
 Use it for:
 
@@ -36,6 +38,14 @@ Do not use this skill for:
 - changing the command surface or core protocol
 - free-form scraping outside the `agent-data-cli` model
 
+## Install From skills.sh
+
+Install this skill directly from `skills.sh`:
+
+```bash
+npx skills add https://github.com/severinzhong/agent-data-cli --skill using-data-cli
+```
+
 ## Install And Repo Setup
 
 If `agent-data-cli` is not present locally, install it first:
@@ -49,8 +59,9 @@ uv sync
 Then:
 
 1. Load the bundled skills from this repository's `skills/` directory.
-2. Use the repo root that contains `pyproject.toml`, `cli/`, `sources/`, and `store/`.
-3. Execute commands from the repo root.
+2. Use the repo root that contains `pyproject.toml`, `cli/`, and `store/`.
+3. Treat `source_workspace` as external configuration. The default path is `./sources`, and it is typically backed by the separate `agent-data-hub` workspace.
+4. Execute commands from the repo root.
 
 Always prefer:
 
@@ -78,17 +89,27 @@ Read `references/result-reporting.md` before reporting back after a multi-step r
 
 ### Configure Proxy
 
-When a source needs a proxy, configure it explicitly instead of depending on shell environment:
+`proxy_url` uses one field with three states:
+
+- unset: use the user's current network environment
+- `http://127.0.0.1:7890`: force that proxy
+- `direct`: force direct connection and break CLI-level proxy inheritance
+
+When one source needs its own proxy behavior, configure it explicitly:
 
 ```bash
 uv run -m adc config source set <source> proxy_url http://127.0.0.1:7890
+uv run -m adc config source set <source> proxy_url direct
 ```
 
 If multiple sources should share one proxy, set the CLI-level default:
 
 ```bash
 uv run -m adc config cli set proxy_url http://127.0.0.1:7890
+uv run -m adc config cli unset proxy_url
 ```
+
+If a source needs to bypass an inherited CLI proxy, set that source to `direct`.
 
 Inspect current source config:
 
@@ -96,14 +117,43 @@ Inspect current source config:
 uv run -m adc config source list <source>
 ```
 
+### Configure `source_workspace`
+
+Core only loads sources that exist in the current workspace.
+
+```bash
+uv run -m adc config cli explain source_workspace
+uv run -m adc config cli set source_workspace ./sources
+uv run -m adc config cli set source_workspace /abs/path/to/agent-data-hub
+```
+
+If the workspace contains `data_hub`, use it to discover, install, or uninstall official sources:
+
+```bash
+uv run -m adc content search --source data_hub --channel official --query xiaohongshu
+uv run -m adc content interact --source data_hub --verb install --ref data_hub:content/xiaohongshu
+uv run -m adc content interact --source data_hub --verb uninstall --ref data_hub:content/xiaohongshu
+```
+
+### Schedule Updates with `cron`
+
+Use a system scheduler when you want periodic local syncs. Keep the repo path explicit and append logs so the run can be inspected later:
+
+```bash
+30 8 * * * cd /abs/path/to/agent-data-cli && /abs/path/to/uv run -m adc content update --source bbc >> /abs/path/to/agent-data-cli/update.log 2>&1
+```
+
+If you need tighter OS integration, the same pattern can also be implemented with `launchd` or `systemd`.
+
 ### Use `--jsonl` with `jq` or `awk`
 
 For machine filtering, prefer `--jsonl` and pipe to shell tools:
 
 ```bash
 uv run -m adc content query --source cryptocompare --channel BTC --limit 30 --jsonl | jq '.title'
-uv run -m adc content query --source cryptocompare --channel BTC --limit 30 --jsonl | jq 'select(.channel_key=="BTC")'
-uv run -m adc content query --source cryptocompare --channel BTC --limit 30 --jsonl | awk -F'"' '/"channel_key": "BTC"/ {print $0}'
+uv run -m adc content query --source cryptocompare --channel BTC --limit 30 --jsonl | jq 'select(.channel=="BTC")'
+uv run -m adc content query --source cryptocompare --channel BTC --limit 30 --jsonl | awk -F'"' '/"channel": "BTC"/ {print $0}'
+uv run -m adc content query --source xiaohongshu --children xiaohongshu:content/note%3A123 --depth -1 --jsonl | jq '.relation_depth'
 ```
 
 The same pattern works for remote discovery:
@@ -143,5 +193,6 @@ This is useful when you want to:
 - `content update` is the only remote sync path that writes to the database.
 - `content query` is local-only and never triggers remote work.
 - `content interact` is explicit remote side effect execution only.
+- installing source runtime dependencies must stay out of the core project manifest; use `uv pip install` or source-local `init.sh`, not `uv add`
 
 If a task does not fit these boundaries, say so directly instead of approximating.
