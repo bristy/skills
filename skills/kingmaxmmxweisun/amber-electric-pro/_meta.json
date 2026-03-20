@@ -1,11 +1,17 @@
 {
   "owner": "kingmaxmmxweisun",
   "slug": "amber-electric-pro",
-  "displayName": "Amber Smart Energy Bill Management",
+  "displayName": "Amber Electric 的实时电价、预测电价及站点信息",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772697187974,
-    "commit": "https://github.com/openclaw/skills/commit/8d3e8f36c4c154c3c424f4767f133e3dbc593601"
+    "version": "1.0.1",
+    "publishedAt": 1773734615554,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772697187974,
+      "commit": "https://github.com/openclaw/skills/commit/8d3e8f36c4c154c3c424f4767f133e3dbc593601"
+    }
+  ]
 }
