@@ -1,47 +1,179 @@
 ---
-version: "2.0.0"
+version: "4.0.4"
 name: xhs-content-creator
-description: "Xiaohongshu viral note writer. 小红书爆款笔记生成器、标题优化、标签推荐、封面建议。Generate viral notes, trending titles, SEO tags, hooks, and cover suggestions. 小红书运营、种草文案、爆款标题公式、流量密码。. Use when you need xhs content creator capabilities. Triggers on: xhs content creator."
+description: "Generate viral Xiaohongshu notes with titles, tags, and covers. Use when drafting seed posts, writing reviews, crafting tutorials, or boosting engagement."
 author: BytesAgain
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 ---
-# xhs-content-creator
 
-Xiaohongshu viral note writer. 小红书爆款笔记生成器、标题优化、标签推荐、封面建议。Generate viral notes, trending titles, SEO tags, hooks, and cover suggestions. 小红书运营、种草文案、爆款标题公式、流量密码。
+# xhs-viral-note-writer
 
-## 为什么选择这个工具
-
-- ✅ 专为中文用户设计，理解中国市场和文化
-- ✅ 多种命令覆盖不同场景需求
-- ✅ 输出实用、可直接使用的内容
-- ✅ 持续更新，紧跟行业最新趋势
-
-## 命令速查
-
-```
-  note            note
-  title           title
-  tags            tags
-  hook            hook
-  cover           cover
-  trending        trending
-  rewrite         rewrite
-  batch           batch
-```
-
-## 专业建议
-
-- 标题决定了80%的打开率。好标题 = 情绪共鸣 + 信息增量 + 视觉冲击。
-- 用户刷信息流时，封面图是唯一的"门面"。3秒内抓不住眼球，就被滑走。
-- 小红书正文默认折叠，只显示前3行。把最抓人的信息、最刺激的结论放在最前面。
-- 小红书用户对"广告味"极其敏感。真人出镜、手持拍摄、真实场景，远比精修大片有效。
-- 每一篇笔记都要回答一个问题："读者看完能得到什么？"——干货、省钱、避坑、灵感。
-
----
-*xhs-content-creator by BytesAgain*
----
-💬 Feedback & Feature Requests: https://bytesagain.com/feedback
-Powered by BytesAgain | bytesagain.com
+Xiaohongshu (Little Red Book) content creation toolkit. Generate note titles, body text, opening hooks, closing CTAs, emoji suggestions, hashtags, cover ideas, and posting time recommendations. All content generated locally with built-in Chinese templates.
 
 ## Commands
 
-Run `xhs-viral-note-writer help` to see all available commands.
+### `note`
+
+Generate a complete note with title, body, hashtags, and emoji for a given topic.
+
+```bash
+scripts/script.sh note "topic"
+```
+
+### `title`
+
+Generate multiple clickable title candidates. Returns 5-10 options using built-in title formulas.
+
+```bash
+scripts/script.sh title "topic" 5
+```
+
+### `hook`
+
+Generate 5 opening hook styles: question, data-driven, story, pain-point, suspense.
+
+```bash
+scripts/script.sh hook "topic"
+```
+
+### `body`
+
+Generate body text structure for a specific content style (tutorial, review, recommendation, tips).
+
+```bash
+scripts/script.sh body "topic" tutorial
+```
+
+### `ending`
+
+Generate closing paragraphs with engagement prompts for different goals.
+
+```bash
+scripts/script.sh ending engagement
+```
+
+### `emoji`
+
+Suggest emoji combinations organized by content category (food, beauty, travel, fitness, tech).
+
+```bash
+scripts/script.sh emoji "topic"
+```
+
+### `hashtag`
+
+Generate relevant hashtag suggestions from built-in tag database by category.
+
+```bash
+scripts/script.sh hashtag "topic" 10
+```
+
+### `timing`
+
+Show recommended posting times by day of week and content category.
+
+```bash
+scripts/script.sh timing
+```
+
+### `cover`
+
+Generate cover image concept suggestions with text overlay ideas for different cover types.
+
+```bash
+scripts/script.sh cover tutorial
+```
+
+### `hotspot`
+
+Show trending topic directions and seasonal content ideas from built-in data.
+
+```bash
+scripts/script.sh hotspot
+```
+
+### `checklist`
+
+Run a pre-publish checklist to verify note completeness before posting.
+
+```bash
+scripts/script.sh checklist
+```
+
+### `templates`
+
+Browse available content templates organized by category.
+
+```bash
+scripts/script.sh templates
+```
+
+### `save`
+
+Save a generated note to local library for later use.
+
+```bash
+scripts/script.sh save "note-name" "content"
+```
+
+### `list`
+
+List all saved notes in the local library.
+
+```bash
+scripts/script.sh list
+```
+
+### `stats`
+
+Show usage statistics — notes created, templates used, topics covered.
+
+```bash
+scripts/script.sh stats
+```
+
+### `help`
+
+```bash
+scripts/script.sh help
+```
+
+### `version`
+
+```bash
+scripts/script.sh version
+```
+
+## Examples
+
+```bash
+# Full content creation workflow
+scripts/script.sh hotspot
+scripts/script.sh note "coffee shop review"
+scripts/script.sh title "coffee shop review" 5
+scripts/script.sh hashtag "coffee" 10
+scripts/script.sh checklist
+scripts/script.sh save "coffee-note" "content"
+```
+
+## Configuration
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `XHS_DIR` | No | Data directory (default: `~/.local/share/xhs-viral-note-writer/`) |
+
+## Data Storage
+
+All data saved in `~/.local/share/xhs-viral-note-writer/`:
+- `notes/` — Saved notes
+- `stats.json` — Usage statistics
+- `history.log` — Generation log
+
+## Requirements
+
+- bash 4.0+
+
+---
+
+*Powered by BytesAgain | bytesagain.com | hello@bytesagain.com*

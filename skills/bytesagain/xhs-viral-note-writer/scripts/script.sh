@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# xhs-viral-note-writer — 小红书爆款笔记创作助手
+# xhs-viral-note-writer — Xiaohongshu note generator
 set -euo pipefail
-VERSION="2.0.0"
+VERSION="4.0.4"
 DATA_DIR="${XHS_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/xhs-viral-note-writer}"
 mkdir -p "$DATA_DIR/notes" "$DATA_DIR/templates"
 
@@ -67,7 +67,7 @@ cmd_note() {
     echo "  📌 总结: 一句话概括核心价值"
     echo ""
     echo "  ── 互动引导 ──"
-    echo "  觉得有用的姐妹点个赞❤️收藏📁"
+    echo "  觉得有用的姐妹点个赞❤收藏📁"
     echo "  有问题评论区见～我会一一回复的！"
     echo ""
     cmd_hashtag "$topic" 5
@@ -82,7 +82,7 @@ cmd_title() {
     echo "  🔥 爆款标题 ($topic):"
     local templates=(
         "关于${topic}，我后悔没早点知道的%d件事"
-        "${topic}天花板❗️这篇笔记建议收藏"
+        "${topic}天花板❗这篇笔记建议收藏"
         "姐妹们！${topic}真的绝了！！！"
         "被问了800遍的${topic}攻略，一次说清✨"
         "${topic}避坑指南｜血泪经验总结"
@@ -107,7 +107,7 @@ cmd_hook() {
     echo "  2. 反转型: 「以前我也觉得${topic}没用，直到...」"
     echo "  3. 数据型: 「花了XX元踩坑${topic}，总结出这几条」"
     echo "  4. 紧迫型: 「关于${topic}，这个方法快要被限流了赶紧看」"
-    echo "  5. 权威型: 「做${topic}5年，这些经验分享给你」"
+    echo "  5. 权威型: 「做${topic}5年，这些经验都在这里」"
 }
 
 cmd_body() {
@@ -148,8 +148,8 @@ cmd_ending() {
     echo "  ═══ 结尾模板 ($type) ═══"
     case "$type" in
         互动) echo "  「觉得有用就点个赞吧～有问题评论区见！」"
-              echo "  「你们还想看什么？评论区告诉我📝」"
-              echo "  「收藏=学会✅ 转发=分享❤️」" ;;
+              echo "  「你们还想看什么？评论区留言📝」"
+              echo "  「收藏=学会✅ 转发=分享❤」" ;;
         引流) echo "  「更多干货在主页，记得关注不迷路～」"
               echo "  「私信【关键词】获取完整资料📋」" ;;
         促单) echo "  「链接放评论区了，需要的自取～」"
@@ -161,11 +161,11 @@ cmd_ending() {
 cmd_emoji() {
     local topic="${1:-}"
     echo "  ═══ Emoji搭配建议 ═══"
-    echo "  通用: ✨ 💕 📌 🔥 ❤️ 👏 🙌 💯"
-    echo "  强调: ❗️ ⚠️ 🚨 ‼️ ⭐️"
-    echo "  列表: ✅ 1️⃣ 2️⃣ 3️⃣ ▪️ ▫️"
+    echo "  通用: ✨ 💕 📌 🔥 ❤ 👏 🙌 💯"
+    echo "  强调: ❗ ⚠ 🚨 ‼ ⭐"
+    echo "  列表: ✅ 1⃣ 2⃣ 3⃣ ▪ ▫"
     echo "  美妆: 💄 💋 🪞 ✨ 🌸"
-    echo "  美食: 🍜 🥘 🍰 😋 👨‍🍳"
+    echo "  美食: 🍜 🥘 🍰 😋 👨🍳"
     echo "  穿搭: 👗 👠 🧥 💅 🎀"
     echo "  学习: 📚 📝 💡 🎯 🧠"
     echo ""
@@ -275,7 +275,7 @@ cmd_templates() {
     echo "  1. 干货分享型 — 「关于XX的N个建议」"
     echo "  2. 种草推荐型 — 「用了XX之后再也离不开」"
     echo "  3. 测评对比型 — 「XX vs YY 到底选哪个」"
-    echo "  4. 教程攻略型 — 「手把手教你XX」"
+    echo "  4. 教程攻略型 — 「一步步学XX」"
     echo "  5. 经验避坑型 — 「XX踩坑实录」"
     echo "  6. 合集清单型 — 「XX合集 一篇搞定」"
 }

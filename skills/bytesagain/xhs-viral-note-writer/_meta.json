@@ -3,11 +3,16 @@
   "slug": "xhs-viral-note-writer",
   "displayName": "Xhs Viral Note Writer",
   "latest": {
-    "version": "2.3.6",
-    "publishedAt": 1773667320593,
-    "commit": "https://github.com/openclaw/skills/commit/94b6fb7276686d293df13d88983f19d06549b575"
+    "version": "4.0.4",
+    "publishedAt": 1773884895829,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.6",
+      "publishedAt": 1773667320593,
+      "commit": "https://github.com/openclaw/skills/commit/94b6fb7276686d293df13d88983f19d06549b575"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773422029153,
