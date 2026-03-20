@@ -1,11 +1,17 @@
 {
   "owner": "jisuapi",
   "slug": "ip",
-  "displayName": "IP查询 - IP Address Query",
+  "displayName": "IP Address Query - IP查询",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772609556344,
-    "commit": "https://github.com/openclaw/skills/commit/88c4cd3363ea15430d2c4af784883ffcd2906b03"
+    "version": "1.0.1",
+    "publishedAt": 1773720688441,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772609556344,
+      "commit": "https://github.com/openclaw/skills/commit/88c4cd3363ea15430d2c4af784883ffcd2906b03"
+    }
+  ]
 }
