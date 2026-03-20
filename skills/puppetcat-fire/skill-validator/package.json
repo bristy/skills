@@ -1,6 +1,6 @@
 {
   "name": "@clawhub/skill-validator",
-  "version": "1.0.4",
+  "version": "1.0.8",
   "description": "技能检验工具：基于ClawHub技能格式规范的验证工具，确保技能符合最新发布要求",
   "author": "柏然 <xiaoboren0@gmail.com> (https://github.com/puppetcat-fire)",
   "license": "MIT-0",

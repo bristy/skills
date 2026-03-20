@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 技能验证工具 v1.0.4 - 简化修复版
+# 技能验证工具 v1.0.8 - 简化修复版
 # 无jq依赖，纯bash实现，兼容ClawHub规范检查
 
 set -e
@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 show_help() {
-    echo "技能验证工具 v1.0.4"
+    echo "技能验证工具 v1.0.8"
     echo "用法: $0 <技能目录>"
     echo ""
     echo "基于ClawHub技能格式规范检查："
@@ -27,6 +27,11 @@ show_help() {
 check_skill() {
     local skill_dir="$1"
     local skill_name=$(basename "$skill_dir")
+    
+    # 检查ClawHub规范版本（占位符，后续实现完整检测）
+    echo -e "${BLUE}📋 ClawHub规范版本检查：${NC}"
+    echo "  ℹ️  规范版本检测功能建设中..."
+    echo ""
     
     echo -e "${GREEN}🔍 验证技能: $skill_name${NC}"
     echo "路径: $skill_dir"

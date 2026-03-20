@@ -2,20 +2,15 @@
 name: skill-validator
 description: "技能检验工具：基于ClawHub技能格式规范的验证工具，确保技能符合最新发布要求。自动检测格式问题，提供修复建议，与ClawHub规范同步更新。"
 author: "puppetcat-fire (柏然)"
-version: "1.0.4"
+version: "1.0.8"
 created: "2026-03-13"
-updated: "2026-03-14"
+updated: "2026-03-18"
 license: "MIT-0"
 metadata:
   openclaw:
     emoji: "🔍✅"
     requires:
       bins: ["bash", "jq", "find", "grep", "sed"]
-    install:
-      - id: "scripts"
-        kind: "shell"
-        command: "./install.sh"
-        label: "安装技能检验工具"
     examples:
       - input: "检验技能质量"
         output: "基于ClawHub规范深度检验技能，识别所有问题"
@@ -27,7 +22,7 @@ metadata:
         output: "输出JSON格式详细验证报告"
 ---
 
-# 技能检验工具 v1.0.4
+# 技能检验工具 v1.0.8
 
 ## 🎯 设计目标
 提供与**ClawHub技能格式规范同步**的验证工具，确保技能符合最新发布要求。每日自动检查规范更新，保持验证规则与ClawHub源码一致。
@@ -407,6 +402,12 @@ MIT License - 详见LICENSE文件
 
 **🚀 使用技能发布适配器，告别发布失败，专注技能开发！**
 ## 版本历史
+
+### v1.0.8 (2026-03-18)
+- 修复元数据兼容性问题：移除无效的install.kind声明
+- 更新版本号至1.0.8
+- 添加ClawHub规范版本检测占位符
+- 确保MIT-0许可证合规
 
 ### v1.0.1 (2026-03-13)
 - 修复GitHub链接，更新为正确的puppetcat-fire仓库

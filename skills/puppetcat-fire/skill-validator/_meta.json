@@ -3,11 +3,16 @@
   "slug": "skill-validator",
   "displayName": "Skill Validator",
   "latest": {
-    "version": "1.0.4",
-    "publishedAt": 1773655317713,
-    "commit": "https://github.com/openclaw/skills/commit/7c28b957447fa73ca085f635a9a734f4dd421f60"
+    "version": "1.0.8",
+    "publishedAt": 1773914477521,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.4",
+      "publishedAt": 1773655317713,
+      "commit": "https://github.com/openclaw/skills/commit/7c28b957447fa73ca085f635a9a734f4dd421f60"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1773483473065,
