@@ -55,11 +55,12 @@ Perform strict logical deduction on the selected events:
 
 For multi-source concurrency or rolling reports on the same market event, **DO NOT simply discard duplicate news items**. Instead, apply strict "Delta Extraction" tracking based on time:
 - **Definition of Delta**: "Delta" means **new information added since the last generated report** (temporal delta), NOT whether the news broke market expectations.
-- **Baseline Comparison**: Compare newly scraped news against the *previous report's* coverage of the same event.
+- **Baseline Comparison**: You MUST read the previous report from `~/.openclaw/workspace-group/memory/last_capital_market_report.md` before generating the new report. Use it to compare newly scraped news against the *previous report's* coverage of the same event.
 - **Extract Delta (New Information)**: Specifically pull out any new data, new official statements, or new market reactions that weren't in the previous report.
 - **Visual Labeling**: Use tiered labeling for event tracking updates. For example:
   - `🔴 [增量更新 - 关键细节/市场反应]` for news containing substantial new facts since the last report.
   - `⚪ [跟进报道 - 与上次相比无新增]` for news that merely repeats facts already covered in the previous report.
+- **Save State**: After generating the new report, you MUST overwrite `~/.openclaw/workspace-group/memory/last_capital_market_report.md` with the exact text of the new report so it is available for the next run.
 
 ## Report Output Format
 
