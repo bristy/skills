@@ -3,11 +3,16 @@
   "slug": "contact-book",
   "displayName": "Contact Book",
   "latest": {
-    "version": "2.3.5",
-    "publishedAt": 1773673630892,
-    "commit": "https://github.com/openclaw/skills/commit/df9716244393540083eee63a6848629da065d4b5"
+    "version": "2.0.1",
+    "publishedAt": 1773830333993,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.5",
+      "publishedAt": 1773673630892,
+      "commit": "https://github.com/openclaw/skills/commit/df9716244393540083eee63a6848629da065d4b5"
+    },
     {
       "version": "2.3.0",
       "publishedAt": 1773447066263,
