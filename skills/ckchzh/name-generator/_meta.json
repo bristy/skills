@@ -3,11 +3,16 @@
   "slug": "name-generator",
   "displayName": "Name Generator",
   "latest": {
-    "version": "2.3.5",
-    "publishedAt": 1773666554548,
-    "commit": "https://github.com/openclaw/skills/commit/3eeff60311828d1755b9a5662630dfdaeb18d453"
+    "version": "2.0.0",
+    "publishedAt": 1773773762491,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.5",
+      "publishedAt": 1773666554548,
+      "commit": "https://github.com/openclaw/skills/commit/3eeff60311828d1755b9a5662630dfdaeb18d453"
+    },
     {
       "version": "2.3.2",
       "publishedAt": 1773611487610,
