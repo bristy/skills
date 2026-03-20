@@ -2,9 +2,11 @@
 name: roadmap
 version: "2.0.0"
 author: BytesAgain
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 license: MIT-0
 tags: [roadmap, tool, utility]
-description: "Roadmap - command-line tool for everyday use"
+description: "Roadmap - command-line tool for everyday use Use when you need roadmap."
 ---
 
 # Roadmap

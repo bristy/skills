@@ -3,9 +3,15 @@
   "slug": "roadmap",
   "displayName": "Roadmap",
   "latest": {
-    "version": "1.0.5",
-    "publishedAt": 1773664084951,
-    "commit": "https://github.com/openclaw/skills/commit/561b2c3f7cd6e60d05b35699561f97d7265f3d7a"
+    "version": "2.0.0",
+    "publishedAt": 1773774851932,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.5",
+      "publishedAt": 1773664084951,
+      "commit": "https://github.com/openclaw/skills/commit/561b2c3f7cd6e60d05b35699561f97d7265f3d7a"
+    }
+  ]
 }
