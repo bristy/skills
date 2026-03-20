@@ -3,11 +3,16 @@
   "slug": "send-usms-uspeedo",
   "displayName": "Send Usms Uspeedo",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773718284622,
-    "commit": "https://github.com/openclaw/skills/commit/c7a00f6c8375c471b2530abf48d8775e47673c93"
+    "version": "1.0.3",
+    "publishedAt": 1773916322715,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773718284622,
+      "commit": "https://github.com/openclaw/skills/commit/c7a00f6c8375c471b2530abf48d8775e47673c93"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773491798939,

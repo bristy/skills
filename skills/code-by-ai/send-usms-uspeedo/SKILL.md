@@ -9,7 +9,7 @@ metadata: {"openclaw":{"homepage":"https://uspeedo.com","requires":{"env":["USPE
 
 ## Skill Overview
 
-This skill sends **international SMS (USMS)** through the **uspeedo HTTP API**, supporting verification codes, notifications, and marketing. After configuring environment variables, you can send in batch and fill content by template. See the [uspeedo console](https://console.uspeedo.com/) for API docs and account management.
+This skill sends **international SMS (USMS)** through the **uspeedo HTTP API**, supporting verification codes, notifications, and marketing. After configuring environment variables, you can send in batch and fill content by template. See the [uspeedo console](https://uspeedo.com/en/ai-communication?SaleCode=JD4651&ChannelCode=OpenClaw) for API docs and account management.
 
 ## Environment Variables
 
@@ -35,7 +35,7 @@ Before sending, check environment variables. When not configured, guide the user
 
 Tell the user to follow these steps directly. **After giving this guidance, stop—do not perform sending or any further steps**:
 
-1. Open the [uspeedo console](https://console.uspeedo.com/?SaleCode=UI2346) to register and log in.
+1. Open the [uspeedo console](https://uspeedo.com/en/ai-communication?SaleCode=JD4651&ChannelCode=OpenClaw) to register and log in.
 2. In the console, create an **AccessKey** and save the ACCESSKEY_ID and ACCESSKEY_SECRET.
 3. Open [SMS template management](https://console.uspeedo.com/sms/template), create a **full-variable template**: choose purpose “Verification” or “Notification/Marketing” (according to the type you want to send), set template content to `{1}`, submit and wait for approval.
 4. After approval, copy the **template ID** from the template list. It is recommended to create one template per type (verification, notification, marketing) and set `USPEEDO_TEMPLATE_ID_VERIFICATION`, `USPEEDO_TEMPLATE_ID_NOTIFICATION`, `USPEEDO_TEMPLATE_ID_MARKETING` accordingly.
