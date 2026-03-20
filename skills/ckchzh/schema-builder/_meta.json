@@ -3,11 +3,16 @@
   "slug": "schema-builder",
   "displayName": "Schema Builder",
   "latest": {
-    "version": "2.3.4",
-    "publishedAt": 1773666968266,
-    "commit": "https://github.com/openclaw/skills/commit/76fcb33bed3c1ef057b76ab75098b8762aabba34"
+    "version": "3.0.0",
+    "publishedAt": 1773930175609,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.4",
+      "publishedAt": 1773666968266,
+      "commit": "https://github.com/openclaw/skills/commit/76fcb33bed3c1ef057b76ab75098b8762aabba34"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773421764490,
