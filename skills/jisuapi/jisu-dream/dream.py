@@ -14,7 +14,7 @@ import requests
 DREAM_SEARCH_URL = "https://api.jisuapi.com/dream/search"
 
 
-def _call_dream_api(appkey: str, params: dict | None = None):
+def _call_dream_api(appkey: str, params: dict = None):
     query = {"appkey": appkey}
     if params:
         for k, v in params.items():
