@@ -1,0 +1,11 @@
+{
+  "owner": "tiantian-pago",
+  "slug": "local-file-converter",
+  "displayName": "Local File Converter",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774015799324,
+    "commit": null
+  },
+  "history": []
+}
