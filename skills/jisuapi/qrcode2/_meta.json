@@ -1,13 +1,18 @@
 {
   "owner": "jisuapi",
   "slug": "qrcode2",
-  "displayName": "本地二维码生成与识别 - Local QR Code Generation And Recognition  Not Require An API_KEY",
+  "displayName": "Local QR Code Generation And Recognition  Not Require An API_KEY - 本地二维码生成与识别",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773641459272,
-    "commit": "https://github.com/openclaw/skills/commit/727c8ac0250f13f7bec60344a8b0b97013402578"
+    "version": "1.0.3",
+    "publishedAt": 1773721060961,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773641459272,
+      "commit": "https://github.com/openclaw/skills/commit/727c8ac0250f13f7bec60344a8b0b97013402578"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773396061769,
