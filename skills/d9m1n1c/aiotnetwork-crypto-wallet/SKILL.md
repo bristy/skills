@@ -2,11 +2,29 @@
 name: Crypto Wallet
 description: Discover supported cryptocurrencies, generate deposit addresses, and withdraw crypto to external wallets.
 version: 1.0.0
+metadata:
+  openclaw:
+    requires:
+      env:
+        - AIOT_API_BASE_URL
+    primaryEnv: AIOT_API_BASE_URL
 ---
 
 # Crypto Wallet
 
 Use this skill when the user needs to deposit cryptocurrency into their wallet or withdraw to an external address.
+
+## Configuration
+
+The default API base URL is `https://payment-api-dev.aiotnetwork.io`. All endpoints are relative to this URL.
+
+To override (e.g. for local development):
+
+```bash
+export AIOT_API_BASE_URL="http://localhost:8080"
+```
+
+If `AIOT_API_BASE_URL` is not set, use `https://payment-api-dev.aiotnetwork.io` as the base for all requests.
 
 ## Available Tools
 

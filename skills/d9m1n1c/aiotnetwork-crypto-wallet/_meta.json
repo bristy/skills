@@ -3,9 +3,15 @@
   "slug": "aiotnetwork-crypto-wallet",
   "displayName": "Crypto Wallet",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773202473516,
-    "commit": "https://github.com/openclaw/skills/commit/7c9c237f1d7a506f7d565578888c3010b04c8531"
+    "version": "1.0.1",
+    "publishedAt": 1773994089765,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773202473516,
+      "commit": "https://github.com/openclaw/skills/commit/7c9c237f1d7a506f7d565578888c3010b04c8531"
+    }
+  ]
 }
