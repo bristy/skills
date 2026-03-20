@@ -1,13 +1,18 @@
 {
   "owner": "xemaya",
   "slug": "a2hmarket",
-  "displayName": "a2hmarket",
+  "displayName": "A2hmarket",
   "latest": {
-    "version": "1.0.17",
-    "publishedAt": 1773560423814,
-    "commit": "https://github.com/openclaw/skills/commit/2e08a9fb8d53136779c56194974d8fa06cfed3fd"
+    "version": "1.0.18",
+    "publishedAt": 1773819299975,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.17",
+      "publishedAt": 1773560423814,
+      "commit": "https://github.com/openclaw/skills/commit/2e08a9fb8d53136779c56194974d8fa06cfed3fd"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1772769082325,
