@@ -3,11 +3,16 @@
   "slug": "kimi-websearch",
   "displayName": "Kimi Websearch",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1773566176511,
-    "commit": "https://github.com/openclaw/skills/commit/928f2673f351e60b3570e1e985cd5df45f0c0af5"
+    "version": "1.0.9",
+    "publishedAt": 1773840727503,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1773566176511,
+      "commit": "https://github.com/openclaw/skills/commit/928f2673f351e60b3570e1e985cd5df45f0c0af5"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773211002683,
