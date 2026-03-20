@@ -3,9 +3,15 @@
   "slug": "clawcall-phone",
   "displayName": "clawcall-phone",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1772997937481,
-    "commit": "https://github.com/openclaw/skills/commit/6f716f1ab5d79cf2118c62729f6518ac44efca08"
+    "version": "1.1.1",
+    "publishedAt": 1773772998962,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1772997937481,
+      "commit": "https://github.com/openclaw/skills/commit/6f716f1ab5d79cf2118c62729f6518ac44efca08"
+    }
+  ]
 }
