@@ -3,9 +3,15 @@
   "slug": "blog-polish-zhcn",
   "displayName": "blog-polish-zhcn",
   "latest": {
-    "version": "1.0.8",
-    "publishedAt": 1773578533095,
-    "commit": "https://github.com/openclaw/skills/commit/fc0266e0331da10ca649aff6effd6abb660792ac"
+    "version": "1.0.9",
+    "publishedAt": 1773753594773,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.8",
+      "publishedAt": 1773578533095,
+      "commit": "https://github.com/openclaw/skills/commit/fc0266e0331da10ca649aff6effd6abb660792ac"
+    }
+  ]
 }

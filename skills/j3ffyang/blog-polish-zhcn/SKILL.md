@@ -2,7 +2,7 @@
 name: blog-polish-zhcn
 description: Polish and translate a technical blog draft into a 1000–1200 word, 4-5 section Markdown article in Simplified Chinese (zh-CN), preserving technical terms and code blocks.
 author: Jeff Yang
-version: 1.0.8
+version: 1.0.9
 tags: [openclaw, clawhub, blog, polish, translate, zh-cn, markdown]
 metadata:
   openclaw:
@@ -34,7 +34,7 @@ workflow:
     run: |
       draftPath=${draftPath:-~/.openclaw/workspace/contentDraft/latestDraft.md}
       outputDir=${outputDir:-~/.openclaw/workspace/contentPolished/}
-      ts=$(date +"%Y%m%d%H%M")
+      ts=$(date +"%y%m%d%H%M")
       save_state ts "$ts"
       save_state draftPath "$draftPath"
       save_state outputDir "$outputDir"
@@ -78,7 +78,7 @@ Use when the user asks to polish/translate a technical blog draft to zh-CN **wit
 
 ## Workflow Summary
 
-1. **Resolve paths** + create timestamp (`date +"%Y%m%d%H%M"`)
+1. **Resolve paths** + create timestamp (`date +"%y%m%d%H%M"`)
 2. **Read draft** from `draftPath`
 3. **Polish English**: Fix grammar/spelling, improve clarity, structure into 4-5 sections, target 1000-1200 words
 4. **Translate to zh-CN**: Preserve code blocks, inline code, technical terms (`openclaw`, `skill`, `cli`)
