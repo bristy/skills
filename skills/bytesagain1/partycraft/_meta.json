@@ -3,11 +3,16 @@
   "slug": "partycraft",
   "displayName": "Partycraft",
   "latest": {
-    "version": "1.0.7",
-    "publishedAt": 1773666698807,
-    "commit": "https://github.com/openclaw/skills/commit/477f03400dc253909fee798e1070e793daf74f02"
+    "version": "2.0.1",
+    "publishedAt": 1773830889155,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.7",
+      "publishedAt": 1773666698807,
+      "commit": "https://github.com/openclaw/skills/commit/477f03400dc253909fee798e1070e793daf74f02"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773521581243,
