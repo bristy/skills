@@ -51,6 +51,8 @@ def main():
     parser.add_argument('--reaction', help='Allergic reaction')
     parser.add_argument('--severity', choices=['mild', 'moderate', 'severe'],
                         help='Allergy severity')
+    parser.add_argument('--category', choices=['medications', 'foods', 'environmental'],
+                        default='medications', help='Allergy category')
     parser.add_argument('--vaccine', help='Vaccine name')
     parser.add_argument('--next-due', help='Next due date for vaccine')
     parser.add_argument('--physician', help='Doctor name')
@@ -110,8 +112,12 @@ def main():
             "reaction": args.reaction or 'Unknown',
             "severity": args.severity or 'moderate'
         }
-        data['allergies']['medications'].append(record)
-        print(f"✓ Added allergy: {args.allergen}")
+        if 'allergies' not in data:
+            data['allergies'] = {"medications": [], "foods": [], "environmental": []}
+        if args.category not in data['allergies']:
+            data['allergies'][args.category] = []
+        data['allergies'][args.category].append(record)
+        print(f"✓ Added allergy: {args.allergen} ({args.category})")
         print("⚠️  Remember to update your emergency card!")
     
     elif args.type == 'immunization':

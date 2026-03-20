@@ -1,113 +1,191 @@
 ---
 name: medical
-description: Personal health record management with strict privacy boundaries. Use when user mentions tracking symptoms, managing medications, preparing for doctor appointments, logging vital signs, storing medical history, or creating emergency health summaries. Tracks medications, symptoms, lab results, and vital signs for individuals and families. NEVER use for diagnosis, treatment advice, or interpreting symptoms as medical conditions.
+description: Local-first health record management with strict privacy boundaries. Organize what happened, what you take, what changed, and what to bring to your doctor — never diagnosis or treatment advice.
 ---
 
 # Medical
 
-Personal health organization system. Not a doctor. Not a diagnostic tool.
+Medical is a private health organization tool, not a doctor.
 
-## Critical Safety & Privacy
+Use this skill when the user wants to:
+- Track medications
+- Log symptoms over time
+- Record vital signs
+- Store structured medical history
+- Generate an emergency health summary
+- Prepare a concise health summary for a doctor visit
 
-### Data Storage (CRITICAL)
-- **All health data stored locally only**: `memory/health/`
-- **No external APIs** for health data storage
-- **No data transmission** to third parties
-- User controls all data retention and deletion
+Never use this skill for:
+- Diagnosis
+- Treatment advice
+- Interpreting symptoms as medical conditions
+- Recommending starting, stopping, or changing medications
+- Replacing professional medical care
 
-### Safety Boundaries (NON-NEGOTIABLE)
-- ✅ Symptom tracking, medication reminders, appointment prep
-- ✅ Plain-language lab result explanations
-- ✅ Emergency health summary generation
-- ❌ **NEVER diagnose** or interpret symptoms as conditions
-- ❌ **NEVER recommend** starting/stopping medications
-- ❌ **NEVER replace** professional medical consultation
+## Safety Boundaries
 
-### Emergency Protocol
-If user describes symptoms suggesting emergency (chest pain, difficulty breathing, severe bleeding, loss of consciousness, suicidal thoughts):
-1. **Immediately** direct to call emergency services (911/local emergency number)
-2. Do not proceed with tracking until emergency is addressed
+### Emergency First
+If the user describes a possible medical emergency, stop normal workflow and direct them to emergency care first.
 
-## Quick Start
+Examples include:
+- Chest pain or chest pressure
+- Trouble breathing or inability to breathe
+- Severe bleeding
+- Loss of consciousness
+- Suicidal thoughts or self-harm intent
+- Sudden severe neurological symptoms
+- “Worst headache of my life”
 
-### Data Storage Setup
-Health records are stored in your local workspace:
-- `memory/health/medications.json` - Medication list and schedules
-- `memory/health/symptoms.json` - Symptom timeline
-- `memory/health/history.json` - Medical history
-- `memory/health/vitals.json` - Vital signs and metrics
-- `memory/health/emergency.json` - Emergency health card data
+In emergency situations:
+1. Tell the user to call emergency services or seek urgent in-person care now
+2. Do not continue normal tracking until that is addressed
+3. If asked, generate the emergency health summary as fast as possible
 
-Use provided scripts in `scripts/` for all data operations.
+### Medication Safety
+This skill may store medication lists and run a limited local interaction screen for a few common high-risk combinations, but it is not a comprehensive interaction checker.
+
+Always remind the user to verify medication questions with a doctor or pharmacist before making any changes.
+
+### Lab and Vital Safety
+This skill may record lab-related or vital-sign information for personal organization, but it must not diagnose, triage, or decide what a result means clinically.
+
+It may:
+- Compare a recorded value against the range provided by the user or their lab report
+- Help organize questions for a doctor
+- Summarize trends for discussion with a clinician
+
+It must not:
+- Diagnose disease
+- Say a result is “nothing to worry about”
+- Recommend medication or treatment changes
+- Replace clinician review
+
+## Privacy and Storage
+
+All health data is stored locally only under:
+
+`~/.openclaw/workspace/memory/health`
+
+No external APIs should be used for health data storage.
+No third-party transmission.
+User controls retention and deletion.
+
+## Core Files
+
+- `~/.openclaw/workspace/memory/health/medications.json`
+- `~/.openclaw/workspace/memory/health/symptoms.json`
+- `~/.openclaw/workspace/memory/health/history.json`
+- `~/.openclaw/workspace/memory/health/vitals.json`
 
 ## Core Workflows
 
-### Add Medication
-```
-User: "I was prescribed Lisinopril 10mg daily"
-→ Use scripts/add_medication.py
-→ Store in memory/health/medications.json
-→ Set up reminder schedule
-```
+### 1. Add a medication
+Example:
+`I was prescribed Lisinopril 10mg daily`
 
-### Track Symptoms
-```
-User: "I have headaches, 6/10 severity, worse in morning"
-→ Use scripts/add_symptom.py
-→ Build timeline for doctor visit
-```
+Use:
+- `scripts/add_medication.py`
+- `scripts/list_medications.py`
+- `scripts/check_interactions.py` when relevant
 
-### Prepare for Appointment
-```
-User: "Prep me for my cardiology appointment tomorrow"
-→ Read all health records
-→ Generate appointment brief with symptoms, meds, history
-```
+### 2. Log a symptom
+Example:
+`I have a headache, 6 out of 10, worse in the morning`
 
-### Log Vital Signs
-```
-User: "Blood pressure 130/85 this morning"
-→ Use scripts/add_vital.py --type bp --value "130/85"
-→ Track trends over time
-```
+Use:
+- `scripts/add_symptom.py`
 
-### Generate Emergency Card
-```
-User: "Give me my emergency health card"
-→ Use scripts/generate_emergency_card.py
-→ Output: One-page summary for wallet/phone lock screen
-```
+Track:
+- What happened
+- Severity
+- When it started
+- Triggers or context
+- Notes for future doctor visits
 
-## Module Reference
+### 3. Log a vital sign
+Example:
+`My blood pressure this morning was 130/85`
 
-For detailed implementation of each module:
-- **Symptom & Appointment**: See [references/symptom-tracker.md](references/symptom-tracker.md)
-- **Medication Management**: See [references/medication-manager.md](references/medication-manager.md)
-- **Lab Results**: See [references/lab-results.md](references/lab-results.md)
-- **Medical History**: See [references/medical-history.md](references/medical-history.md)
-- **Vital Signs & Chronic Conditions**: See [references/vital-signs.md](references/vital-signs.md)
-- **Family Profiles**: See [references/family-profiles.md](references/family-profiles.md)
-- **Emergency Card**: See [references/emergency-card.md](references/emergency-card.md)
+Use:
+- `scripts/add_vital.py`
+- `scripts/get_vital_trends.py`
 
-## Scripts Reference
+### 4. Add medical history
+Example:
+`Add penicillin allergy`
+`Add appendectomy from 2015`
+`Add my primary care doctor`
 
-All data operations use scripts in `scripts/`:
+Use:
+- `scripts/add_history_record.py`
 
-| Script | Purpose |
-|--------|---------|
-| `add_medication.py` | Add new medication with schedule |
-| `list_medications.py` | Show all current medications |
-| `check_interactions.py` | Check for known drug interactions |
-| `add_symptom.py` | Log symptom with severity and context |
-| `get_symptom_timeline.py` | Generate symptom history for doctor |
-| `add_vital.py` | Log vital signs (BP, glucose, weight, etc.) |
-| `get_vital_trends.py` | Show trends and averages |
-| `add_history_record.py` | Add to medical history |
-| `get_medical_history.py` | Retrieve complete history |
-| `add_lab_result.py` | Store lab results |
-| `generate_emergency_card.py` | Create emergency health summary |
-| `manage_family_profile.py` | Switch/add family member profiles |
+Store structured records for:
+- Personal info
+- Conditions
+- Surgeries
+- Hospitalizations
+- Allergies
+- Immunizations
+- Physicians
+- Emergency contacts
+
+### 5. Generate emergency health summary
+Example:
+`Generate my emergency health card`
+
+Use:
+- `scripts/generate_emergency_card.py`
+
+Use this for:
+- Phone lock screen
+- Wallet printout
+- Quick access in emergencies
+
+### 6. Prepare a doctor-visit summary
+When the user wants a concise summary for a doctor visit:
+- Read medications
+- Read symptoms
+- Read vitals
+- Read history
+- Summarize what changed, what is ongoing, and what to ask
+
+Do not diagnose.
+Do not interpret symptoms as conditions.
+Do not recommend treatment changes.
+
+## Scripts Currently Included
+
+- `scripts/add_medication.py`
+- `scripts/list_medications.py`
+- `scripts/check_interactions.py`
+- `scripts/add_symptom.py`
+- `scripts/add_vital.py`
+- `scripts/get_vital_trends.py`
+- `scripts/add_history_record.py`
+- `scripts/generate_emergency_card.py`
+
+## Output Style
+
+Prefer concise, structured, doctor-friendly output:
+- Medication list
+- Symptom timeline summary
+- Vital trend summary
+- Relevant history
+- Questions to ask a clinician
+
+## Product Definition
+
+Medical is a local-first personal health record system with strict privacy and safety boundaries.
+
+Its job is to help the user organize:
+- What happened
+- What they take
+- What changed
+- What they may want to bring to a doctor
+
+Its job is not to diagnose, prescribe, or replace medical care.
 
 ## Disclaimer
 
-This skill is a personal health organization tool only. It does not provide medical advice, diagnosis, or treatment recommendations. Always consult qualified healthcare professionals for medical decisions.
+This skill is for personal health record management only.
+It is not a medical professional, not a diagnostic system, and not a substitute for a doctor, pharmacist, or emergency services.

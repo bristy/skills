@@ -80,5 +80,4 @@ def main():
     print(f"\nStored in: {SYMPTOMS_FILE}")
 
 if __name__ == '__main__':
-    import sys
     main()
