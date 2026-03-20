@@ -1,6 +1,18 @@
-# Memory Writing Templates
+# Memory Writing Templates v2.0
 
 Quick reference templates for writing to memory files.
+
+## v2.0 Quick Reference
+
+| Priority | When | Write To | Template |
+|----------|------|----------|----------|
+| ⚡ 1 | Instant cache needed | Session buffer | Brief note |
+| 🔄 2 | Session start (today) | Today's memory | Session Start |
+| 🔄 3 | Session start (recent) | Last 7 days | Search first |
+| 📚 4 | User shares info | USER.md | User Profile Update |
+| 📚 5 | Promise made | todos.md + MEMORY.md | Commitment |
+| 📚 6 | User corrects me | MEMORY.md | User Correction |
+| 🗑️ | End of 7 days | Auto-cleanup | - |
 
 ## Session Start Template
 
