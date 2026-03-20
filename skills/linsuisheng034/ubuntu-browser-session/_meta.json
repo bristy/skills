@@ -1,11 +1,17 @@
 {
   "owner": "linsuisheng034",
   "slug": "ubuntu-browser-session",
-  "displayName": "ubuntu-browser-session",
+  "displayName": "Ubuntu Browser Session",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773417485469,
-    "commit": "https://github.com/openclaw/skills/commit/b68a2aec5ae1c395a16a39690105b19e6e032eb4"
+    "version": "1.0.3",
+    "publishedAt": 1773987089509,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773417485469,
+      "commit": "https://github.com/openclaw/skills/commit/b68a2aec5ae1c395a16a39690105b19e6e032eb4"
+    }
+  ]
 }
