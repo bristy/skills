@@ -1,6 +1,6 @@
 {
   "name": "chinese-bank-forex-rates",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "An OpenClaw skill for fetching forex rates from Chinese banks.",
   "license": "MIT",
   "author": "Hongming Li",

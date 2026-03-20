@@ -20,7 +20,7 @@ The script returns JSON with:
 - `updateTime` in ISO 8601 format when normalization is possible
 - `rates`: list of objects with `currencyName`, `buyPrice`, and `sellPrice`
 
-Prices are returned as strings to preserve bank-published precision. If the preferred value and configured fallback are both empty, the field is returned as an empty string.
+Prices are standardized to CNY per 100 units of foreign currency, rounded to two decimal places. If the preferred value and configured fallback are both empty, the field is returned as an empty string.
 
 ## Supported Banks
 
@@ -45,5 +45,5 @@ If a bank only publishes one buy and one sell price, the published pair is used 
 From this skill directory:
 
 ```bash
-node index.js --bank "中国银行" --currencies 美元 EUR
+node index.js --bank 中国银行 --currencies 美元,EUR
 ```
