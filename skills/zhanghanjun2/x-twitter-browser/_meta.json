@@ -3,11 +3,16 @@
   "slug": "x-twitter-browser",
   "displayName": "x-twitter-browser",
   "latest": {
-    "version": "1.0.9",
-    "publishedAt": 1773653271803,
-    "commit": "https://github.com/openclaw/skills/commit/63c4245668b5379744e9372f80753b928464e5c9"
+    "version": "1.0.10",
+    "publishedAt": 1773891292385,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.9",
+      "publishedAt": 1773653271803,
+      "commit": "https://github.com/openclaw/skills/commit/63c4245668b5379744e9372f80753b928464e5c9"
+    },
     {
       "version": "1.0.8",
       "publishedAt": 1773399478022,

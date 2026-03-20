@@ -76,11 +76,25 @@ Session cookies are stored in `~/.openclaw/auth/x-twitter/cookies.json` (central
 
 ### Log in (first time or when session expires)
 
+This is a two-phase process. You (the agent) drive both phases — the user does not need to touch the terminal.
+
+**Phase 1 — Launch the login browser:**
+
 ```bash
 python3 scripts/setup_session.py
 ```
 
-This opens a visible browser window with the X login page. Log in with your account (username, password, 2FA if needed). Once you see the home timeline, go back to the terminal and press Enter. Cookies are saved automatically.
+This opens a visible browser window at the X login page. The script prints a banner and **waits for Enter on stdin** before saving cookies. Once the browser is open, tell the user:
+
+> A browser window has opened with the X login page. Please log in with your account (username, password, 2FA if prompted). Once you see the home timeline, let me know.
+
+Then wait for the user to confirm they have logged in. Do NOT send Enter yet.
+
+**Phase 2 — After the user confirms they are logged in:**
+
+Send Enter (newline) to the waiting script's stdin to trigger cookie saving. Check the output for `Session saved` to confirm success.
+
+If the output shows a WARNING ("The page still looks like a login page"), ask the user to double-check they are actually logged in and can see the home timeline. Once confirmed, send Enter again to save anyway.
 
 ### Verify session
 
@@ -94,7 +108,7 @@ Success looks like:
 Session looks valid: https://x.com/home
 ```
 
-If verification fails, re-run `setup_session.py` to log in again.
+If verification fails, re-run the two-phase login flow above.
 
 ### OpenClaw / headless-only environments
 
@@ -108,9 +122,7 @@ scp ~/.openclaw/auth/x-twitter/cookies.json user@server:~/.openclaw/auth/x-twitt
 
 ### 1. Set up session (once)
 
-```bash
-python3 scripts/setup_session.py
-```
+Follow the two-phase login flow in the "Session management" section above. Do not simply run `setup_session.py` and tell the user to press Enter — you must run it, wait for the user to confirm login, then send Enter yourself.
 
 ### 2. Post a tweet
 
@@ -186,7 +198,7 @@ For like and bookmark, `--tweet` accepts a full URL or just the tweet ID.
 
 ## Operational requirements
 
-- Before the first action, check if session exists; if not, tell the user to run `setup_session.py`
+- Before the first action, check if session exists; if not, run the two-phase login flow (see "Session management" above)
 - Run `--verify-only` before any write operation
 - Confirm the action and content before executing
 - Do not commit cookies to the repo (`~/.openclaw/auth/`)
@@ -196,15 +208,11 @@ For like and bookmark, `--tweet` accepts a full URL or just the tweet ID.
 
 ### `No saved session. Run setup_session.py first to log in to X.`
 
-No cookies found at `~/.openclaw/auth/x-twitter/cookies.json`. Run:
-
-```bash
-python3 scripts/setup_session.py
-```
+No cookies found at `~/.openclaw/auth/x-twitter/cookies.json`. Run the two-phase login flow (see "Session management" above).
 
 ### `Session is not authenticated`
 
 - Session cookies expired (typically lasts days to weeks)
 - Account triggered extra verification
 
-Re-run `setup_session.py` to log in again.
+Re-run the two-phase login flow to log in again.
