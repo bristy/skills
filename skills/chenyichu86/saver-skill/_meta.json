@@ -3,9 +3,15 @@
   "slug": "saver-skill",
   "displayName": "Saver",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773152153067,
-    "commit": "https://github.com/openclaw/skills/commit/60df223ab7263f7c0573d64375a78d1760e46322"
+    "version": "1.1.1",
+    "publishedAt": 1773931741985,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773152153067,
+      "commit": "https://github.com/openclaw/skills/commit/60df223ab7263f7c0573d64375a78d1760e46322"
+    }
+  ]
 }

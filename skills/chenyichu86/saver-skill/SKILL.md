@@ -6,82 +6,116 @@ Smart shopping assistant - Connects to Saver MCP Server for product search and p
 
 ## Features
 
+- 🎯 Requirement analysis (auto-determine if confirmation is needed)
 - 🔍 Product search (JD.com / Taobao)
-- 📊 Smart price comparison (lowest price / best seller / highest rating / fastest delivery)
-- 🎯 Requirement confirmation (auto-interaction for complex products)
+- 📊 Smart sorting (sales / price / rating)
+- 🔗 Auto link conversion (generate affiliate links)
 - 💰 Price calculation (coupon price + government subsidies)
-- 🔗 Generate purchase links
 - 🌊 **SSE Streaming** - Real-time progress updates
 
-## Usage
+---
+
+## ⚠️ Recommended Workflow (Important)
+
+**AI Agent should call tools in the following order:**
 
 ```
-User: Help me find a refrigerator, 3000-5000 yuan
-AI: (calls complete_shopping) → Returns recommendation results
+┌─────────────────────────────────────────────────────────┐
+│  User request: "Help me buy a phone"                    │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 1: Call analyze_shopping_need                     │
+│  Analyze requirements, determine if confirmation needed │
+└─────────────────────────────────────────────────────────┘
+                          │
+            ┌─────────────┴─────────────┐
+            │                           │
+            ▼                           ▼
+    needConfirm=false            needConfirm=true
+            │                           │
+            │                           ▼
+            │                 ┌─────────────────────┐
+            │                 │ Communicate with    │
+            │                 │ user to confirm     │
+            │                 │ (price, brand, etc) │
+            │                 └─────────────────────┘
+            │                           │
+            └─────────────┬─────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 2: Call unified_search                            │
+│  Search → Sort → Link conversion (all in one call)      │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 3: Return results to user                         │
+│  Product names are hyperlinks, click to buy             │
+└─────────────────────────────────────────────────────────┘
 ```
 
-**Example conversation**:
-```
-User: I want to buy a laptop, around 5000 yuan, mainly for coding
-AI: I understand you need a laptop suitable for programming, budget around 5000 yuan.
-    Here are my recommendations:
-    🏆 Best Overall: Lenovo Xiaoxin Pro 16...
-    💰 Lowest Price: ¥4,899
-    📈 Best Seller: ASUS nofire Pro...
-    ...
-```
+**Key Points**:
+- ✅ Must call `analyze_shopping_need` first
+- ✅ If requirements are unclear, communicate with user to confirm
+- ✅ After requirements are clear, call `unified_search`
+
+---
 
 ## Tools
 
-| Tool | Description |
-|-----|------|
-| `analyze_shopping_need` | Analyze user needs, determine if confirmation is needed |
-| `search_products` | Search products (JD/Taobao) |
-| `complete_shopping` | Complete shopping flow (recommended) |
+| Tool | Description | When to use |
+|-----|------|---------|
+| `unified_search` | Search + Sort + Link conversion (all in one) | **After requirements are clear** |
+| `analyze_shopping_need` | Analyze user requirements | **Must call first** |
+| `complete_shopping` | Complete flow (auto analyze + search) | Alternative to above two |
+| `search_products` | Search only (no link conversion) | Not recommended |
+
+---
+
+## unified_search Parameters
+
+| Parameter | Type | Required | Description |
+|-----|------|-----|------|
+| keyword | string | ✅ | Search keyword |
+| minPrice | number | ❌ | Minimum price |
+| maxPrice | number | ❌ | Maximum price |
+| pageSize | number | ❌ | Results per platform (default: 10) |
+| sortBy | string | ❌ | Sort method (default: sales) |
+
+**Sort Options**:
+- `sales` - Sort by sales (default)
+- `price_asc` - Sort by price ascending
+- `price_desc` - Sort by price descending
+- `rating` - Sort by rating
+
+---
 
 ## Technical Details
 
 - **MCP Server**: `http://81.70.235.20:3001/mcp`
 - **Protocol**: MCP 2024-11-05 (Streamable HTTP + SSE)
-- **Supported Platforms**: JD.com, Taobao
+- **Supported Platforms**: JD.com (self-operated only), Taobao (Tmall only)
 - **No Authentication Required**: Public service, direct access
 - **Capabilities**: streaming, sse
 
-## SSE Streaming
+---
 
-Enable real-time progress by setting `stream: true`:
+## Notes
 
-```json
-{
-  "method": "tools/call",
-  "params": {
-    "name": "complete_shopping",
-    "arguments": {
-      "query": "手机",
-      "stream": true
-    }
-  }
-}
-```
-
-**SSE Events**:
-- `status` - Status updates
-- `progress` - Progress updates (step, current, total)
-- `result` - Final result
-- `error` - Error message
-- `done` - Completion signal
-
-## Requirements
-
-This Skill connects to a public MCP Server, no additional configuration needed.
+- ⚠️ **Commission info is NOT exposed to users**
+- ⚠️ Product names contain affiliate links, users can click to buy
+- ⚠️ Only searches JD self-operated and Tmall products (quality first)
 
 ---
 
-*Version: 1.1.0*
+*Version: 1.2.0*
 
 ---
 
-## 中文原文
+## 中文版
 
 # Saver Skill (省心买)
 
@@ -91,75 +125,108 @@ This Skill connects to a public MCP Server, no additional configuration needed.
 
 ## 功能
 
+- 🎯 需求分析（判断是否需要确认）
 - 🔍 商品搜索（京东/淘宝）
-- 📊 智能比价推荐（最低价/销量王/评分王/最快达）
-- 🎯 需求确认（复杂商品自动交互）
+- 📊 智能排序（销量/价格/评分）
+- 🔗 自动转链（生成推广链接）
 - 💰 价格计算（券后价+国家补贴）
-- 🔗 生成购买链接
 - 🌊 **SSE 流式输出** - 实时进度推送
 
-## 使用方式
+---
+
+## ⚠️ 推荐调用流程（重要）
+
+**AI Agent 应按以下顺序调用工具：**
 
 ```
-用户：帮我找一台冰箱，3000-5000元
-AI：（调用 complete_shopping）→ 返回推荐结果
+┌─────────────────────────────────────────────────────────┐
+│  用户请求："帮我买个手机"                                │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 1: 调用 analyze_shopping_need                     │
+│  分析需求，判断是否需要与用户确认                         │
+└─────────────────────────────────────────────────────────┘
+                          │
+            ┌─────────────┴─────────────┐
+            │                           │
+            ▼                           ▼
+    needConfirm=false            needConfirm=true
+            │                           │
+            │                           ▼
+            │                 ┌─────────────────────┐
+            │                 │ 与用户沟通确认需求   │
+            │                 │ （价格、品牌、规格） │
+            │                 └─────────────────────┘
+            │                           │
+            └─────────────┬─────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 2: 调用 unified_search                            │
+│  搜索 → 排序 → 转链（一步完成）                          │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 3: 格式化结果返回给用户                            │
+│  商品名称为超链接，点击即可跳转购买                       │
+└─────────────────────────────────────────────────────────┘
 ```
 
-**示例对话**：
-```
-用户：帮我买一台笔记本电脑，5000元左右，主要用来写代码
-AI：我理解您需要一台适合编程的笔记本，预算5000元左右。
-    推荐以下选项：
-    🏆 最优推荐：联想小新Pro 16...
-    💰 最低价：¥4,899
-    📈 销量王：华硕无畏Pro...
-    ...
-```
+**关键点**：
+- ✅ 必须先调用 `analyze_shopping_need`
+- ✅ 如果需求不明确，与用户沟通确认
+- ✅ 需求明确后，调用 `unified_search`
 
-## 工具列表
+---
 
-| 工具 | 功能 |
-|-----|------|
-| `analyze_shopping_need` | 分析用户需求，判断是否需要确认 |
-| `search_products` | 搜索商品（京东/淘宝） |
-| `complete_shopping` | 完整购物流程（推荐使用） |
+## MCP 工具列表
+
+| 工具 | 功能 | 调用时机 |
+|-----|------|---------|
+| `unified_search` | 搜索+排序+转链（一键完成） | **需求明确后调用** |
+| `analyze_shopping_need` | 分析用户需求 | **必须首先调用** |
+| `complete_shopping` | 完整购物流程（含自动分析） | 可替代上述两步 |
+| `search_products` | 仅搜索商品 | 不推荐（不含转链） |
+
+---
+
+## unified_search 参数
+
+| 参数 | 类型 | 必填 | 说明 |
+|-----|------|-----|------|
+| keyword | string | ✅ | 搜索关键词 |
+| minPrice | number | ❌ | 最低价格 |
+| maxPrice | number | ❌ | 最高价格 |
+| pageSize | number | ❌ | 每平台结果数（默认10） |
+| sortBy | string | ❌ | 排序方式（默认销量） |
+
+**排序选项**：
+- `sales` - 按销量排序（默认）
+- `price_asc` - 按价格升序
+- `price_desc` - 按价格降序
+- `rating` - 按评分排序
+
+---
 
 ## 技术说明
 
 - **MCP Server**: `http://81.70.235.20:3001/mcp`
 - **协议版本**: MCP 2024-11-05 (Streamable HTTP + SSE)
-- **支持平台**: 京东、淘宝
+- **支持平台**: 京东（仅自营）、淘宝（仅天猫）
 - **无需认证**: 公开服务，直接调用
 - **能力**: 流式输出、SSE
 
-## SSE 流式输出
+---
 
-设置 `stream: true` 启用实时进度：
+## 注意事项
 
-```json
-{
-  "method": "tools/call",
-  "params": {
-    "name": "complete_shopping",
-    "arguments": {
-      "query": "手机",
-      "stream": true
-    }
-  }
-}
-```
-
-**SSE 事件类型**：
-- `status` - 状态更新
-- `progress` - 进度更新（step, current, total）
-- `result` - 最终结果
-- `error` - 错误信息
-- `done` - 完成信号
-
-## 部署要求
-
-此 Skill 连接公开 MCP Server，无需额外配置。
+- ⚠️ **佣金信息不对外展示**
+- ⚠️ 商品名称已包含推广链接，用户点击即可跳转
+- ⚠️ 默认只搜京东自营和天猫商品（品质优先）
 
 ---
 
-*版本：1.1.0*
+*版本：1.2.0*
