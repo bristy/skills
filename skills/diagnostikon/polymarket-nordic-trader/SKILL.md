@@ -30,34 +30,58 @@ Key edge: the vast majority of Polymarket liquidity is US/global retail. Nordic-
 
 ## Signal Logic
 
-### Default Signal: Nordic News Feed + Market Mismatch
+### Default Signal: Conviction-Based Sizing with Local Edge Bias
 
-1. Discover markets mentioning Nordic/Scandinavian keywords
-2. Monitor Swedish/Nordic RSS feeds: SVT, Aftonbladet, Di.se, Affärsvärlden
-3. Check local weather data from SMHI (Swedish Meteorological Institute) for weather markets
-4. Compare current news consensus with market price
-5. Enter when the global market clearly hasn't incorporated locally-obvious information
+1. Discover markets matching Nordic/Scandinavian keywords
+2. Compute base conviction from distance to threshold (0% at boundary → 100% at p=0/p=1)
+3. Apply `local_edge_bias()` — combines CET timezone timing with domain confidence
+4. Size = `max(MIN_TRADE, conviction × bias × MAX_POSITION)` — capped at MAX_POSITION
+5. Skip markets with spread > MAX_SPREAD or fewer than MIN_DAYS to resolution
+
+### Local Edge Bias (built-in, no API required)
+
+`local_edge_bias()` multiplies conviction using two factors simultaneously:
+
+**Factor 1 — CET Timezone Window**
+
+Nordic news breaks during CET business hours (approx 06:00–18:00 UTC). Polymarket is US-dominated — repricing on Nordic news takes 2–6 hours. Trading inside the window means information is still fresh.
+
+| Time (UTC) | Multiplier | Why |
+|---|---|---|
+| 06:00–18:00 | **1.2x** | CET business hours — Nordic news is fresh, US retail hasn't caught up |
+| 18:00–06:00 | **0.9x** | Outside window — advantage likely already priced in |
+
+**Factor 2 — Domain Confidence**
+
+| Domain | Multiplier | Why |
+|---|---|---|
+| Riksdag / politics / elections | **1.20x** | Public structured data, predictable process |
+| Nordic tech (Spotify, Klarna, Northvolt) | **1.15x** | Swedish business press is early and detailed |
+| SMHI / local weather | **1.10x** | Swedish forecasts published before English-language coverage |
+| Sports / culture (Zlatan, Melodifestivalen) | **0.85x** | High randomness, hard to model |
+
+Combined multiplier is capped at **1.40x** to avoid over-sizing on illiquid markets.
+
+Example: Riksdag vote question at 25% during CET hours → conviction 34% × (1.2 × 1.2 = 1.40x capped) = 48% → $10 position. Same question at 01:00 UTC → 34% × (0.9 × 1.2 = 1.08x) = 37% → $7.
 
 ### Remix Ideas
 
-- **SMHI API**: https://www.smhi.se/klimatdata — Official Swedish weather data
-- **Riksdagen API**: https://data.riksdagen.se/ — Parliamentary voting and legislation tracking
-- **SCB (Statistics Sweden)**: https://www.scb.se/en/ — Economic data releases
-- **Avanza/Nordnet**: Swedish stock sentiment as proxy for Spotify/Nordic tech markets
-- **Allsvenskan data**: Football results and standings for sports markets
+- **Riksdagen API**: Feed live voting data into p — trade divergence between parliamentary consensus and market price
+- **SMHI API**: Replace market probability with SMHI forecast confidence for weather markets
+- **SVT/Di.se RSS**: Monitor Swedish news feeds for events that haven't hit English-language sources yet
+- **Avanza/Nordnet sentiment**: Swedish retail stock sentiment as proxy for Nordic tech markets
+- **SCB data releases**: Statistics Sweden economic releases as leading indicator for macro markets
 
 ## Market Categories Tracked
 
 ```python
-NORDIC_KEYWORDS = [
-    "Sweden", "Sverige", "Stockholm", "Malmö", "Göteborg",
-    "Norway", "Norge", "Oslo", "Denmark", "Danmark", "Copenhagen",
-    "Spotify", "Northvolt", "Klarna", "Ericsson", "Volvo",
-    "Riksdag", "government", "election", "Nordic", "Scandinavian",
-    "IKEA", "H&M", "Skanska", "Atlas Copco",
-    "Melodifestivalen", "ABBA", "Way Out West",
-    "Champions League", "Swedish football", "Zlatan",
-    "SMHI", "Öresund", "Arctic", "fjord"
+KEYWORDS = [
+    'Sweden', 'Sverige', 'Stockholm', 'Malmö', 'Göteborg',
+    'Norway', 'Norge', 'Oslo', 'Denmark', 'Danmark', 'Copenhagen',
+    'Finland', 'Helsinki', 'Nordic', 'Scandinavian',
+    'Spotify', 'Northvolt', 'Klarna', 'Ericsson', 'Volvo', 'IKEA',
+    'Riksdag', 'Melodifestivalen', 'Zlatan', 'Allsvenskan',
+    'SMHI', 'Öresund',
 ]
 ```
 
@@ -126,11 +150,14 @@ All risk parameters are declared in `clawhub.json` as `tunables` and adjustable 
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `SIMMER_NORDIC_MAX_POSITION` | `20` | Max USDC per trade |
-| `SIMMER_NORDIC_MIN_VOLUME` | `1000` | Min market volume filter (USD) |
-| `SIMMER_NORDIC_MAX_SPREAD` | `0.20` | Max bid-ask spread (0.10 = 10%) |
-| `SIMMER_NORDIC_MIN_DAYS` | `3` | Min days until market resolves |
-| `SIMMER_NORDIC_MAX_POSITIONS` | `8` | Max concurrent open positions |
+| `SIMMER_MAX_POSITION` | `20` | Max USDC per trade (reached at 100% conviction) |
+| `SIMMER_MIN_VOLUME` | `1000` | Min market volume filter (USD) |
+| `SIMMER_MAX_SPREAD` | `0.20` | Max bid-ask spread (0.20 = 20%, wider for niche markets) |
+| `SIMMER_MIN_DAYS` | `3` | Min days until market resolves |
+| `SIMMER_MAX_POSITIONS` | `8` | Max concurrent open positions |
+| `SIMMER_YES_THRESHOLD` | `0.38` | Buy YES if market price ≤ this value |
+| `SIMMER_NO_THRESHOLD` | `0.62` | Sell NO if market price ≥ this value |
+| `SIMMER_MIN_TRADE` | `5` | Floor for any trade (min USDC regardless of conviction) |
 
 ## Dependency
 
