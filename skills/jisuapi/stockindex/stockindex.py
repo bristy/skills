@@ -14,7 +14,7 @@ import requests
 BASE_URL = "https://api.jisuapi.com/stockindex"
 
 
-def _call_api(path: str, appkey: str, params: dict | None = None):
+def _call_api(path: str, appkey: str, params: dict = None):
     if params is None:
         params = {}
     all_params = {"appkey": appkey}

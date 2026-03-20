@@ -1,13 +1,18 @@
 {
   "owner": "jisuapi",
   "slug": "stockindex",
-  "displayName": "上证股票指数 - Shanghai Stock Exchange Composite Index",
+  "displayName": "Shanghai Stock Exchange Composite Index - 上证股票指数",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773632379993,
-    "commit": "https://github.com/openclaw/skills/commit/339bfaf692fa01553d200570b59d4b9dba80a705"
+    "version": "1.0.2",
+    "publishedAt": 1773719980164,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773632379993,
+      "commit": "https://github.com/openclaw/skills/commit/339bfaf692fa01553d200570b59d4b9dba80a705"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773202463674,
