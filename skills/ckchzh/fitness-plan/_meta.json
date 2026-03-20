@@ -3,11 +3,16 @@
   "slug": "fitness-plan",
   "displayName": "Fitness Plan",
   "latest": {
-    "version": "2.3.3",
-    "publishedAt": 1773665988969,
-    "commit": "https://github.com/openclaw/skills/commit/1e192d28d58a59d1917c8b048bcac3d52894e42a"
+    "version": "2.0.1",
+    "publishedAt": 1773830605870,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.3.3",
+      "publishedAt": 1773665988969,
+      "commit": "https://github.com/openclaw/skills/commit/1e192d28d58a59d1917c8b048bcac3d52894e42a"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773421303485,
