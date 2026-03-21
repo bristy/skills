@@ -3,9 +3,15 @@
   "slug": "polymarket-cybersecurity-trader",
   "displayName": "Cybersecurity & Hacking Events Trader",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773653201018,
-    "commit": "https://github.com/openclaw/skills/commit/a265ec3068b967a98e3a513d70e34aade32956c0"
+    "version": "1.0.1",
+    "publishedAt": 1773869012725,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773653201018,
+      "commit": "https://github.com/openclaw/skills/commit/a265ec3068b967a98e3a513d70e34aade32956c0"
+    }
+  ]
 }
