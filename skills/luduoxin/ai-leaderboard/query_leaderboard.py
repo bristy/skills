@@ -160,7 +160,7 @@ def print_model_detail(model):
     
     print()
     print("=" * 60)
-    print("API Usage Example:")
+    print("API Usage Example (for reference only, this script does not require API key):")
     print("=" * 60)
     print(f'''
 curl https://openrouter.ai/api/v1/chat/completions \\

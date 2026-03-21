@@ -1,11 +1,17 @@
 {
   "owner": "luduoxin",
   "slug": "ai-leaderboard",
-  "displayName": "Ai Leaderboard",
+  "displayName": "AI Leaderboard",
   "latest": {
-    "version": "1.7.0",
-    "publishedAt": 1773658665884,
-    "commit": "https://github.com/openclaw/skills/commit/9625262ee2b8746d2a7f54c9587a3ac0a25a9452"
+    "version": "1.20.1",
+    "publishedAt": 1773899776856,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.7.0",
+      "publishedAt": 1773658665884,
+      "commit": "https://github.com/openclaw/skills/commit/9625262ee2b8746d2a7f54c9587a3ac0a25a9452"
+    }
+  ]
 }
