@@ -1,0 +1,11 @@
+{
+  "owner": "bytesagain",
+  "slug": "useragent-parser",
+  "displayName": "Useragent Parser",
+  "latest": {
+    "version": "2.0.0",
+    "publishedAt": 1773930061988,
+    "commit": null
+  },
+  "history": []
+}
