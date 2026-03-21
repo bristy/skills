@@ -1,0 +1,11 @@
+{
+  "owner": "nansen-devops",
+  "slug": "nansen-web-searcher",
+  "displayName": "Nansen Web Searcher",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1773937048723,
+    "commit": null
+  },
+  "history": []
+}
