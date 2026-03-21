@@ -1,88 +1,145 @@
 ---
 name: helm
-version: "2.0.0"
+version: "3.0.1"
 author: BytesAgain
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 license: MIT-0
 tags: [helm, tool, utility]
-description: "Helm - command-line tool for everyday use"
+description: "Create, lint, template, and package Kubernetes Helm charts with checks. Use when scaffolding charts, linting templates, or packaging chart releases."
 ---
 
-# Helm
+# helm
 
-Helm chart toolkit — create, lint, template, package, and manage Kubernetes charts.
+Create, lint, template, and package Kubernetes Helm charts with checks. Use when scaffolding charts, linting templates, or packaging chart releases.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `helm help` | Show usage info |
-| `helm run` | Run main task |
-| `helm status` | Check current state |
-| `helm list` | List items |
-| `helm add <item>` | Add new item |
-| `helm export <fmt>` | Export data |
+### `KUBECONFIG`
 
-## Usage
+Path to kubeconfig file
 
 ```bash
-helm help
-helm run
-helm status
+scripts/script.sh KUBECONFIG
 ```
 
-## Examples
+### `create`
+
+Create a new chart scaffold
 
 ```bash
-# Get started
-helm help
-
-# Run default task
-helm run
-
-# Export as JSON
-helm export json
+scripts/script.sh create <chart>
 ```
 
-## Output
+### `lint`
 
-Results go to stdout. Save with `helm run > output.txt`.
+Lint a chart for issues
 
-## Configuration
+```bash
+scripts/script.sh lint <chart>
+```
 
-Set `HELM_DIR` to change data directory. Default: `~/.local/share/helm/`
+### `template`
+
+Render templates locally (--set key=val, --values file)
+
+```bash
+scripts/script.sh template <chart> [opts]
+```
+
+### `list`
+
+List installed releases
+
+```bash
+scripts/script.sh list [namespace]
+```
+
+### `status`
+
+Show release status and notes
+
+```bash
+scripts/script.sh status <release>
+```
+
+### `values`
+
+Show values (source: chart|deployed)
+
+```bash
+scripts/script.sh values <chart> [source]
+```
+
+### `repo-add`
+
+Add a chart repository
+
+```bash
+scripts/script.sh repo-add <name> <url>
+```
+
+### `repo-list`
+
+List configured repositories
+
+```bash
+scripts/script.sh repo-list
+```
+
+### `repo-update`
+
+Update all repository indexes
+
+```bash
+scripts/script.sh repo-update
+```
+
+### `search`
+
+Search repos and Artifact Hub
+
+```bash
+scripts/script.sh search <keyword>
+```
+
+### `package`
+
+Package chart into .tgz
+
+```bash
+scripts/script.sh package <chart> [opts]
+```
+
+### `history`
+
+Show release revision history
+
+```bash
+scripts/script.sh history <release>
+```
+
+### `rollback`
+
+Rollback to a previous revision
+
+```bash
+scripts/script.sh rollback <release> [rev]
+```
+
+### `diff`
+
+Compare chart with deployed release
+
+```bash
+scripts/script.sh diff <chart> <release>
+```
+
+## Requirements
+
+- helm
+- curl
 
 ---
-*Powered by BytesAgain | bytesagain.com*
-*Feedback & Feature Requests: https://bytesagain.com/feedback*
 
-
-## Features
-
-- Simple command-line interface for quick access
-- Local data storage with JSON/CSV export
-- History tracking and activity logs
-- Search across all entries
-
-## Quick Start
-
-```bash
-# Check status
-helm status
-
-# View help
-helm help
-
-# Export data
-helm export json
-```
-
-## How It Works
-
-Helm stores all data locally in `~/.local/share/helm/`. Each command logs activity with timestamps for full traceability.
-
-## Support
-
-- Feedback: https://bytesagain.com/feedback/
-- Website: https://bytesagain.com
-
-Powered by BytesAgain | bytesagain.com | hello@bytesagain.com
+*Powered by BytesAgain | bytesagain.com | hello@bytesagain.com*

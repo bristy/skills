@@ -3,11 +3,16 @@
   "slug": "helm",
   "displayName": "Helm",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773673803462,
-    "commit": "https://github.com/openclaw/skills/commit/0d46e86780d57d646919ed3527f49bd7b3e283de"
+    "version": "3.0.1",
+    "publishedAt": 1773914032191,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773673803462,
+      "commit": "https://github.com/openclaw/skills/commit/0d46e86780d57d646919ed3527f49bd7b3e283de"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773640908950,
