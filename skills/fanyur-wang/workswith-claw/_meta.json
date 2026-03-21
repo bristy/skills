@@ -3,9 +3,15 @@
   "slug": "workswith-claw",
   "displayName": "Workswith Claw",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773792800416,
-    "commit": "https://github.com/openclaw/skills/commit/3c288ca55edaa0977b695ccb2a73c36a1bdcf3c2"
+    "version": "1.0.3",
+    "publishedAt": 1773835919705,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773792800416,
+      "commit": "https://github.com/openclaw/skills/commit/3c288ca55edaa0977b695ccb2a73c36a1bdcf3c2"
+    }
+  ]
 }

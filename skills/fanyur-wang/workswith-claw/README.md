@@ -7,6 +7,14 @@
 
 ---
 
+## ⚠️ 重要说明
+
+- **非 Home Assistant 官方集成**：本项目是独立的智能家居中间件，非 HA 官方维护
+- **OpenClaw 技能包**：可通过 OpenClaw 平台安装使用
+- **依赖 HA**：需要 Home Assistant 提供设备控制能力
+
+---
+
 ## 一句话介绍
 
 Workswith Claw 是一个运行在本地 Mac mini/服务器上的智能家居中间件，通过深度集成 Home Assistant，实现设备的语义化理解、习惯学习和智能预判，让你的家真正"懂"你。
