@@ -35,7 +35,7 @@ export PPIO_API_KEY="your-api-key-here"
 ### Text to Image
 
 #### Gemini 3.1 Flash Image (Default, with web search)
-- **Endpoint**: `https://api.ppio.com/v3/gemini-3.1-flash-image`
+- **Endpoint**: `https://api.ppio.com/v3/gemini-3.1-flash-image-text-to-image`
 - **Method**: POST
 - **Headers**:
   - `Authorization: Bearer <API_KEY>`
@@ -82,7 +82,7 @@ export PPIO_API_KEY="your-api-key-here"
 ```
 
 #### Gemini 3 Pro Image (Highest quality)
-- **Endpoint**: `https://api.ppio.com/v3/gemini-3-pro-image`
+- **Endpoint**: `https://api.ppio.com/v3/gemini-3-pro-image-text-to-image`
 - **Features**: Highest quality, excellent for complex scenes
 
 ### Image to Image
@@ -121,8 +121,8 @@ export PPIO_API_KEY="your-api-key-here"
 
 | Model | Endpoint | Use Case | Notes |
 |-------|----------|----------|-------|
-| **Gemini 3.1 Flash Image** | `/v3/gemini-3.1-flash-image` | Text to Image | Default recommended |
-| **Gemini 3 Pro Image** | `/v3/gemini-3-pro-image` | Text to Image | Highest quality |
+| **Gemini 3.1 Flash Image** | `/v3/gemini-3.1-flash-image-text-to-image` | Text to Image | Default recommended |
+| **Gemini 3 Pro Image** | `/v3/gemini-3-pro-image-text-to-image` | Text to Image | Highest quality |
 | **Gemini 3.1 Flash Edit** | `/v3/gemini-3.1-flash-image-edit` | Image to Image | Default recommended |
 | **Gemini 3 Pro Edit** | `/v3/gemini-3-pro-image-edit` | Image to Image | High quality editing |
 
