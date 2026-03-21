@@ -21,7 +21,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-SPARKI_API_BASE="${SPARKI_API_BASE:-https://agent-enterprise-dev.aicoding.live/api/v1}"
+SPARKI_API_BASE="${SPARKI_API_BASE:-https://business-agent-api.sparki.io/api/v1}"
 RATE_LIMIT_SLEEP=3
 
 # ---------------------------------------------------------------------------

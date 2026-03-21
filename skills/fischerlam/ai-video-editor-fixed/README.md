@@ -1,104 +1,104 @@
 # ai-video-editor
 
 [![ClawHub Skill](https://img.shields.io/badge/ClawHub-Skill-blueviolet)](https://clawhub.io)
-[![Version](https://img.shields.io/badge/version-1.0.5-blue)](SKILL.md)
+[![Version](https://img.shields.io/badge/version-1.0.6-blue)](SKILL.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-> **One-for-all AI video editing.**
-> Copy Style ✂️ · Long to Short 🔤 · AI Caption 🎙️ · AI Commentary 📐 · Video Resizer · Highlight Reels ⚽ · Vlog · Montage · Talking-head
+> **一站式 AI 视频剪辑。**
+> 模仿风格 ✂️ · 长视频转短视频 🔤 · AI 字幕 🎙️ · AI 解说 📐 · 视频尺寸调整 · 高光集锦 ⚽ · Vlog · 混剪 · 口播
 >
-> Upload raw footage, apply AI editing with a natural-language prompt, retrieve a processed video URL — all from a shell script. Powered by [Sparki](https://sparki.io).
+> 上传原始素材，配上自然语言要求，交给 AI 处理并拿回成品下载链接。由 [Sparki](https://sparki.io) 提供能力。
 
 ---
 
-## What It Does
+## 这个 Skill 做什么
 
-This ClawHub Skill wraps the [Sparki](https://sparki.io) AI video editing API into four Bash scripts:
+这个 ClawHub Skill 把 [Sparki](https://sparki.io) 的 AI 视频编辑 API 封装成了 4 个 Bash 脚本：
 
-| Script | Purpose |
+| 脚本 | 用途 |
 |--------|---------|
-| `scripts/upload_asset.sh` | Upload a video file, get an `object_key` |
-| `scripts/create_project.sh` | Start AI video processing with style tips |
-| `scripts/get_project_status.sh` | Poll project state and retrieve result URL |
-| `scripts/edit_video.sh` | **End-to-end**: upload → process → download URL |
+| `scripts/upload_asset.sh` | 上传视频文件，返回 `object_key` |
+| `scripts/create_project.sh` | 用风格 tips 创建 AI 视频处理项目 |
+| `scripts/get_project_status.sh` | 轮询项目状态并获取结果链接 |
+| `scripts/edit_video.sh` | **端到端**：上传 → 处理 → 返回下载链接 |
 
-**Supported use cases:**
+**适用场景：**
 
-| Scenario | Keywords |
+| 场景 | 关键词 |
 |----------|----------|
-| Copy a creator's style | Copy Style, Style Transfer, Aesthetic Match |
-| Cut long videos into short clips | Long to Short, Short-form, Reels, Shorts, TikTok, Clips |
-| Add subtitles or narration | AI Caption, AI Commentary, Subtitles, Voice-over |
-| Reformat for any platform | Video Resizer, Aspect Ratio, Vertical, Square, Landscape |
-| Sports / event highlights | Highlight Reels, Sports, Best Moments |
-| Daily vlog production | Vlog, Travel, Lifestyle |
-| Multi-clip storytelling | Montage, Compilation, Mashup |
-| Presenter / interview content | Talking-head, Interview, Explainer |
-| Batch automation pipelines | Batch Processing, Content Factory, Automation |
+| 模仿创作者风格 | 模仿风格、风格迁移、审美对齐 |
+| 长视频切短视频 | Long to Short、短视频、Reels、Shorts、TikTok、切片 |
+| 自动字幕或解说 | AI 字幕、AI 解说、字幕、旁白 |
+| 适配不同平台比例 | 改尺寸、比例转换、竖屏、方屏、横屏 |
+| 体育/活动高光 | 高光集锦、精彩片段、最佳时刻 |
+| 日常 Vlog | Vlog、旅行、生活记录 |
+| 多片段叙事 | 混剪、合集、Mashup |
+| 口播 / 采访内容 | 口播、采访、讲解型视频 |
+| 批量自动化生产 | 批处理、内容工厂、自动化 |
 
 ---
 
-## Quick Start
+## 快速开始
 
-### 1. Install via OpenClaw
+### 1. 通过 OpenClaw 安装
 
 ```bash
 npx clawhub install ai-video-editor --force
 ```
 
-### 2. Configure API key
+### 2. 配置 API Key
 
 ```bash
 export SPARKI_API_KEY="sk_live_your_key_here"
 ```
 
-Get your key from the [Sparki Dashboard](https://sparki.io).
+你可以从 [Sparki](https://sparki.io) 获取 key。
 
-### 3. Process a video
+### 3. 处理视频
 
 ```bash
-# Full workflow — returns a 24-hour download URL
-RESULT_URL=$(bash scripts/edit_video.sh my_video.mp4 "22" "energetic and trendy" "9:16")
+# 完整工作流 —— 返回一个 24 小时有效的下载链接
+RESULT_URL=$(bash scripts/edit_video.sh my_video.mp4 "22" "节奏更快、更有活力" "9:16")
 echo "$RESULT_URL"
 ```
 
 ---
 
-## Requirements
+## 环境要求
 
 - `bash` 4.x+
 - `curl`
 - `jq`
-- `SPARKI_API_KEY` environment variable
+- `SPARKI_API_KEY` 环境变量
 
 ---
 
-## Usage Examples
+## 使用示例
 
-**Vertical short-form (default):**
+**竖屏短视频（默认）：**
 ```bash
 bash scripts/edit_video.sh footage.mp4 "22"
 ```
 
-**Square video with creative direction:**
+**方屏视频 + 创意要求：**
 ```bash
-bash scripts/edit_video.sh clip.mp4 "28" "cinematic slow motion" "1:1"
+bash scripts/edit_video.sh clip.mp4 "28" "更有电影感的慢动作" "1:1"
 ```
 
-**Landscape with duration limit:**
+**横屏视频 + 限制时长：**
 ```bash
 bash scripts/edit_video.sh raw.mp4 "19" "" "16:9" 60
 ```
 
-**Step-by-step (manual control):**
+**分步手动控制：**
 ```bash
-# Upload
+# 上传
 OBJECT_KEY=$(bash scripts/upload_asset.sh footage.mp4)
 
-# Create project
-PROJECT_ID=$(bash scripts/create_project.sh "$OBJECT_KEY" "22" "dynamic" "9:16")
+# 创建项目
+PROJECT_ID=$(bash scripts/create_project.sh "$OBJECT_KEY" "22" "节奏更紧凑" "9:16")
 
-# Poll until done
+# 轮询直到完成
 while true; do
   set +e
   STATUS=$(bash scripts/get_project_status.sh "$PROJECT_ID")
@@ -115,16 +115,16 @@ echo "Download: $RESULT_URL"
 
 ---
 
-## Supported Parameters
+## 支持的参数
 
-| Parameter | Values | Default |
+| 参数 | 可选值 | 默认值 |
 |-----------|--------|---------|
 | `aspect_ratio` | `9:16`, `1:1`, `16:9` | `9:16` |
-| `duration` | integer (seconds) | — |
-| `tips` | integer ID (e.g. `22`, `28`) | required |
-| `user_prompt` | free text | — |
+| `duration` | 整数（秒） | — |
+| `tips` | 风格 ID（例如 `22`, `28`） | 必填 |
+| `user_prompt` | 自然语言要求 | — |
 
-**Timeout overrides:**
+**超时覆盖：**
 ```bash
 WORKFLOW_TIMEOUT=7200 bash scripts/edit_video.sh long_video.mp4 "1"
 ASSET_TIMEOUT=120 bash scripts/edit_video.sh large_file.mp4 "2"
@@ -132,44 +132,44 @@ ASSET_TIMEOUT=120 bash scripts/edit_video.sh large_file.mp4 "2"
 
 ---
 
-## Error Codes
+## 错误码
 
-| Code | Meaning |
+| Code | 含义 |
 |------|---------|
-| `401` | Invalid API key |
-| `413` | File too large (> 3 GB) or storage full |
-| `453` | Concurrent project limit reached |
-| `500` | Server error — retry |
+| `401` | API key 无效 |
+| `413` | 文件太大（> 3 GB）或存储不足 |
+| `453` | 并发项目数达到上限 |
+| `500` | 服务端错误，重试即可 |
 
 ---
 
-## Publishing
+## 发布
 
 ```bash
-# Package for ClawHub
+# 打包给 ClawHub
 zip -r sparki-video-processor.zip SKILL.md scripts/ README.md
 ```
 
-Upload via [ClawHub Dashboard](https://clawhub.io) → "Publish New Skill".
+通过 [ClawHub Dashboard](https://clawhub.io) 上传并发布。
 
-Recommended metadata:
+推荐 metadata：
 - **Category:** `video/ai-generation`
 - **Tags:** `video-editing`, `ai`, `content-creation`, `short-form`, `highlight`, `vlog`, `montage`, `caption`, `resizer`
 
 ---
 
-Powered by [Sparki](https://sparki.io) — AI video editing for everyone.
+Powered by [Sparki](https://sparki.io) — AI 视频编辑能力。
 
 ---
 
-## Security
+## 安全说明
 
-- `SPARKI_API_KEY` is passed only via HTTP header — never logged or written to disk
-- All user-provided arguments are double-quoted to prevent shell injection
-- Scripts make outbound requests only to `agent-enterprise-dev.aicoding.live` — no local filesystem writes beyond the uploaded file read
+- `SPARKI_API_KEY` 只通过 HTTP Header 传递，不会写入磁盘
+- 所有用户输入参数都被双引号包裹，降低 shell 注入风险
+- 脚本只会向 `business-agent-api.sparki.io` 发起网络请求，不会在本地写入视频文件
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — 见 [LICENSE](LICENSE)。
