@@ -1,0 +1,11 @@
+{
+  "owner": "phemex",
+  "slug": "phemex-cli",
+  "displayName": "Phemex Cli",
+  "latest": {
+    "version": "2.0.0",
+    "publishedAt": 1773996764353,
+    "commit": null
+  },
+  "history": []
+}
