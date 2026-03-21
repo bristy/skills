@@ -1,0 +1,11 @@
+{
+  "owner": "ezviz-open",
+  "slug": "ezviz-open-camera-video",
+  "displayName": "Ezviz Open Camera Video",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773924075790,
+    "commit": null
+  },
+  "history": []
+}
