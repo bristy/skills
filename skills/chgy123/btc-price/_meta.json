@@ -1,0 +1,11 @@
+{
+  "owner": "chgy123",
+  "slug": "btc-price",
+  "displayName": "my skill",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773908900881,
+    "commit": null
+  },
+  "history": []
+}
