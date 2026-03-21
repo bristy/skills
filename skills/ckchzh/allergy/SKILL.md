@@ -1,8 +1,10 @@
 ---
 name: "Allergy"
-description: "Take control of Allergy with this health & wellness toolkit. Clean interface, local storage, zero configuration."
+description: "Log allergens, track reactions, and chart symptom patterns over time. Use when identifying triggers, preparing reports, or setting reminders."
 version: "2.0.0"
 author: "BytesAgain"
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 tags: ["wellness", "fitness", "self-care", "allergy", "personal"]
 ---
 
