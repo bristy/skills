@@ -1,11 +1,17 @@
 {
   "owner": "wangziiiiii",
   "slug": "baidu-search-pro",
-  "displayName": "Baidu Search (compat alias)",
+  "displayName": "Baidu Search Pro",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773691612934,
-    "commit": "https://github.com/openclaw/skills/commit/a79d07d6e7cc0f2578677c41daa411d359b1af96"
+    "version": "1.0.1",
+    "publishedAt": 1773829962282,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773691612934,
+      "commit": "https://github.com/openclaw/skills/commit/a79d07d6e7cc0f2578677c41daa411d359b1af96"
+    }
+  ]
 }
