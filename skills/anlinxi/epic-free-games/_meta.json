@@ -3,9 +3,15 @@
   "slug": "epic-free-games",
   "displayName": "Epic Free Games",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773796468704,
-    "commit": "https://github.com/openclaw/skills/commit/d824be0d7e1c5922bd602ffcd489c314d8b3f37d"
+    "version": "1.2.0",
+    "publishedAt": 1773983164443,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773796468704,
+      "commit": "https://github.com/openclaw/skills/commit/d824be0d7e1c5922bd602ffcd489c314d8b3f37d"
+    }
+  ]
 }

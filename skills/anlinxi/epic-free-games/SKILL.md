@@ -125,6 +125,74 @@ agent-browser install
 2. **Login Expiry** - Re-run `--login` if session expires / 登录过期时重新运行 `--login`
 3. **Already Owned** - Script detects and skips owned games / 脚本会检测并跳过已拥有游戏
 
+## 🔒 Security Best Practices / 安全最佳实践
+
+**IMPORTANT: This skill does NOT contain any pre-filled authentication files.**
+
+**重要：本技能不包含任何预填充的认证文件。**
+
+### For Users / 用户须知
+
+1. **Generate Your Own Auth File / 自行生成认证文件**
+   - Run `python scripts/claim.py --login` to create your own `epic_auth.json`
+   - Never share your auth file with others / 不要分享你的认证文件
+   - The auth file contains sensitive credentials / 认证文件包含敏感凭证
+
+2. **Keep Auth File Private / 保护认证文件**
+   - Add `epic_auth.json` to `.gitignore` if using git
+   - Do not upload to public repositories / 不要上传到公开仓库
+
+3. **Isolated Environment / 隔离环境**
+   - Consider running in a sandbox or VM / 建议在沙箱或虚拟机中运行
+   - Review the source code before running / 运行前请审查源代码
+
+### For Developers / 开发者须知
+
+1. **Never Commit Sensitive Files / 不要提交敏感文件**
+   ```
+   # These files should NEVER be in the distribution:
+   # 以下文件绝对不应出现在分发包中：
+   - epic_auth.json
+   - browser-profile/
+   - browser_profile/
+   - *.png (screenshots may contain sensitive info)
+   ```
+
+2. **Use .gitignore / 使用 .gitignore**
+   - The skill includes a `.gitignore` file to prevent accidental commits
+   - 本技能包含 `.gitignore` 文件，防止意外提交
+
+3. **Security First / 安全第一**
+   - User credentials are private / 用户凭证是私密的
+   - Never bundle auth files in distributions / 分发时绝不要打包认证文件
+
+## Usage Tips / 使用技巧
+
+### Cloudflare 验证绕过
+
+Epic 网站使用 Cloudflare 验证检测自动化访问。使用 `--headed` 显示浏览器窗口手动处理验证：
+
+```bash
+# 显示浏览器窗口 + 禁用自动化检测标志
+agent-browser --headed --session epic \
+  --args "--disable-blink-features=AutomationControlled" \
+  open "https://store.epicgames.com/zh-CN/free-games"
+```
+
+### 推荐的手动 + 自动混合流程
+
+1. **打开浏览器窗口** (自动)
+2. **用户手动完成验证和登录** (手动)
+3. **自动领取游戏** (自动)
+
+### agent-browser 常用命令
+
+```bash
+agent-browser --session epic snapshot -i  # 查看页面快照
+agent-browser --session epic click "ref=e55"  # 点击元素
+agent-browser --session epic close  # 关闭浏览器
+```
+
 ## License / 许可证
 
 MIT License - Use at your own risk / 使用风险自负
