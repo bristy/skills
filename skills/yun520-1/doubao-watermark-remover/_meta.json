@@ -3,9 +3,15 @@
   "slug": "doubao-watermark-remover",
   "displayName": "豆包 AI 视频水印去除",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773670499581,
-    "commit": "https://github.com/openclaw/skills/commit/a5f2d8fb550d6dadf4557eddd256ea0a463b80c3"
+    "version": "3.1.1",
+    "publishedAt": 1773807683377,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773670499581,
+      "commit": "https://github.com/openclaw/skills/commit/a5f2d8fb550d6dadf4557eddd256ea0a463b80c3"
+    }
+  ]
 }
