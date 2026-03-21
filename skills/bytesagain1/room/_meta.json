@@ -3,9 +3,15 @@
   "slug": "room",
   "displayName": "Room",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773673868558,
-    "commit": "https://github.com/openclaw/skills/commit/73ade2d8fbf4e9644f0d2942f0efd0fb97723760"
+    "version": "2.0.1",
+    "publishedAt": 1773798352443,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773673868558,
+      "commit": "https://github.com/openclaw/skills/commit/73ade2d8fbf4e9644f0d2942f0efd0fb97723760"
+    }
+  ]
 }

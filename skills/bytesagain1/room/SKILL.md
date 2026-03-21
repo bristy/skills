@@ -1,8 +1,10 @@
 ---
 name: "Room"
-description: "Terminal-first Room manager. Keep your home management data organized with simple commands."
+description: "Organize room inventory and maintenance schedules. Use when adding furniture items, tracking appliances, scheduling deep cleans, setting repair reminders."
 version: "2.0.0"
 author: "BytesAgain"
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 tags: ["organize", "domestic", "room", "inventory", "home"]
 ---
 
