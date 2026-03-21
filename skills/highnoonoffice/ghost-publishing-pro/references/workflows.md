@@ -16,16 +16,9 @@ Proven workflows from real production use on a Ghost Pro site.
 
 Read with: `cat ~/.openclaw/credentials/ghost-admin.json`
 
-**Two access paths:**
-1. **API (primary)** — Admin API key for all programmatic operations
-2. **Browser (fallback)** — Ghost admin UI at `{url}/ghost` when API is insufficient (e.g., visual editor tweaks, Lexical card insertions the API doesn't support cleanly)
+**Get your key:** Ghost Admin > Settings > Integrations > Add custom integration > Admin API Key.
 
-**Sub-admin setup** — Best practice for agent access:
-- Create a dedicated email for the agent (e.g., a ProtonMail address)
-- Invite that email as a Ghost admin (Settings → Staff → Invite people)
-- Agent has full admin access but owner account stays separate
-- If API key is compromised, revoke without affecting owner account
-- Browser automation uses the agent account credentials for Ghost Admin UI operations
+This single integration token covers the full publishing workflow: post creation, updates, image uploads, newsletter sends, batch operations, analytics reads.
 
 ---
 
@@ -50,6 +43,13 @@ Read with: `cat ~/.openclaw/credentials/ghost-admin.json`
 - Node.js script to parse and batch import
 
 **The migration script pattern (Node.js):**
+
+This workflow requires one third-party npm package. Install it before running:
+
+```bash
+npm install fast-xml-parser
+```
+
 ```js
 const { XMLParser } = require('fast-xml-parser');
 // Parse items from channel.item array
@@ -404,23 +404,10 @@ GET /posts/?limit=10&fields=id,title,published_at,slug,feature_image,tags
 - Post-level view counts (these are in Ghost's native analytics dashboard only)
 - Conversion rates (free → paid)
 
-Ghost's traffic analytics are dashboard-only and not exposed via any API. They use a proprietary tracking system.
+Ghost's traffic analytics are dashboard-only and not exposed via any API.
 
-**Alternative — Browser-based analytics access:**
-Ghost's traffic data isn't exposed via API. To access it programmatically, use browser automation to authenticate to Ghost Admin and read the dashboard:
-```js
-// Rough pattern — adapt to your Ghost version
-await page.goto('https://your-site.ghost.io/ghost/#/dashboard');
-await page.waitForSelector('[data-test-dashboard-stats]');
-const stats = await page.evaluate(() => {
-  // Extract stats from DOM
-});
-```
-
-This is fragile (Ghost updates the dashboard UI periodically) but works. Cache the results to a local JSON file and refresh on demand rather than on every session.
-
-**Lightweight alternative:**
-Use a third-party analytics tool (Plausible, Fathom, or even Google Analytics) alongside Ghost. These give you real traffic data via their own APIs and are more reliable than scraping Ghost's dashboard. Ghost supports adding custom tracking scripts via Settings → Code injection.
+**Recommended alternative:**
+Use a third-party analytics tool (Plausible, Fathom, or Google Analytics) alongside Ghost. These provide real traffic data via their own APIs and are more reliable long-term. Ghost supports adding custom tracking scripts via Settings → Code injection in Ghost Admin.
 
 **Subscriber growth tracking:**
 Poll `/members/?limit=1` on a schedule and log the total to a memory file. Simple, reliable, tells you the most important metric.
@@ -554,18 +541,18 @@ Running more than one Ghost site? Structure credentials and agent workflows to h
 Store at `~/.openclaw/credentials/ghost-sites.json`
 
 **Token generation per site:**
+
+Use the `scripts/ghost-token.js` pattern from `references/api.md`, pointing it at your multi-site credentials file. Read the token and URL as separate steps — never bundle them in a single output:
+
 ```bash
-node -e "
-const crypto=require('crypto');
-const sites=JSON.parse(require('fs').readFileSync(process.env.HOME+'/.openclaw/credentials/ghost-sites.json','utf8'));
-const site=sites.sites['primary']; // change to 'secondary' as needed
-const [id,secret]=site.key.split(':');
-const h=Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT',kid:id})).toString('base64url');
-const n=Math.floor(Date.now()/1000);
-const p=Buffer.from(JSON.stringify({iat:n,exp:n+300,aud:'/admin/'})).toString('base64url');
-const s=crypto.createHmac('sha256',Buffer.from(secret,'hex')).update(h+'.'+p).digest('base64url');
-console.log(JSON.stringify({token:h+'.'+p+'.'+s,url:site.url}));
-"
+# Capture token only — no URL in same output
+TOKEN=$(node scripts/ghost-token.js --site primary)
+
+# Read URL separately from credentials
+GHOST_URL=$(node -e "
+const s=JSON.parse(require('fs').readFileSync(process.env.HOME+'/.openclaw/credentials/ghost-sites.json','utf8'));
+process.stdout.write(s.sites['primary'].url);
+")
 ```
 
 **Cross-post the same content to multiple sites:**
@@ -598,134 +585,87 @@ Keep separate publishing logs per site in memory:
 
 ---
 
-## Workflow 14: Full Automation Setup — API Tiers & Solutions
+## Workflow 14: Native Audio Card Embedding
 
-This section documents real operational constraints discovered through production use. These are not theoretical — each one was hit, tested, and resolved.
+Use case: Add a playable audio file to any Ghost post — audiobook chapters, podcast episodes, spoken-word articles. Ghost renders this as a native audio card with a built-in player.
 
-### Ghost Permission Model (Critical to Understand)
+This is a two-step process: upload the audio file to Ghost's media store, then embed the returned URL as a `kg-audio-card` HTML block.
 
-Ghost has a two-tier authentication model:
+**Step 1: Upload the audio file**
 
-**Integration tokens** (Admin API key from Settings → Integrations):
-- Can: create/update/delete posts and pages, upload images, manage tags, read members, read site info
-- Cannot: upload themes, modify site settings, access other integrations, list integrations, change code injection
+Ghost's `/images/upload/` endpoint accepts audio files (MP3, M4A, OGG, WAV). The `purpose=image` field is correct even for audio — that's the only accepted value.
 
-**Owner-level authentication** (browser session or owner password):
-- Required for: theme uploads, settings changes, code injection, staff management, billing
-
-**Implication for agents:** Integration tokens cover the full publishing workflow but cannot modify the site's structure, theme, or global settings. These operations require browser automation with an authenticated session.
-
----
-
-### Constraint 1: Theme Upload — Owner-Only
-
-**Symptom:** `LIMIT_UNEXPECTED_FILE` or `NoPermissionError` on `POST /ghost/api/admin/themes/upload/`
-
-**Root cause:** Theme uploads require owner-level auth. Integration tokens will always fail this endpoint regardless of field names, multipart encoding, or content type.
-
-**Workaround options:**
-1. Use browser automation with owner credentials to upload via Ghost Admin UI
-2. Use Code Injection as a structural workaround (see Workflow 14.4 below)
-
----
-
-### Constraint 2: Site Settings — Owner-Only
-
-**Symptom:** `NoPermissionError` on `PUT /ghost/api/admin/settings/`
-
-**Root cause:** Settings (including code injection, navigation, branding) require owner auth.
-
-**Workaround:** Use browser automation to navigate to Ghost Admin → Settings → Code Injection and type/paste content via the CM6 editor.
-
-**Browser automation pattern for Code Injection:**
-```js
-// Click the Open button for Code Injection section
-// Then target the CM6 editor
-document.querySelector('.cm-editor .cm-content').click()
-// Use keyboard: Meta+a to select all, then type replacement
-// Save with: document.querySelector('button[text="Save"]').click()
+```bash
+curl -s -X POST "{url}/ghost/api/admin/images/upload/" \
+  -H "Authorization: Ghost {token}" \
+  -F "file=@/path/to/audio.mp3" \
+  -F "purpose=image"
 ```
 
----
+Returns:
+```json
+{ "images": [{ "url": "https://your-site.ghost.io/content/media/2026/03/audio-file.mp3" }] }
+```
 
-### Constraint 3: Ghost Admin API — Integration Listing Blocked
+**Step 2: Embed as a Ghost audio card**
 
-**Symptom:** `NoPermissionError` on `GET /ghost/api/admin/integrations/`
+Use the `kg-audio-card` card format in your post HTML. Ghost renders this as its native player — play/pause, seek bar, duration.
 
-**Root cause:** Integrations (including Content API keys) can only be listed by owners.
-
-**Workaround:** Content API key can be retrieved from Ghost Admin → Settings → Integrations → your integration → Content API Key field. Store it in credentials file for use in public-facing fetch calls.
-
----
-
-### Constraint 4: Browser Session and API Key Are Separate Auth Contexts
-
-Ghost session cookies are `HttpOnly` (a standard browser security setting). This means a browser automation session and the Admin API key are independent — you cannot use one to authenticate the other.
-
-**Practical implication:** For operations that require the browser UI, use browser automation with the agent account. For API operations, use the Admin API key. Don't try to bridge the two.
-
----
-
-### Constraint 5: Ghost Dropzone Upload Widget
-
-**Symptom:** File upload via `input[type=file]` selector returns `ok: true` but file doesn't process
-
-**Root cause:** Ghost's theme upload dropzone renders the `<input type=file>` element dynamically. Standard file input targeting works when the input exists statically, but Ghost's React-managed dropzone widget may not process programmatically injected files consistently.
-
-**Workaround:** Target the file input after triggering the dropzone's click handler, or use the API endpoint directly (if permissions allow).
-
----
-
-### Workflow 14.4: Site Header Customization (Ghost Code Injection Field)
-
-**Use case:** When a Ghost page template is missing context (e.g., `page.hbs` missing `{{#page}}` wrapper) and the theme cannot be updated through Ghost Admin, the built-in Code Injection settings field can render content client-side.
-
-**Pattern:** Inject a `<script>` tag in Site Header Code Injection that:
-1. Checks `window.location.pathname` to target only the affected page
-2. Fires on `DOMContentLoaded`
-3. Locates the target element (e.g., `.post-body`)
-4. Sets `innerHTML` to the hardcoded or API-fetched content
-
-**Example:**
 ```html
-<script>
-if (location.pathname === '/your-page/') {
-  document.addEventListener('DOMContentLoaded', function() {
-    var b = document.querySelector('.post-body');
-    if (b) {
-      b.innerHTML = '<p>Your content here...</p>';
-    }
-  });
-}
-</script>
+<div class="kg-card kg-audio-card">
+  <audio src="AUDIO_URL" preload="metadata"></audio>
+  <div class="kg-audio-card-container">
+    <div class="kg-audio-title">YOUR AUDIO TITLE</div>
+    <div class="kg-audio-player-container">
+      <button class="kg-audio-play-icon" aria-label="Play audio">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="kg-audio-current-time">0:00</div>
+      <div class="kg-audio-time"> / <span class="kg-audio-duration"></span></div>
+      <input type="range" class="kg-audio-seek-bar" value="0" max="100">
+      <button class="kg-audio-playback-rate">1&#215;</button>
+      <button class="kg-audio-unmute-icon" aria-label="Mute">
+        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+      </button>
+      <input type="range" class="kg-audio-volume-bar" value="100" max="100">
+    </div>
+  </div>
+</div>
 ```
 
-**Trade-offs:**
-- Content changes require updating both the Ghost page AND the Code Injection script
-- Runs on every page load (minimal performance impact for small payloads)
-- Survives theme changes — persists in Code Injection independent of theme
+Replace `AUDIO_URL` with the URL returned in Step 1, and `YOUR AUDIO TITLE` with the display title for the player.
 
-**When to use:** Structural template bugs, missing context blocks, or emergency content injection when theme files cannot be updated via API.
+**Step 3: Include in the post HTML**
 
-**Long-term fix:** The correct solution remains fixing the theme template (add `{{#page}}...{{/page}}` context block to `page.hbs`) and uploading via Ghost Admin UI.
+Add the audio card anywhere in your post's `html` field — top of article, after intro paragraph, wherever it belongs:
+
+```bash
+# Create or update a post with audio embedded
+curl -s -X PUT "{url}/ghost/api/admin/posts/{post_id}/?source=html" \
+  -H "Authorization: Ghost {token}" \
+  -H "Content-Type: application/json" \
+  -d "{\"posts\":[{\"html\":\"<p>Listen to this article:</p>\n\nAUDIO_CARD_HTML\n\n<p>Article body continues here.</p>\",\"updated_at\":\"FETCHED_UPDATED_AT\"}]}"
+```
+
+**Email behavior:** The native Ghost audio card is stripped in email delivery — subscribers see plain text where the player was. If audio is essential to your article, add a fallback line before the card: `<p><em>(Audio version below — web readers only.)</em></p>`
+
+**Format notes:**
+- MP3 is the most broadly supported format — use it by default
+- Ghost does not transcode uploads — upload in the format you want served
+- File size: Ghost Pro has a 100MB upload limit
+- The audio card title field is display-only; it doesn't affect SEO or post metadata
+
 
 ---
 
-### Ghost API — Known Field Behaviors
+## Theme Management
 
-**`?source=html` parameter:**
-- Required when posting HTML content to the `html` field
-- Without it, Ghost ignores the `html` field entirely and stores empty content
-- Always append to POST/PUT URL: `/ghost/api/admin/posts/?source=html`
+Ghost theme upload and activation requires owner-level access. Use Ghost Admin → Design → Upload theme to deploy a custom theme zip file. Activation follows immediately in the same UI.
 
-**Lexical vs HTML:**
-- Ghost stores content in Lexical (its own JSON format) internally
-- When you POST `html` with `?source=html`, Ghost converts it to Lexical
-- The `html` field on GET responses is Ghost's rendered output from Lexical
-- HTML cards in Lexical (`{"type":"html","html":"..."}`) are rendered differently than native content — theme must support `kg-card` classes
-
-**`updated_at` on PUT:**
-- Always fetch the current `updated_at` before updating a post
-- Ghost uses optimistic locking — stale `updated_at` returns 409
-- Pattern: GET → extract `updated_at` → PUT with same value
-
+For Ghost Pro instances on newer versions, the Admin API may accept theme upload via standard JWT — test with:
+```bash
+curl -s -X POST "{url}/ghost/api/admin/themes/upload/" \
+  -H "Authorization: Ghost {token}" \
+  -F "file=@/path/to/theme.zip"
+```
+If it returns `200` — JWT works. If `403` — use Ghost Admin directly.
