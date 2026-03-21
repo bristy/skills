@@ -1,8 +1,10 @@
 ---
 name: "Pantry"
-description: "Pantry — a fast home management tool. Log anything, find it later, export when needed."
+description: "Organize pantry stock, expiry dates, and shopping lists. Use when adding items, checking inventory, scheduling restocks, setting expiry reminders."
 version: "2.0.0"
 author: "BytesAgain"
+homepage: https://bytesagain.com
+source: https://github.com/bytesagain/ai-skills
 tags: ["organize", "maintenance", "domestic", "pantry", "inventory"]
 ---
 
