@@ -1,0 +1,11 @@
+{
+  "owner": "myclaw-ai",
+  "slug": "ask-lenny",
+  "displayName": "Ask Lenny",
+  "latest": {
+    "version": "1.0.4",
+    "publishedAt": 1773988821607,
+    "commit": null
+  },
+  "history": []
+}
