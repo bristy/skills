@@ -1,0 +1,11 @@
+{
+  "owner": "grey0758",
+  "slug": "cloudflare-openwebui-tunnel-operator",
+  "displayName": "Cloudflare Open WebUI Tunnel Operator",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773909499196,
+    "commit": null
+  },
+  "history": []
+}
