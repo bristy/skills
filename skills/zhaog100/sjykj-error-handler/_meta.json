@@ -1,11 +1,17 @@
 {
   "owner": "zhaog100",
   "slug": "sjykj-error-handler",
-  "displayName": "Error Handler Library",
+  "displayName": "Utils",
   "latest": {
-    "version": "1.3.0",
-    "publishedAt": 1773734510629,
-    "commit": "https://github.com/openclaw/skills/commit/ddbdd9a1574a41fcba94e86c4073799b5a553ac9"
+    "version": "1.3.1",
+    "publishedAt": 1773989888077,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.3.0",
+      "publishedAt": 1773734510629,
+      "commit": "https://github.com/openclaw/skills/commit/ddbdd9a1574a41fcba94e86c4073799b5a553ac9"
+    }
+  ]
 }
