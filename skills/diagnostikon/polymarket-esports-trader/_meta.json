@@ -3,9 +3,15 @@
   "slug": "polymarket-esports-trader",
   "displayName": "Esports & Gaming Trader",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773568724175,
-    "commit": "https://github.com/openclaw/skills/commit/4a4919c0dd12e900b0915eb28c904ba8b24b38c2"
+    "version": "1.0.1",
+    "publishedAt": 1773862641670,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773568724175,
+      "commit": "https://github.com/openclaw/skills/commit/4a4919c0dd12e900b0915eb28c904ba8b24b38c2"
+    }
+  ]
 }
