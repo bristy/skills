@@ -5,6 +5,19 @@ description: |
   触发场景包括但不限于：用户提到"归因""归因分析""波动分析""波动归因""根因分析""根因""下钻分析""下钻归因""为什么涨了""为什么跌了""为什么下降""为什么增长""什么原因""哪个维度导致""贡献度分析""贡献度""因子拆解""因子分解""驱动因素""影响因素""变化原因""差异分析"，或用户对某个指标的变化表达了疑问、希望了解变化背后的原因时，都应使用此 Skill。
   即使用户没有直接说"归因"二字，只要其意图是理解指标变化的原因或定位问题维度，也应触发此 Skill。
   **重要：本 Skill 通过组合调用 Gateway API 获取指标数据，在本地进行归因计算，结合外部事件检索，最终输出综合归因诊断报告。构建查询前，必须先通过 Gateway API 检索相关指标和维度信息，禁止凭记忆猜测指标名或维度名。**
+permissions:
+  - env:read 
+  - network:outbound 
+env_vars:
+  - name: "CAN_API_KEY"
+    description: "Aloudata CAN网关API访问密钥，需用户自行在~/.openclaw/.env中配置"
+    required: true
+domain_whitelist:
+  - "gateway.can.aloudata.com" 
+version: "1.0.4"
+author: "Aloudata"
+homepage: "https://aloudata.com/"
+metadata.openclaw: {"emoji": "🔍"}
 ---
 
 # 指标波动归因诊断 Skill
@@ -55,15 +68,15 @@ description: |
 **认证方式**：所有请求必须携带 API Key，通过请求头 `X-API-Key` 传递（也可通过 `?apikey=` 查询参数传递）。未携带或无效 Key 将返回 401。
 
 **调用铁律**：
-1. **所有请求必须加 API Key 认证头 `-H "X-API-Key: {your-api-key}"`**
+1. **所有请求必须加 API Key 认证头 `-H "X-API-Key: $CAN_API_KEY"`**，`$CAN_API_KEY` 从环境变量读取（用户需在 `~/.openclaw/.env` 中配置 `CAN_API_KEY=cgk-xxxxxxxx`）
 2. URL 中文参数必须 URL 编码，使用 `--data-urlencode` + `-G`
 
 > 示例：
 > ```bash
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=5" --data-urlencode "keyword=销售额" -G
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/retail_amt/dimensions"
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=5" --data-urlencode "keyword=销售额" -G
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/retail_amt/dimensions"
 > # 维度多关键词过滤（逗号分隔，匹配任一即返回，匹配范围包括维度名/展示名/描述/维度值样本）
-> curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/retail_amt/dimensions" --data-urlencode "keyword=渠道,地区,品牌" -G
+> curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/retail_amt/dimensions" --data-urlencode "keyword=渠道,地区,品牌" -G
 > ```
 
 ### 指标查询 API（执行数据查询）
@@ -73,7 +86,7 @@ description: |
 用 heredoc 传 JSON body（因 timeConstraint 含单引号，禁止用 `-d '...'`）：
 ```bash
 curl -X POST "https://gateway.can.aloudata.com/api/metrics/query" \
-  -H "X-API-Key: {your-api-key}" \
+  -H "X-API-Key: $CAN_API_KEY" \
   -H "Content-Type: application/json" \
   -d @- <<'EOF'
 {JSON请求体}
@@ -105,11 +118,11 @@ EOF
 
 ```bash
 # 搜索指标
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=5" --data-urlencode "keyword=销售额" -G
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=5" --data-urlencode "keyword=销售额" -G
 
 # 查整体环比变化
 curl -X POST "https://gateway.can.aloudata.com/api/metrics/query" \
-  -H "X-API-Key: {your-api-key}" \
+  -H "X-API-Key: $CAN_API_KEY" \
   -H "Content-Type: application/json" \
   -d @- <<'EOF'
 {
@@ -161,7 +174,7 @@ EOF
 
 ```bash
 # 搜索相关因子指标
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=10" --data-urlencode "keyword=UV,转化率,客单价,购买人数" -G
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/search?pageSize=10" --data-urlencode "keyword=UV,转化率,客单价,购买人数" -G
 ```
 
 ```json
@@ -331,7 +344,7 @@ def waterfall_chart(factors, contributions, base_value, current_value, title, sa
 
 查询指标（或主因子指标）的可用维度：
 ```bash
-curl -H "X-API-Key: {your-api-key}" "https://gateway.can.aloudata.com/api/metrics/{metricName}/dimensions"
+curl -H "X-API-Key: $CAN_API_KEY" "https://gateway.can.aloudata.com/api/metrics/{metricName}/dimensions"
 ```
 
 从可用维度中选取 3-5 个业务上最可能影响波动的维度：
