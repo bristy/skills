@@ -1,0 +1,11 @@
+{
+  "owner": "krishnakumarmahadevan-cmd",
+  "slug": "toolweb-mitre-attack-mapper",
+  "displayName": "MITRE ATT&CK Technique Mapper",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773912805395,
+    "commit": null
+  },
+  "history": []
+}
