@@ -3,9 +3,15 @@
   "slug": "kafka",
   "displayName": "Kafka",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773673807449,
-    "commit": "https://github.com/openclaw/skills/commit/8984b5d8111cdaf62e3001cc79c89522e4bd3613"
+    "version": "3.0.1",
+    "publishedAt": 1773914027979,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773673807449,
+      "commit": "https://github.com/openclaw/skills/commit/8984b5d8111cdaf62e3001cc79c89522e4bd3613"
+    }
+  ]
 }
