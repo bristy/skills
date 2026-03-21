@@ -1,0 +1,11 @@
+{
+  "owner": "juan-oy",
+  "slug": "local-image-gen-aipc",
+  "displayName": "Local image generation with OpenVINO (no API key)",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1773986769531,
+    "commit": null
+  },
+  "history": []
+}
