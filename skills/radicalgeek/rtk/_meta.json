@@ -1,0 +1,11 @@
+{
+  "owner": "radicalgeek",
+  "slug": "rtk",
+  "displayName": "cli output compression for token savings with rtk",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773968562005,
+    "commit": null
+  },
+  "history": []
+}
