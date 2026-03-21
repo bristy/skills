@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-from app.core.settings import get_settings
+from app.core.settings import ROOT_DIR, Settings, get_settings
 
 
 def resolve_sqlite_path(database_url: str) -> Path:
@@ -11,12 +11,24 @@ def resolve_sqlite_path(database_url: str) -> Path:
     return Path(database_url.removeprefix(prefix))
 
 
-def bootstrap_database() -> Path:
-    settings = get_settings()
-    db_path = resolve_sqlite_path(settings.database_url)
+def resolve_schema_path(settings: Settings | None = None) -> Path:
+    active_settings = settings or get_settings()
+    candidates = [
+        active_settings.configs_dir.parent / "docs" / "schema.sql",
+        ROOT_DIR / "docs" / "schema.sql",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
+def bootstrap_database(settings: Settings | None = None) -> Path:
+    active_settings = settings or get_settings()
+    db_path = resolve_sqlite_path(active_settings.database_url)
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    schema_path = settings.configs_dir.parent / "docs" / "schema.sql"
+    schema_path = resolve_schema_path(active_settings)
     schema_sql = schema_path.read_text(encoding="utf-8")
 
     connection = sqlite3.connect(db_path)
@@ -27,6 +39,7 @@ def bootstrap_database() -> Path:
         _migrate_sender_profiles(connection)
         _migrate_memory(connection)
         _migrate_review_streaks(connection)
+        _migrate_exemplar_cache(connection)
         _populate_fts(connection)
         connection.commit()
     finally:
@@ -53,6 +66,8 @@ def _migrate_feedback_pairs(connection: sqlite3.Connection) -> None:
 def _migrate_reply_pairs(connection: sqlite3.Connection) -> None:
     """Add quality_score and language columns to reply_pairs if missing."""
     cols = {row[1] for row in connection.execute("PRAGMA table_info(reply_pairs)").fetchall()}
+    if "auto_feedback_processed" not in cols:
+        connection.execute("ALTER TABLE reply_pairs ADD COLUMN auto_feedback_processed INTEGER DEFAULT 0")
     if "quality_score" not in cols:
         connection.execute("ALTER TABLE reply_pairs ADD COLUMN quality_score REAL DEFAULT 1.0")
     if "language" not in cols:
@@ -147,3 +162,15 @@ def _populate_fts(connection: sqlite3.Connection) -> None:
             )
         except Exception:
             pass
+
+
+def _migrate_exemplar_cache(connection: sqlite3.Connection) -> None:
+    """Create persistent exemplar cache table if it doesn't exist."""
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS exemplar_cache (
+            cache_key TEXT PRIMARY KEY,
+            source_ids_json TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_exemplar_cache_updated ON exemplar_cache(updated_at)")

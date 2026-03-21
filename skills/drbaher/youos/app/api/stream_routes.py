@@ -13,11 +13,15 @@ from app.core.sender import classify_sender, extract_domain
 from app.core.text_utils import strip_quoted_text
 from app.generation.service import (
     DraftRequest,
+    _apply_cached_order,
     _format_sender_context,
+    _get_cached_exemplar_ids,
     _load_persona,
     _load_prompts,
     _precedent_summary,
     _score_confidence,
+    _top_exemplar_source_ids,
+    _update_exemplar_cache,
     assemble_prompt,
     generate_draft,
     lookup_sender_profile,
@@ -59,6 +63,27 @@ def _stream_generate(body: StreamBody, settings):
     )
 
     reply_pairs = retrieval_response.reply_pairs
+
+    # Apply exemplar caching (read + write)
+    from app.core.intent import classify_intents_multi
+    intents = classify_intents_multi(clean_inbound)
+    detected_intent = intents[0]
+
+    cached_ids, exemplar_cache_hit, exemplar_cache_key = _get_cached_exemplar_ids(
+        detected_intent,
+        sender_type_hint,
+        database_url=settings.database_url,
+    )
+    reply_pairs = _apply_cached_order(reply_pairs, cached_ids)
+
+    selected_ids = _top_exemplar_source_ids(reply_pairs)
+    _update_exemplar_cache(
+        detected_intent,
+        sender_type_hint,
+        selected_ids,
+        database_url=settings.database_url,
+    )
+
     confidence, _ = _score_confidence(reply_pairs)
     precedent_used = [_precedent_summary(rp) for rp in reply_pairs]
     detected_mode = retrieval_response.detected_mode
@@ -80,6 +105,7 @@ def _stream_generate(body: StreamBody, settings):
         detected_mode=detected_mode,
         tone_hint=body.tone_hint,
         sender_context=sender_context,
+        sender_type=sender_type_hint,
         user_prompt=body.user_prompt,
     )
 
@@ -117,7 +143,14 @@ def _stream_generate(body: StreamBody, settings):
         except Exception as exc:
             yield f"data: {json.dumps({'token': f'[generation failed: {exc}]'})}\n\n"
 
-    yield f"data: {json.dumps({'done': True, 'confidence': confidence, 'precedent_used': precedent_used})}\n\n"
+    done_payload = {
+        "done": True,
+        "confidence": confidence,
+        "precedent_used": precedent_used,
+        "exemplar_cache_hit": exemplar_cache_hit,
+        "exemplar_cache_key": exemplar_cache_key,
+    }
+    yield f"data: {json.dumps(done_payload)}\n\n"
 
 
 @router.post("/stream")

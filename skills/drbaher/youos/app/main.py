@@ -1,4 +1,7 @@
+import logging
+import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -23,11 +26,13 @@ from app.core.auth import (
     verify_pin,
 )
 from app.core.config import load_config
+from app.core.data_safety import validate_startup_runtime
 from app.core.settings import get_settings
 
 TEMPLATES_DIR = Path(__file__).resolve().parents[1] / "templates"
 SESSION_COOKIE = "youos_session"
 SESSION_MAX_AGE = 86400  # 24 hours
+logger = logging.getLogger("youos.runtime")
 
 
 class PinAuthMiddleware(BaseHTTPMiddleware):
@@ -60,7 +65,40 @@ class PinAuthMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    settings = app.state.settings
+    config = app.state.config
+    logger.info(
+        "Starting YouOS runtime: env=%s instance=%s db=%s configs=%s",
+        settings.environment,
+        settings.instance_name,
+        settings.database_url,
+        settings.configs_dir,
+    )
+    try:
+        startup_report = validate_startup_runtime(settings, config)
+    except Exception:
+        logger.exception(
+            "YouOS startup validation failed: env=%s instance=%s db=%s",
+            settings.environment,
+            settings.instance_name,
+            settings.database_url,
+        )
+        raise
+
+    app.state.startup_report = startup_report
+    app.state.is_ready = True
+    if startup_report.get("warnings"):
+        for warning in startup_report["warnings"]:
+            logger.warning("Startup warning: %s", warning)
+    logger.info(
+        "YouOS runtime ready: bootstrap_applied=%s status=%s started_at=%s",
+        startup_report.get("bootstrap_applied", False),
+        startup_report.get("status"),
+        datetime.now(timezone.utc).isoformat(),
+    )
+
     yield
+    app.state.is_ready = False
     # Clear embedding cache on shutdown
     from app.core.embeddings import clear_embedding_cache
 
@@ -70,15 +108,22 @@ async def _lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     config = load_config()
+    instance_name = getattr(settings, "instance_name", "YouOS")
+    if instance_name == "YouOS":
+        instance_name = str(config.get("user", {}).get("display_name") or instance_name)
 
     app = FastAPI(
-        title="YouOS",
-        version="0.1.10",
+        title=f"{settings.app_name} ({instance_name})",
+        version=settings.version,
         description="Your personal AI email copilot — learns your style from your Gmail history.",
         lifespan=_lifespan,
     )
     app.state.settings = settings
     app.state.config = config
+    app.state.started_at_monotonic = time.monotonic()
+    app.state.started_at_utc = datetime.now(timezone.utc).isoformat()
+    app.state.startup_report = None
+    app.state.is_ready = False
 
     auth_middleware = PinAuthMiddleware(app, config)
     app.add_middleware(BaseHTTPMiddleware, dispatch=auth_middleware.dispatch)

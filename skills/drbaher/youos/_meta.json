@@ -3,9 +3,15 @@
   "slug": "youos",
   "displayName": "YouOS",
   "latest": {
-    "version": "0.1.10",
-    "publishedAt": 1773781178129,
-    "commit": "https://github.com/openclaw/skills/commit/c523ec691c6185db1f00e04079aa57bb92c7fb90"
+    "version": "0.1.18",
+    "publishedAt": 1773929839369,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.10",
+      "publishedAt": 1773781178129,
+      "commit": "https://github.com/openclaw/skills/commit/c523ec691c6185db1f00e04079aa57bb92c7fb90"
+    }
+  ]
 }

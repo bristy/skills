@@ -23,11 +23,8 @@ def _default_config_path() -> Path:
     return ROOT_DIR / "youos_config.yaml"
 
 
-CONFIG_PATH = _default_config_path()
-
-
 def _load_raw_config(config_path: Path | None = None) -> dict[str, Any]:
-    path = config_path or CONFIG_PATH
+    path = config_path or _default_config_path()
     if not path.exists():
         return {}
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -36,6 +33,10 @@ def _load_raw_config(config_path: Path | None = None) -> dict[str, Any]:
 @lru_cache(maxsize=1)
 def load_config(config_path: Path | None = None) -> dict[str, Any]:
     return _load_raw_config(config_path)
+
+
+def get_config_path(config_path: Path | None = None) -> Path:
+    return config_path or _default_config_path()
 
 
 def get_user_name(config: dict[str, Any] | None = None) -> str:
@@ -128,6 +129,16 @@ def get_tailscale_hostname(config: dict[str, Any] | None = None) -> str:
 def get_autoresearch_iterations(config: dict[str, Any] | None = None) -> int:
     cfg = config or load_config()
     return int(cfg.get("autoresearch", {}).get("iterations", 80))
+
+
+def get_persona_mode_config(sender_type: str, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    cfg = config or load_config()
+    return cfg.get("persona", {}).get("modes", {}).get(sender_type, {})
+
+
+def get_persona_style_anchor(sender_type: str, config: dict[str, Any] | None = None) -> str | None:
+    mode_config = get_persona_mode_config(sender_type, config)
+    return mode_config.get("style_anchor")
 
 
 def get_ollama_config(config: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -227,7 +238,7 @@ def get_account_for_sender(sender: str, config: dict[str, Any] | None = None) ->
 
 
 def save_config(config: dict[str, Any], config_path: Path | None = None) -> None:
-    path = config_path or CONFIG_PATH
+    path = get_config_path(config_path)
     path.write_text(
         yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False, width=120),
         encoding="utf-8",
