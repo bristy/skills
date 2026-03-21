@@ -137,10 +137,7 @@ def sync(email_cn, password_cn, email_global=None, password_global=None, new_onl
     if not password_global:
         password_global = password_cn
     
-    print("Logging into Garmin CN...")
     client_cn = login_garmin(email_cn, password_cn, 'garmin.cn')
-    
-    print("Logging into Garmin Global...")
     client_int = login_garmin(email_global, password_global, 'garmin.com')
     
     # Load state
@@ -148,11 +145,9 @@ def sync(email_cn, password_cn, email_global=None, password_global=None, new_onl
     failed_records = load_json(FAILED_FILE, {})
     
     # Get CN activities
-    print("Fetching CN activities...")
     cn_activities = get_all_activities(client_cn)
     
     # Get Global activities
-    print("Fetching Global activities...")
     int_activities = get_all_activities(client_int)
     
     # Use startTimeLocal + distance as unique key
@@ -163,8 +158,6 @@ def sync(email_cn, password_cn, email_global=None, password_global=None, new_onl
     
     # Step 1: Retry failed records (only once each)
     retry_keys = list(failed_records.keys())
-    print(f"\n=== Retry Phase ===")
-    print(f"Found {len(retry_keys)} failed records to retry")
     
     retry_success = 0
     for key in retry_keys:
@@ -190,23 +183,26 @@ def sync(email_cn, password_cn, email_global=None, password_global=None, new_onl
     save_json(FAILED_FILE, failed_records)
     
     # Step 2: Sync new records
-    print(f"\n=== Sync Phase ===")
-    
     # Filter activities
     if new_only and last_sync:
-        print(f"Only syncing records newer than {last_sync}")
         to_sync = [a for a in cn_activities 
                    if a.get('startTimeLocal') > last_sync 
                    and (a.get('startTimeLocal'), a.get('distance')) not in int_keys]
     else:
-        print("Syncing all unsynced records")
         to_sync = [a for a in cn_activities 
                    if (a.get('startTimeLocal'), a.get('distance')) not in int_keys]
     
-    print(f"Found {len(to_sync)} new activities to sync")
+    # If nothing to retry and nothing to sync, exit silently (no output = no notification)
+    if len(to_sync) == 0 and retry_success == 0 and len(retry_keys) == 0:
+        sys.exit(0)
     
-    synced = 0
+    # Now print progress - only if there's something to do
+    print(f"\n=== Garmin Sync ===")
+    if retry_keys:
+        print(f"Retrying {len(retry_keys)} failed records")
+    
     failed = 0
+    synced = 0
     latest_time = last_sync
     
     for i, a in enumerate(to_sync):
@@ -237,9 +233,8 @@ def sync(email_cn, password_cn, email_global=None, password_global=None, new_onl
     # Save failed records
     save_json(FAILED_FILE, failed_records)
     
-    # If nothing to sync and no retries, exit silently
+    # If nothing to sync and no retries, exit silently (no output = no notification)
     if synced == 0 and retry_success == 0 and failed == 0:
-        print("No new activities to sync.")
         sys.exit(0)
     
     # Update state
@@ -247,7 +242,8 @@ def sync(email_cn, password_cn, email_global=None, password_global=None, new_onl
     state['last_activity_time'] = latest_time
     save_json(STATE_FILE, state)
     
-    print(f"\n=== Done ===")
+    # Always output in English
+    print(f"\n=== Garmin Sync Done ===")
     print(f"Retried: {retry_success}")
     print(f"Synced: {synced}")
     print(f"Failed: {failed}")

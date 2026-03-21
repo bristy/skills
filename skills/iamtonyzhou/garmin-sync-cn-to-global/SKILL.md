@@ -12,8 +12,17 @@ pip install garth
 garmin-sync set-credentials --email your_email --password your_password
 
 # Sync new activities from CN to Global
-garmin-sync sync
+garmin-sync sync --new-only
 ```
+
+## Options
+
+- `--new-only` - Only sync records newer than last sync time (recommended for cron jobs)
+
+## Behavior
+
+- **Silent when no new activities**: If there are no activities to sync (and no failed retries), the script exits silently with no output. This is useful for cron jobs where you only want to be notified when there's actual work to do.
+- **English output**: All output is in English for consistency.
 
 ## Requirements
 
