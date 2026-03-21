@@ -3,9 +3,15 @@
   "slug": "ocas-voyage",
   "displayName": "Ocas Voyage",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773721082491,
-    "commit": "https://github.com/openclaw/skills/commit/9885e59a401a584f60607cf176ac7aae562bbb5e"
+    "version": "2.0.0",
+    "publishedAt": 1773812079560,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773721082491,
+      "commit": "https://github.com/openclaw/skills/commit/9885e59a401a584f60607cf176ac7aae562bbb5e"
+    }
+  ]
 }

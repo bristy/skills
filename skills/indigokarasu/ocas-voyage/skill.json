@@ -1,8 +1,7 @@
 {
   "name": "ocas-voyage",
-  "version": "1.0.1",
-  "description": "Travel planning, itinerary construction, and reservation management. Use when the user wants to plan a trip, build an itinerary, find lodging or restaurants, optimize travel logistics, or manage reservations. Trigger phrases: 'plan a trip to Kyoto', 'build an itinerary for Tokyo', 'recommend where to stay', 'optimize this itinerary'. Do not use for generic travel inspiration, visa advice, or airfare-only optimization.",
+  "version": "2.0.0",
+  "description": "Travel planning, itinerary construction, and reservation management. Use when the user wants to plan a trip, build an itinerary, find lodging or restaurants, optimize travel logistics, or manage reservations. Do not use for generic travel inspiration, visa advice, or airfare-only optimization.",
   "author": "Indigo Karasu",
-  "email": "mx.indigo.karasu@gmail.com",
-  "skill_type": "workflow"
+  "email": "mx.indigo.karasu@gmail.com"
 }
