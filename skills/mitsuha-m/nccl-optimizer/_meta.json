@@ -1,0 +1,11 @@
+{
+  "owner": "mitsuha-m",
+  "slug": "nccl-optimizer",
+  "displayName": "Nccl Optimizer",
+  "latest": {
+    "version": "1.1.0",
+    "publishedAt": 1773999219962,
+    "commit": null
+  },
+  "history": []
+}
