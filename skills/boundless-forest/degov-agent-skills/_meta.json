@@ -1,0 +1,11 @@
+{
+  "owner": "boundless-forest",
+  "slug": "degov-agent-skills",
+  "displayName": "DAO Governance",
+  "latest": {
+    "version": "0.6.1",
+    "publishedAt": 1773910533162,
+    "commit": null
+  },
+  "history": []
+}
