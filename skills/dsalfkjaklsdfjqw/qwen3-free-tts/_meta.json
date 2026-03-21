@@ -1,0 +1,11 @@
+{
+  "owner": "dsalfkjaklsdfjqw",
+  "slug": "qwen3-free-tts",
+  "displayName": "Qwen3/Free Text-to-Speech and Voice Cloning",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773954326034,
+    "commit": null
+  },
+  "history": []
+}
