@@ -1,0 +1,11 @@
+{
+  "owner": "juan-oy",
+  "slug": "ov-local-image-gen",
+  "displayName": "Local image generator on Intel platform",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773976709618,
+    "commit": null
+  },
+  "history": []
+}
