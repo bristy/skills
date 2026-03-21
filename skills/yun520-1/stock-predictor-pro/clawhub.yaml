@@ -1,0 +1,68 @@
+# ClawHub 技能配置
+name: stock-predictor-pro
+slug: stock-predictor-pro
+version: 26.0.0
+displayName: 股票预测专家 Pro (数据升级版 v26.0)
+description: 基于 275M 历史数据的智能股票预测系统 - 集成模型 (LGB+XGB+RF)，准确率 91.37%，支持阈值优化、数据库管理、Top10 推荐
+author: 9 号小虫子 · 严谨专业版
+license: MIT-0
+category: finance-analysis
+
+# 技能入口文件
+main: train_and_predict_v24.py
+
+# 依赖
+dependencies:
+  - pandas>=1.5.0
+  - numpy>=1.21.0
+  - lightgbm>=3.3.0
+  - scikit-learn>=1.0.0
+  - tqdm>=4.65.0
+  - requests>=2.28.0
+  - akshare>=1.10.0
+
+# 系统要求
+requirements:
+  - Python 3.8+
+
+# 标签
+tags:
+  - stock
+  - prediction
+  - machine-learning
+  - lightgbm
+  - finance
+  - a-share
+  - quantitative
+
+# 使用示例
+examples:
+  - "python train_and_predict_v24.py --train"
+  - "python train_and_predict_v24.py --predict"
+  - "python backtest_v24.py --days 30"
+
+# 变更日志
+changelog: |
+  ### v26.0.0 (2026-03-19)
+  - 🤖 集成模型：LightGBM + XGBoost + Random Forest
+  - 🎯 阈值优化：11 个阈值测试，最优 0.65 (准确率 91.37%)
+  - 🗄️ 数据库管理：SQLite 支持每日自动更新
+  - 📊 历史数据分析：3995 条预测记录分析
+  - 🏆 Top10 推荐：自动生成每日推荐
+  - 📦 完整备份：8.9MB ZIP 包
+  
+  ### v25.1.0 (2026-03-19)
+  - 🎯 阈值优化系统
+  - 📊 准确率最高 96.67%
+  
+  ### v25.0.0 (2026-03-19)
+  - 🤖 集成模型优化
+  - 📈 特征工程增强
+  
+  ### v24.0.0 (2026-03-19)
+  - 🎯 数据升级：整合 275M 历史数据集
+  - 🧠 模型优化：LightGBM v23 → v24
+  
+  ### v23.0.0 (2026-03-18)
+  - ✨ LightGBM 机器学习模型
+  - 📊 23 个技术因子
