@@ -1,0 +1,18 @@
+Please use kb-manager to initialize a knowledge base.
+
+Requirements:
+1. Create a `knowledge/` directory in the current workspace
+2. Create standard subdirectories:
+   - 00_inbox
+   - 01_reference
+   - 02_learning
+   - 03_projects
+   - 04_research
+   - 05_playbooks
+   - 06_prompts
+   - 07_archive
+   - _meta
+3. Create meta files for classification rules, naming rules, active template, and intake log
+4. Use `templates/default-entry.md` as the default template
+5. Use `templates/project-entry.md` for project-related content
+6. Put uncertain items into `00_inbox`

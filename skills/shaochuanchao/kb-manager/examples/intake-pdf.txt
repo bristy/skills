@@ -1,0 +1,7 @@
+Please turn this PDF into a knowledge entry.
+
+Requirements:
+1. If it is an official document, prefer `01_reference`
+2. If it is a tutorial or study material, prefer `02_learning`
+3. Use the default entry template
+4. Output the final path, filename, and structured Markdown
