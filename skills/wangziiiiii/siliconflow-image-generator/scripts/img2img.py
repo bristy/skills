@@ -6,8 +6,8 @@ import sys
 import requests
 
 CONFIGS = [
-    pathlib.Path('/home/wang/.openclaw/openclaw.json'),
-    pathlib.Path('/mnt/e/openclaw-data/.openclaw/openclaw.json'),
+    pathlib.Path('E:/openclaw/.openclaw/openclaw.json'),
+    pathlib.Path('E:/openclaw/.openclaw/openclaw.json'),
 ]
 API_URL = 'https://api.siliconflow.cn/v1/images/generations'
 MODEL = 'Kwai-Kolors/Kolors'

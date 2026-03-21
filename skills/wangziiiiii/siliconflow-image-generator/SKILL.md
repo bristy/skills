@@ -5,6 +5,8 @@ description: "SiliconFlow text-to-image and image-to-image generation for covers
 
 # Image Generator
 
+> Cross-platform Python: on Windows prefer `py -3.11`; on Linux/macOS prefer `python3`; if plain `python` already points to Python 3, it also works.
+
 Generate cover images, posters, and campaign creatives with SiliconFlow image generation.
 Use this skill for text-to-image and image-to-image workflows, not OCR or visual question answering.
 
@@ -20,7 +22,7 @@ Use this skill when you want to:
 Run from the installed skill directory:
 
 ```bash
-python3 scripts/txt2img.py '{
+py -3.11 scripts/txt2img.py '{
   "prompt": "a clean promotional poster for a VIN lookup workflow",
   "image_size": "1024x1024"
 }'
@@ -84,7 +86,7 @@ Use a different skill when you need:
 ### 文生图
 
 ```bash
-python3 scripts/txt2img.py '{
+py -3.11 scripts/txt2img.py '{
   "prompt": "an island near sea, with seagulls, moon shining over the sea, light house",
   "image_size": "1024x1024"
 }'
@@ -93,7 +95,7 @@ python3 scripts/txt2img.py '{
 ### 图生图
 
 ```bash
-python3 scripts/img2img.py '{
+py -3.11 scripts/img2img.py '{
   "prompt": "turn this into a dreamy cinematic moonlit seascape",
   "image_path": "/path/to/reference.jpg",
   "image_size": "1024x1024"
@@ -120,7 +122,7 @@ python3 scripts/img2img.py '{
 
 快速自检：
 ```bash
-python3 scripts/txt2img.py '{"prompt":"a minimal test image","image_size":"512x512"}'
+py -3.11 scripts/txt2img.py '{"prompt":"a minimal test image","image_size":"512x512"}'
 ```
 若返回图片 URL 或标准响应 JSON，说明密钥生效。
 
