@@ -1,11 +1,17 @@
 {
   "owner": "yh22e",
   "slug": "openclaw-smartness-eval",
-  "displayName": "Openclaw Smartness Eval",
+  "displayName": "OpenClaw Smartness Eval",
   "latest": {
-    "version": "0.2.1",
-    "publishedAt": 1773630360350,
-    "commit": "https://github.com/openclaw/skills/commit/e2f42aa6b0d0708f466e0542ac4ad30e2ab5b7fa"
+    "version": "0.3.2",
+    "publishedAt": 1774012185204,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.2.1",
+      "publishedAt": 1773630360350,
+      "commit": "https://github.com/openclaw/skills/commit/e2f42aa6b0d0708f466e0542ac4ad30e2ab5b7fa"
+    }
+  ]
 }
