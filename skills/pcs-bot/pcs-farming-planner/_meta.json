@@ -1,0 +1,11 @@
+{
+  "owner": "pcs-bot",
+  "slug": "pcs-farming-planner",
+  "displayName": "Farming Planner",
+  "latest": {
+    "version": "1.1.1",
+    "publishedAt": 1773995474214,
+    "commit": null
+  },
+  "history": []
+}
