@@ -1,11 +1,17 @@
 {
   "owner": "phy041",
   "slug": "phy-ux-reviewer",
-  "displayName": "UX Reviewer",
+  "displayName": "Phy Ux Reviewer",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772796208732,
-    "commit": "https://github.com/openclaw/skills/commit/c2ea1ca4cc04ff7ec51ec553f384ff97dfe31f28"
+    "version": "1.0.1",
+    "publishedAt": 1774181683279,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772796208732,
+      "commit": "https://github.com/openclaw/skills/commit/c2ea1ca4cc04ff7ec51ec553f384ff97dfe31f28"
+    }
+  ]
 }

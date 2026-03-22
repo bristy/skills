@@ -1,6 +1,7 @@
 ---
 name: ux-reviewer
 description: UX 启发式评估专家。基于 Nielsen Norman 10 条可用性原则检查用户体验问题。当用户说「review UX」「检查用户体验」「UX 评估」「可用性检查」「启发式评估」时触发。
+homepage: https://canlah.ai
 ---
 
 # UX Reviewer
