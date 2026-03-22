@@ -1,6 +1,7 @@
 ---
 name: linkedin-gtm
 description: LinkedIn go-to-market strategy for founders and product builders. Use when planning LinkedIn content, targeting DTC brand operators, B2B decision makers, or investors. Triggers on "LinkedIn strategy", "LinkedIn for founders", "investor outreach on LinkedIn", "B2B content", "professional networking", or any LinkedIn marketing planning.
+homepage: https://canlah.ai
 metadata: {"openclaw": {"emoji": "💼", "os": ["darwin", "linux"]}}
 ---
 
