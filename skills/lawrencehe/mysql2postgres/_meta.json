@@ -1,0 +1,11 @@
+{
+  "owner": "lawrencehe",
+  "slug": "mysql2postgres",
+  "displayName": "MySQL to PostgreSQL Migration",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1774165378147,
+    "commit": null
+  },
+  "history": []
+}
