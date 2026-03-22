@@ -1,0 +1,11 @@
+{
+  "owner": "chuansir123",
+  "slug": "xuebang-data-skill",
+  "displayName": "查看学邦数据。用于登录学邦后台并读取首页今日经营数据与待办数据。",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774159645350,
+    "commit": null
+  },
+  "history": []
+}
