@@ -1,0 +1,11 @@
+{
+  "owner": "alfred-intel-handler-source",
+  "slug": "liteparse",
+  "displayName": "LiteParse",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774112545268,
+    "commit": null
+  },
+  "history": []
+}
