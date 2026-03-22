@@ -1,0 +1,11 @@
+{
+  "owner": "yoshiofthewire",
+  "slug": "unraid-claw",
+  "displayName": "Unraid Monitor Skill for OpenClaw",
+  "latest": {
+    "version": "1.0.4",
+    "publishedAt": 1774043586436,
+    "commit": null
+  },
+  "history": []
+}
