@@ -1,0 +1,11 @@
+{
+  "owner": "ddpie",
+  "slug": "batch-file-processor",
+  "displayName": "Batch File Processor",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774156145432,
+    "commit": null
+  },
+  "history": []
+}
