@@ -1,0 +1,11 @@
+{
+  "owner": "phy041",
+  "slug": "phy-http-cache-audit",
+  "displayName": "Phy Http Cache Audit",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774044870999,
+    "commit": null
+  },
+  "history": []
+}
