@@ -1,0 +1,11 @@
+{
+  "owner": "gora050",
+  "slug": "ansible-integration",
+  "displayName": "Ansible",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774159408889,
+    "commit": null
+  },
+  "history": []
+}
