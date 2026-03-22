@@ -1,0 +1,10 @@
+{
+  "name": "theta-trading-system",
+  "version": "1.0.0",
+  "description": "基于真实A股涨停股数据的智能选股系统",
+  "author": "Theta Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/theta-team/theta-trading-system"
+  }
+}
