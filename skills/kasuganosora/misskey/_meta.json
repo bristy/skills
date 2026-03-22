@@ -1,0 +1,11 @@
+{
+  "owner": "kasuganosora",
+  "slug": "misskey",
+  "displayName": "Misskey",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1774141816088,
+    "commit": null
+  },
+  "history": []
+}
