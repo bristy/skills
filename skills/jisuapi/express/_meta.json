@@ -1,13 +1,18 @@
 {
   "owner": "jisuapi",
   "slug": "express",
-  "displayName": "快递物流查询 - Express Logistics Track",
+  "displayName": "Express Logistics Track - 快递物流查询",
   "latest": {
-    "version": "1.0.3",
-    "publishedAt": 1773309215787,
-    "commit": "https://github.com/openclaw/skills/commit/bb7148f37fcd448ca2576ce3c017dc85b7ab394a"
+    "version": "1.0.4",
+    "publishedAt": 1773719712088,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.3",
+      "publishedAt": 1773309215787,
+      "commit": "https://github.com/openclaw/skills/commit/bb7148f37fcd448ca2576ce3c017dc85b7ab394a"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1772532598520,
