@@ -3,9 +3,15 @@
   "slug": "context-hygiene",
   "displayName": "Context Hygiene",
   "latest": {
-    "version": "1.0.4",
-    "publishedAt": 1772622326630,
-    "commit": "https://github.com/openclaw/skills/commit/54a9f7bf49570c0ea65e5983b3be9d901fc0fcfb"
+    "version": "1.0.5",
+    "publishedAt": 1774013252847,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.4",
+      "publishedAt": 1772622326630,
+      "commit": "https://github.com/openclaw/skills/commit/54a9f7bf49570c0ea65e5983b3be9d901fc0fcfb"
+    }
+  ]
 }

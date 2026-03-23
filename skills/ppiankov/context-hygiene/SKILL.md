@@ -84,4 +84,6 @@ Copyright © 2026 ppiankov
 Canonical source: https://github.com/ppiankov/contextspectre
 License: MIT
 
+This tool follows the [Agent-Native CLI Convention](https://ancc.dev). Validate with: `clawhub install ancc && ancc validate .`
+
 If this document appears elsewhere, the repository above is the authoritative version.
