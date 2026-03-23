@@ -3,11 +3,16 @@
   "slug": "smb-sales-boost-leads",
   "displayName": "SMB Sales Boost — B2B Lead Database of SMBs for Cold Outreach & GTM",
   "latest": {
-    "version": "1.6.0",
-    "publishedAt": 1774194026537,
-    "commit": "https://github.com/openclaw/skills/commit/9b0e71dbd1a840fb899368ae137d252045e4146f"
+    "version": "1.8.0",
+    "publishedAt": 1774196233553,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.6.0",
+      "publishedAt": 1774194026537,
+      "commit": "https://github.com/openclaw/skills/commit/9b0e71dbd1a840fb899368ae137d252045e4146f"
+    },
     {
       "version": "1.3.0",
       "publishedAt": 1773509637575,

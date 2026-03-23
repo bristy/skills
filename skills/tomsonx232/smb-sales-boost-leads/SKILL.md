@@ -1,6 +1,14 @@
 ---
 name: smb-sales-boost
-description: Query and manage leads from the SMB Sales Boost B2B lead database. Search newly registered businesses, filter by location/industry/keywords, export leads, manage filter presets, and use AI-powered category suggestions. REQUIRED CREDENTIAL — SMB_SALES_BOOST_API_KEY environment variable (smbk_... prefix, generate from Dashboard > API tab). Exports contain PII (business phone numbers and email addresses) — handle with care. Includes programmatic purchase endpoints that create real Stripe charges — always confirm with the user before executing.
+description: Query and manage leads from the SMB Sales Boost B2B lead database. Search newly registered businesses, filter by location/industry/keywords, export leads, manage filter presets, and use AI-powered category suggestions. Requires SMB_SALES_BOOST_API_KEY env var (smbk_... prefix). Exports contain PII (phone numbers, emails). Includes purchase endpoints that create real Stripe charges — always confirm with user.
+metadata:
+  {
+    "openclaw":
+      {
+        "requires": { "env": ["SMB_SALES_BOOST_API_KEY"] },
+        "primaryEnv": "SMB_SALES_BOOST_API_KEY",
+      },
+  }
 ---
 
 # SMB Sales Boost Skill
@@ -298,11 +306,13 @@ Endpoints:
 
 **⚠ Purchase Confirmation Required:** Always confirm with the user before calling `POST /purchase`, `POST /purchase-credits`, or `POST /subscription/change-plan`. These endpoints create real Stripe charges. Never execute a purchase action without explicit user confirmation.
 
+**⚠ Unauthenticated Endpoints:** `POST /purchase` and `POST /claim-key` do **not** require an API key. This means they can be called without any credentials. Because they initiate real Stripe checkout sessions and retrieve API keys, **never call these endpoints autonomously** — always present the action to the user and wait for explicit approval before executing.
+
 No web signup required. New users can purchase and get an API key entirely via API:
 
-1. `POST /purchase` — Create a Stripe Checkout session. Provide `email` and `plan` (starter, growth, scale, platinum, or enterprise). Returns a `checkoutUrl` and `claimToken`.
+1. `POST /purchase` **(unauthenticated)** — Create a Stripe Checkout session. Provide `email` and `plan` (starter, growth, scale, platinum, or enterprise). Returns a `checkoutUrl` and `claimToken`.
 2. Direct the user to complete payment at the checkout URL.
-3. `POST /claim-key` — After payment, provide `email` and `claimToken` to retrieve the API key. If payment is still pending, returns status `pending` — poll every 5-10 seconds.
+3. `POST /claim-key` **(unauthenticated)** — After payment, provide `email` and `claimToken` to retrieve the API key. If payment is still pending, returns status `pending` — poll every 5-10 seconds.
 
 ### 13. Credits & Subscription Management
 
