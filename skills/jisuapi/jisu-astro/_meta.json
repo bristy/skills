@@ -1,13 +1,18 @@
 {
   "owner": "jisuapi",
   "slug": "jisu-astro",
-  "displayName": "星座运势查询 - Star Sign / Horoscope Inquiry",
+  "displayName": "Star Sign / Horoscope Inquiry - 星座运势查询",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1772533582678,
-    "commit": "https://github.com/openclaw/skills/commit/55cf85534239996680af60c2d00aa761a79f6b18"
+    "version": "1.0.3",
+    "publishedAt": 1773727919289,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1772533582678,
+      "commit": "https://github.com/openclaw/skills/commit/55cf85534239996680af60c2d00aa761a79f6b18"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1772518448511,
