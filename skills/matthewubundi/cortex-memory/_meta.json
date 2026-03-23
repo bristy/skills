@@ -3,11 +3,16 @@
   "slug": "cortex-memory",
   "displayName": "Cortex Memory",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773836404348,
-    "commit": "https://github.com/openclaw/skills/commit/46cd414307b4061c243992e16bee42b49097cb47"
+    "version": "1.1.2",
+    "publishedAt": 1773933504042,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773836404348,
+      "commit": "https://github.com/openclaw/skills/commit/46cd414307b4061c243992e16bee42b49097cb47"
+    },
     {
       "version": "1.0.2",
       "publishedAt": 1771328486361,
