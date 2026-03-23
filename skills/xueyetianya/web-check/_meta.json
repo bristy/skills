@@ -3,9 +3,15 @@
   "slug": "web-check",
   "displayName": "Web Check",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1773930068242,
-    "commit": "https://github.com/openclaw/skills/commit/7e7fa23489488ea470fff304254e118eff433b05"
+    "version": "2.0.1",
+    "publishedAt": 1774237693888,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.0.0",
+      "publishedAt": 1773930068242,
+      "commit": "https://github.com/openclaw/skills/commit/7e7fa23489488ea470fff304254e118eff433b05"
+    }
+  ]
 }
