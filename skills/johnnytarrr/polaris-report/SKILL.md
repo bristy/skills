@@ -1,6 +1,6 @@
 # polaris-report
 
-News briefs for AI agents from The Polaris Report — 160+ sources, 18 categories, bias scored, confidence rated.
+Verified intelligence for AI agents — 891 tickers, 200+ sources, 18 categories, bias scored, confidence rated. Live prices, trading signals, screener, social sentiment, crypto, forex, commodities, economic data.
 
 ## Install
 
@@ -10,64 +10,84 @@ openclaw install polaris-report
 
 ## Commands
 
-### `/news [category] [limit]`
+### Intelligence
 
-Get the latest verified news briefs. Optionally filter by category and set result count.
+| Command | Description |
+|---------|-------------|
+| `/news [category] [limit]` | Latest verified briefs (18 categories) |
+| `/brief [topic]` | Generate an on-demand intelligence brief |
+| `/search [query]` | Full-text search across all briefs |
+| `/trending` | Trending stories by engagement |
+| `/forecast [topic]` | Structured predictions on any topic |
+| `/entities [query]` | Search extracted entities (people, orgs, tickers) |
+| `/trending-entities` | Most mentioned entities in last 24h |
+| `/events [type] [subject]` | Structured events (acquisitions, funding, launches) |
+| `/historical [from] [to]` | Search briefs within a date range |
+| `/similar [brief_id]` | Find related briefs by similarity |
+| `/clusters [period]` | Automatic story clusters by topic |
+| `/data [entity] [type]` | Structured data (money, percentages, metrics) |
+| `/timeline [brief_id]` | How a living brief evolved over time |
+| `/web-search [query]` | Web search with trust scoring |
+| `/crawl [url]` | Extract structured content from a URL |
 
-```
-/news              # Latest briefs across all categories
-/news crypto 5     # Latest 5 crypto briefs
-/news ai_ml 3      # Latest 3 AI/ML briefs
-```
+### Trading & Market Data
 
-**Categories:** tech, policy, markets, global, science, health, startups, ai_ml, cybersecurity, climate, defense, realestate, biotech, crypto, politics, energy, space, sports
+| Command | Description |
+|---------|-------------|
+| `/price [symbol]` | Live price + change for any ticker |
+| `/ticker [symbol]` | Ticker overview with sentiment + price |
+| `/ticker-score [symbol]` | Composite trading signal (4 components) |
+| `/technicals [symbol]` | 20 technical indicators + signal summary |
+| `/candles [symbol] [range]` | OHLCV candlestick data |
+| `/screener [query]` | AI-powered natural language stock screener |
+| `/backtest [strategy]` | Replay strategies with equity curve + Sharpe |
+| `/correlation [tickers]` | Pearson correlation matrix (up to 10 tickers) |
+| `/alerts [action]` | Price/sentiment alerts with webhook delivery |
+| `/market-movers` | Top gainers, losers, most active |
+| `/sectors [days]` | All sectors with sentiment overview |
+| `/portfolio [tickers]` | Portfolio-aware intelligence feed |
+| `/events-calendar [ticker]` | Upcoming earnings, launches, acquisitions |
+| `/ipo` | IPO calendar from SEC EDGAR |
 
-### `/brief [topic]`
+### Social Sentiment
 
-Generate an on-demand intelligence brief about any topic. Returns a full brief with analysis, counter-argument, confidence score, and bias rating.
+| Command | Description |
+|---------|-------------|
+| `/social [symbol]` | Reddit + Twitter sentiment for a ticker |
+| `/social-trending` | Trending tickers on social media |
 
-```
-/brief impact of AI on healthcare
-/brief bitcoin ETF inflows
-/brief semiconductor export controls
-```
+### Alternative Assets
 
-### `/search [query]`
+| Command | Description |
+|---------|-------------|
+| `/crypto [symbol]` | Crypto token data or market overview (200 tokens) |
+| `/defi [protocol]` | DeFi TVL overview or protocol detail |
+| `/economy [indicator]` | Economic indicators (GDP, CPI, unemployment, yields) |
 
-Search across all verified briefs. Returns the top 5 most relevant results.
+## Coverage
 
-```
-/search federal reserve rate decision
-/search nvidia earnings
-/search climate policy EU
-```
-
-### `/trending`
-
-See what's trending right now based on reader engagement.
-
-```
-/trending
-```
+- **891 tickers**: 548 equities (full S&P 500 + international ADRs), 200 crypto, 117 ETFs, 16 commodities, 8 market indices
+- **200+ sources** across 18 verticals
+- **20 technical indicators**: SMA, EMA, RSI, MACD, Bollinger, ATR, Stochastic, ADX, OBV, VWAP, Williams %R, CCI, MFI, ROC, and more
+- **Multi-provider prices**: Yahoo Finance + Twelve Data + FMP with automatic failover
 
 ## Pricing
 
-| Tier | API Calls | Brief Generation | Price |
-|------|-----------|------------------|-------|
-| Free | 100/day | 3/day | $0 |
-| Consumer | 100/day | 3/day | $9/mo |
-| Usage (Pay-as-you-go) | 1,000 free/day, then $0.001/call | $0.10/brief | $0/mo + metered |
-| Starter | 3,000/day | 20/mo included | $19/mo |
-| Agent Pro | 10,000/day | Unlimited ($0.10 each) | $49/mo |
+| Plan | Credits/mo | Rate Limit | Price |
+|------|------------|------------|-------|
+| Free | 1,000 | 10/min | $0 |
+| Builder | 3,000 | 120/min | $24/mo |
+| Startup | 10,000 | 300/min | $79/mo |
+| Growth | 40,000 | 600/min | $179/mo |
+| Scale | 100,000 | 1,200/min | $399/mo |
 
 Free tier requires no API key. Upgrade at [thepolarisreport.com/pricing](https://thepolarisreport.com/pricing).
 
 ## Security & Privacy
 
-- **Read-only**: This skill only fetches public news data. It does not write, modify, or delete anything.
-- **No credentials**: No API keys, tokens, or authentication are required or sent.
-- **No user data**: Search queries are sent to api.thepolarisreport.com to fetch results but are not stored, logged, or shared.
-- **No environment variables**: The API URL is hardcoded — no env vars are read.
+- **Read-only**: Only fetches public data. Does not write, modify, or delete anything.
+- **No credentials**: No API keys or tokens required.
+- **No user data**: Queries are not stored or shared.
 - **Single domain**: All requests go to `api.thepolarisreport.com` only.
 
 Privacy policy: https://thepolarisreport.com/privacy
@@ -75,5 +95,5 @@ Privacy policy: https://thepolarisreport.com/privacy
 ## Links
 
 - [The Polaris Report](https://thepolarisreport.com)
-- [API Documentation](https://thepolarisreport.com/docs)
-- [Agent Integration Guide](https://thepolarisreport.com/agents)
+- [API Reference](https://thepolarisreport.com/api-reference)
+- [SDKs & Integrations](https://thepolarisreport.com/developers)

@@ -1,6 +1,6 @@
 # polaris-report
 
-News briefs for AI agents from The Polaris Report — 160+ sources, 18 categories, bias scored, confidence rated.
+Verified intelligence for AI agents — 891 tickers, 200+ sources, 18 categories, bias scored, confidence rated. Live prices, trading signals, AI screener, social sentiment, crypto, forex, commodities, economic data.
 
 ## Install
 
@@ -8,70 +8,37 @@ News briefs for AI agents from The Polaris Report — 160+ sources, 18 categorie
 openclaw install polaris-report
 ```
 
-## Commands
+## Commands (31)
 
-### `/news [category] [limit]`
+**Intelligence:** `/news`, `/brief`, `/search`, `/trending`, `/forecast`, `/entities`, `/trending-entities`, `/events`, `/historical`, `/similar`, `/clusters`, `/data`, `/timeline`, `/web-search`, `/crawl`
 
-Get the latest verified news briefs. Optionally filter by category and set result count.
+**Trading:** `/price`, `/ticker`, `/ticker-score`, `/technicals`, `/candles`, `/screener`, `/backtest`, `/correlation`, `/alerts`, `/market-movers`, `/sectors`, `/portfolio`, `/events-calendar`, `/ipo`
 
-```
-/news              # Latest briefs across all categories
-/news crypto 5     # Latest 5 crypto briefs
-/news ai_ml 3      # Latest 3 AI/ML briefs
-```
+**Social:** `/social`, `/social-trending`
 
-**Categories:** tech, policy, markets, global, science, health, startups, ai_ml, cybersecurity, climate, defense, realestate, biotech, crypto, politics, energy, space, sports
-
-### `/brief [topic]`
-
-Generate an on-demand intelligence brief about any topic. Returns a full brief with analysis, counter-argument, confidence score, and bias rating.
-
-```
-/brief impact of AI on healthcare
-/brief bitcoin ETF inflows
-/brief semiconductor export controls
-```
-
-### `/search [query]`
-
-Search across all verified briefs. Returns the top 5 most relevant results.
-
-```
-/search federal reserve rate decision
-/search nvidia earnings
-/search climate policy EU
-```
-
-### `/trending`
-
-See what's trending right now based on reader engagement.
-
-```
-/trending
-```
+**Alternative Assets:** `/crypto`, `/defi`, `/economy`
 
 ## Pricing
 
-| Tier | API Calls | Brief Generation | Price |
-|------|-----------|------------------|-------|
-| Free | 100/day | 3/day | $0 |
-| Consumer | 100/day | 3/day | $9/mo |
-| Usage (Pay-as-you-go) | 1,000 free/day, then $0.001/call | $0.10/brief | $0/mo + metered |
-| Starter | 3,000/day | 20/mo included | $19/mo |
-| Agent Pro | 10,000/day | Unlimited ($0.10 each) | $49/mo |
+| Plan | Credits/mo | Rate Limit | Price |
+|------|------------|------------|-------|
+| Free | 1,000 | 10/min | $0 |
+| Builder | 3,000 | 120/min | $24/mo |
+| Startup | 10,000 | 300/min | $79/mo |
+| Growth | 40,000 | 600/min | $179/mo |
+| Scale | 100,000 | 1,200/min | $399/mo |
 
 Free tier requires no API key. Upgrade at [thepolarisreport.com/pricing](https://thepolarisreport.com/pricing).
 
-## Security & Privacy
+## Security
 
-- **Read-only**: This skill only fetches public news data. No write operations.
-- **No credentials**: No API keys, tokens, or authentication required.
-- **No user data stored**: Search queries are not logged or shared.
-- **No environment variables**: API URL is hardcoded.
-- **Single domain**: All requests go to `api.thepolarisreport.com` only.
+- **Read-only** — no write operations
+- **No credentials** — no API keys required
+- **No user data stored** — queries are not logged
+- **Single domain** — all requests go to `api.thepolarisreport.com`
 
 ## Links
 
 - [The Polaris Report](https://thepolarisreport.com)
-- [API Documentation](https://thepolarisreport.com/docs)
-- [Agent Integration Guide](https://thepolarisreport.com/agents)
+- [API Reference](https://thepolarisreport.com/api-reference)
+- [SDKs & Integrations](https://thepolarisreport.com/developers)

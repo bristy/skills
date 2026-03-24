@@ -3,9 +3,15 @@
   "slug": "polaris-report",
   "displayName": "Polaris Report",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773194917428,
-    "commit": "https://github.com/openclaw/skills/commit/8f35093ce87a733489878cd2e3ae07d3134b476e"
+    "version": "1.0.2",
+    "publishedAt": 1774293810126,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773194917428,
+      "commit": "https://github.com/openclaw/skills/commit/8f35093ce87a733489878cd2e3ae07d3134b476e"
+    }
+  ]
 }
