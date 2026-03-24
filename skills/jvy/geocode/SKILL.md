@@ -13,8 +13,7 @@ Provider: `https://geocode.com.cn` via `curl`.
 Current root response behavior:
 
 - `GET https://geocode.com.cn/` without params returns `400 Bad Request`
-- error: `lat and lon are required`
-- hint: `only supports GET /?lat=<latitude>&lon=<longitude>`
+- returns field labels for Chinese and English display
 - demo: `https://geocode.com.cn/?lat=39.9042&lon=116.4074`
 
 ## Quick Start
@@ -43,7 +42,7 @@ Current root response behavior:
 
 - Pass decimal latitude and longitude.
 - The endpoint supports reverse geocoding only via `GET /?lat=<latitude>&lon=<longitude>`.
-- A bare root request is expected to fail with a parameter hint; that is normal and confirms the API shape.
+- A bare root request returns a field-label hint payload describing the reverse-geocode result columns.
 - `accept-language` may still be passed, but the documented contract on the site only guarantees `lat` and `lon`.
 
 ## Config
@@ -94,38 +93,36 @@ Current response body:
 
 ```json
 {
-  "error": "lat and lon are required",
-  "hint": "only supports GET /?lat=<latitude>&lon=<longitude>",
-  "output": "[name,city_county,province_state,country,latitude,longitude]",
-  "demo": "https://geocode.com.cn/?lat=39.9042&lon=116.4074"
+  "demo": "https://geocode.com.cn/?lat=25.7433&lon=123.4733",
+  "zh": ["国家/地区", "省", "市", "县", "乡镇/街道"],
+  "en": ["Country", "admin1", "admin2", "", "name"]
 }
 ```
 
 ## Response Shape
 
-Successful responses return a compact JSON array, not an object.
+Successful responses return a compact JSON array, not an object. The root hint now documents five display fields instead of the old six-field output description.
 
 Fixed order mapping:
 
-- index `0`: `name` (place name)
-- index `1`: `city_county`
-- index `2`: `province_state`
-- index `3`: `country` (typically ISO country code)
-- index `4`: `latitude` (provider-normalized result latitude)
-- index `5`: `longitude` (provider-normalized result longitude)
+- index `0`: `Country` / `国家/地区`
+- index `1`: `admin1` / `省`
+- index `2`: `admin2` / `市`
+- index `3`: county-level field when present / `县`
+- index `4`: `name` / `乡镇/街道`
 
 Example:
 
 ```json
-["Beijing", "", "Beijing", "CN", 39.9075, 116.39723]
+["CN", "Taiwan Province", "Yilan County", "Toucheng Township", ""]
 ```
 
 ## What to Return
 
 - The original coordinates
-- Best available locality/region text assembled from `name`, `city_county`, and `province_state`
-- Country code when present
-- Provider-returned normalized coordinates when they differ from the input
+- Best available locality/region text assembled from `name`, county, `admin2`, and `admin1`
+- Country or region value when present
+- A note that some positions may be empty, especially the county or `name` slot over water or remote areas
 - A short note if any fields are empty
 
 ## Notes
