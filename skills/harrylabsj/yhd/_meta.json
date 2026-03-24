@@ -1,13 +1,18 @@
 {
   "owner": "harrylabsj",
   "slug": "yhd",
-  "displayName": "1号店购物助手",
+  "displayName": "YHD",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1773873897032,
-    "commit": "https://github.com/openclaw/skills/commit/194c8375100159476443c5da7cce4f82fc75a637"
+    "version": "2.0.1",
+    "publishedAt": 1774072505658,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.0.0",
+      "publishedAt": 1773873897032,
+      "commit": "https://github.com/openclaw/skills/commit/194c8375100159476443c5da7cce4f82fc75a637"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773484109424,
