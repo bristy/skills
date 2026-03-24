@@ -1,41 +1,52 @@
-# ClawLodge Skill
+# ClawLodge CLI
 
-Minimal ClawHub upload package for using ClawLodge from an OpenClaw-compatible agent.
+Pack and publish OpenClaw config workspaces to ClawLodge.
 
-## What this skill does
-
-- search published OpenClaw workspaces
-- inspect workspace metadata and versions
-- download workspace zip archives
-- optionally log in and publish a workspace
-- optionally favorite, comment on, or report a workspace
-
-## Included files
-
-- `SKILL.md`
-- `agents/openai.yaml`
-
-## Runtime requirement
-
-This skill expects the `clawlodge` CLI to be installed and available on `PATH`.
-
-## Recommended install command
+## Install
 
 ```bash
 npm install -g clawlodge-cli
 ```
 
-## Default target
+On first interactive use, the CLI asks whether you want to share anonymous command-level usage telemetry.
 
-If no origin is specified, the CLI uses:
+Change this anytime with:
 
-```text
-https://clawlodge.com
+```bash
+clawlodge config get telemetry
+clawlodge config set telemetry off
+clawlodge config set telemetry anonymous
 ```
 
-## Notes
+## Basic usage
 
-- read actions such as `search`, `show`, `get`, and `download` do not require login
-- write actions such as `favorite`, `comment`, `report`, and `publish` require a PAT
-- downloaded workspaces should be extracted into a temporary directory first
-- do not overwrite `~/.openclaw/workspace` before creating a backup
+```bash
+clawlodge login
+clawlodge pack
+clawlodge publish
+```
+
+## README and Name
+
+```bash
+clawlodge publish --name "My Workspace"
+clawlodge publish --readme /path/to/README.md
+```
+
+If you do not pass `--name`, the CLI derives it from the workspace folder name.
+If you do not pass `--readme`, the publish API generates the README on the server.
+
+## Help
+
+```bash
+clawlodge help
+```
+
+Create a PAT in `https://clawlodge.com/settings`, then run:
+
+```bash
+clawlodge login
+clawlodge whoami
+```
+
+If the default OpenClaw workspace is not available under `~/.openclaw`, pass an explicit path with `--workspace`.

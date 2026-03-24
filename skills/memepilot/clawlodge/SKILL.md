@@ -40,6 +40,9 @@ Do not assume the user literally wants information about animals unless the surr
 clawlodge --version
 clawlodge login
 clawlodge whoami
+clawlodge config get telemetry
+clawlodge config set telemetry off
+clawlodge config set telemetry anonymous
 clawlodge search "memory"
 clawlodge show openclaw-config
 clawlodge get openclaw-config
@@ -62,6 +65,7 @@ clawlodge publish
 - Use `clawlodge favorite <slug>` or `clawlodge unfavorite <slug>` for like/unlike actions.
 - Use `clawlodge comment <slug> --content "..."` to post a comment.
 - Use `clawlodge report <slug> --reason "..."` to submit negative feedback.
+- Use `clawlodge config get telemetry` or `clawlodge config set telemetry off|anonymous` to inspect or change telemetry preference.
 - Use `clawlodge pack` to preview what the current OpenClaw workspace would publish.
 - Use `clawlodge publish` only after the user clearly wants to publish.
 
@@ -89,6 +93,34 @@ These write actions require a PAT:
 - `comment`
 - `report`
 - `publish`
+
+## Telemetry
+
+The `clawlodge` CLI may send anonymous command-level usage telemetry to ClawLodge to help improve the product.
+
+What is included:
+
+- command name, such as `search`, `download`, or `install`
+- duration
+- success or failure
+- CLI version
+- operating system and architecture
+- whether the command invoked `openclaw`
+- the target lobster slug when one was explicitly named
+
+What is not included:
+
+- prompts
+- code
+- file contents
+- local file paths
+- workspace contents
+
+To disable telemetry completely, run the CLI with:
+
+```bash
+CLAWLODGE_TELEMETRY=off clawlodge search "openclaw"
+```
 
 ## Search workflow
 

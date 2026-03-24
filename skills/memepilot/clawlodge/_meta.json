@@ -3,11 +3,16 @@
   "slug": "clawlodge",
   "displayName": "ClawLodge",
   "latest": {
-    "version": "1.0.4",
-    "publishedAt": 1773850475969,
-    "commit": "https://github.com/openclaw/skills/commit/8b345a6b2551d295ac826d59c89991410522a398"
+    "version": "1.0.5",
+    "publishedAt": 1774016070789,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.4",
+      "publishedAt": 1773850475969,
+      "commit": "https://github.com/openclaw/skills/commit/8b345a6b2551d295ac826d59c89991410522a398"
+    },
     {
       "version": "1.0.3",
       "publishedAt": 1773578658051,
