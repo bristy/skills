@@ -3,11 +3,16 @@
   "slug": "arbitrage-finder",
   "displayName": "Arbitrage Finder",
   "latest": {
-    "version": "2.0.1",
-    "publishedAt": 1773830088811,
-    "commit": "https://github.com/openclaw/skills/commit/1d6dea0c7e91cfaaaa3cfffa2f41be8383838d9b"
+    "version": "3.0.2",
+    "publishedAt": 1774314692186,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.0.1",
+      "publishedAt": 1773830088811,
+      "commit": "https://github.com/openclaw/skills/commit/1d6dea0c7e91cfaaaa3cfffa2f41be8383838d9b"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1773420928865,
