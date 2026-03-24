@@ -3,11 +3,16 @@
   "slug": "baoyu-infographic",
   "displayName": "Baoyu Infographic",
   "latest": {
-    "version": "1.60.0",
-    "publishedAt": 1773287402101,
-    "commit": "https://github.com/openclaw/skills/commit/fb92294cdd738e6df8d82020e76b14a80bb99a27"
+    "version": "1.76.1",
+    "publishedAt": 1774153390955,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.60.0",
+      "publishedAt": 1773287402101,
+      "commit": "https://github.com/openclaw/skills/commit/fb92294cdd738e6df8d82020e76b14a80bb99a27"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773076698166,
