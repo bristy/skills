@@ -3,9 +3,15 @@
   "slug": "trivia",
   "displayName": "Trivia",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773674104725,
-    "commit": "https://github.com/openclaw/skills/commit/e4ca4b69e9dea5448d9706073b29c25fa5743ff6"
+    "version": "2.0.2",
+    "publishedAt": 1773831161881,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773674104725,
+      "commit": "https://github.com/openclaw/skills/commit/e4ca4b69e9dea5448d9706073b29c25fa5743ff6"
+    }
+  ]
 }
