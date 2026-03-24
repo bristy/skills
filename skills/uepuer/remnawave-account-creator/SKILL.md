@@ -297,6 +297,25 @@ remnawave-account-creator/
 
 ---
 
+## 📦 ClawHub 发布
+
+**技能 Slug:** `remnawave-account-creator`
+**当前版本:** 1.1.0
+**发布 ID:** `k978ydgq28482dtbyr8ey5vnp58375q3`
+
+**安装命令:**
+```bash
+clawhub install remnawave-account-creator --version 1.1.0
+```
+
+**更新日志 (v1.1.0 - 2026-03-19):**
+- 修复 API 调用错误：更新分组端点从 `PUT /api/users/{uuid}` 改为 `PATCH /api/users`
+- 修复分页参数：从 `page=1&limit=500` 改为 `page=0&size=200`
+- 修复 callApi 响应解析
+- 添加完整 API 参考文档
+
+---
+
 ## 🔐 隐私设置
 
 **访问权限:** 私密（仅作者可用）
