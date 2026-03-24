@@ -3,11 +3,16 @@
   "slug": "recipe-sync-contacts-to-sheet",
   "displayName": "Recipe Sync Contacts To Sheet",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1774300673034,
-    "commit": "https://github.com/openclaw/skills/commit/854f3e45cb4aad4a1f3b660e2ab00d8877d284bb"
+    "version": "1.0.3",
+    "publishedAt": 1774380584196,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1774300673034,
+      "commit": "https://github.com/openclaw/skills/commit/854f3e45cb4aad4a1f3b660e2ab00d8877d284bb"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773569323311,
