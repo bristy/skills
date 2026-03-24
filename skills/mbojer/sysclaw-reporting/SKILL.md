@@ -16,27 +16,26 @@ Report issues and submit requests to SysClaw. This is the client-side skill — 
 
 ## Prerequisites
 
-Set these environment variables before running scripts:
+### 1. Install Python dependency
 
 ```bash
-export SYSCLAW_DB_HOST="<your-db-host>"     # Ask your SysClaw operator
+pip3 install psycopg2-binary
+```
+
+### 2. Set environment variables
+
+Set these before running scripts. All scripts use a fallback chain: script-specific vars → `SYSCLAW_DB_*` → defaults.
+
+```bash
+# Shared connection settings (used by all scripts as fallback)
+export SYSCLAW_DB_HOST="<your-db-host>"        # Ask your SysClaw operator
 export SYSCLAW_DB_PORT="5432"
 export SYSCLAW_DB_NAME="system_comm"
-export SYSCLAW_DB_USER="<your-agent-role>"       # e.g., jobagent, pmagent, researcher_agent
+export SYSCLAW_DB_USER="<your-agent-role>"     # e.g., jobagent, pmagent, researcher_agent
 export SYSCLAW_DB_PASSWORD="<your-db-password>"
-
-# Scripts use these internally — same values as above
-export ISSUE_DB_HOST="$SYSCLAW_DB_HOST"
-export ISSUE_DB_PORT="$SYSCLAW_DB_PORT"
-export ISSUE_DB_NAME="$SYSCLAW_DB_NAME"
-export ISSUE_DB_USER="$SYSCLAW_DB_USER"
-export ISSUE_DB_PASSWORD="$SYSCLAW_DB_PASSWORD"
-export REQUEST_DB_HOST="$SYSCLAW_DB_HOST"
-export REQUEST_DB_PORT="$SYSCLAW_DB_PORT"
-export REQUEST_DB_NAME="$SYSCLAW_DB_NAME"
-export REQUEST_DB_USER="$SYSCLAW_DB_USER"
-export REQUEST_DB_PASSWORD="$SYSCLAW_DB_PASSWORD"
 ```
+
+You can also set per-script overrides (`ISSUE_DB_*`, `REQUEST_DB_*`) if different scripts need different credentials, but in most cases the shared `SYSCLAW_DB_*` vars are sufficient.
 
 **Ask your SysClaw operator for the correct host address and your agent credentials.**
 
@@ -45,7 +44,7 @@ export REQUEST_DB_PASSWORD="$SYSCLAW_DB_PASSWORD"
 For errors, warnings, and problems that need attention:
 
 ```bash
-scripts/report-issue.sh <source> <severity> <title> [category] [details]
+scripts/report-issue.sh <source> <severity> <title> [category] [details] [source_host]
 ```
 
 **Severity:** `info` | `warning` | `critical`
@@ -57,19 +56,20 @@ scripts/report-issue.sh jobhunter warning "Disk usage above 80%" disk "df shows 
 scripts/report-issue.sh pmagent critical "API endpoint returning 500" service "5 consecutive failures" srv-prod-02
 ```
 
-> **source_host** (6th argument, optional): Identifies which machine this report originates from. Defaults to `$(hostname)` if omitted.
+> **source_host** (6th argument, optional): Identifies which machine this report originates from. Defaults to the current hostname if omitted.
 
 ## Request Something from SysClaw
 
 For software installs, access requests, configuration changes, and more:
 
 ```bash
-scripts/request-resource.sh <source> <type> <action> <target> <justification> [urgency] [payload]
+scripts/request-resource.sh <source> <type> <action> <target> <justification> [urgency] [payload] [source_host]
 ```
 
 **Types:** `access` | `software` | `resource` | `config` | `service` | `deployment` | `info`
 **Actions:** `install` | `remove` | `create` | `modify` | `restart` | `grant` | `check` | `deploy`
 **Urgency:** `low` | `normal` | `urgent` (default: `normal`)
+**Payload:** Valid JSON string (optional). Validated before submission.
 
 ### Examples
 
@@ -86,7 +86,7 @@ scripts/request-resource.sh researcher info check disk_usage
 3. **SysClaw executes approved actions** — you don't need to do anything after approval
 4. You receive a notification with the result (e.g., "DONE: nginx installed and running")
 
-**Verdicts:** 
+**Verdicts:**
 - `approved` + `DONE` — SysClaw completed the work, see notification for details
 - `denied` — see notification for reason
 - `escalated` — human operator reviewing, you'll be notified when decided
@@ -130,6 +130,8 @@ Then at session start: `cat memory/notifications.md`
 
 ## Direct SQL (Alternative to Scripts)
 
+If you prefer direct database access:
+
 ```sql
 -- Report issue
 INSERT INTO issues (source, severity, category, title, details, source_host)
@@ -157,3 +159,12 @@ Do not set `verdict`, `security_assessment`, `resolved_at`, or `resolved_by` —
    ```bash
    scripts/report-issue.sh <your-source> info "SysClaw reporting skill installed - test"
    ```
+
+## Technical Notes
+
+- Scripts use **Python `psycopg2`** with parameterized queries (no SQL injection risk)
+- JSON payloads are validated with `json.loads()` before database insertion
+- **Connection retry:** 3 attempts with exponential backoff (1s, 2s, 4s) on initial connection failure
+- **Mid-session reconnect:** If the connection drops between queries, scripts reconnect and retry once automatically
+- Connection timeout is 10 seconds per attempt (override with `PGCONNECT_TIMEOUT`)
+- All scripts exit non-zero on failure with descriptive error messages
