@@ -3,11 +3,16 @@
   "slug": "pi-ppt",
   "displayName": "pi-ppt",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773995564145,
-    "commit": "https://github.com/openclaw/skills/commit/1aca4341354123a26700256534981593fba9ecf4"
+    "version": "1.0.3",
+    "publishedAt": 1774323205835,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773995564145,
+      "commit": "https://github.com/openclaw/skills/commit/1aca4341354123a26700256534981593fba9ecf4"
+    },
     {
       "version": "1.0.1",
       "publishedAt": 1773303933917,

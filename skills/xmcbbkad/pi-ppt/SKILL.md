@@ -8,38 +8,24 @@ description: 使用PI(Presentation Intelligence)提供的服务生成PPT.
 ## 功能
 1. 生成PPT.
 
-## 鉴权配置
+## Setup
 使用 PI 的服务前，须先从 PI 平台获取 `PIPPT_APP_ID` 与 `PIPPT_APP_SECRET`,并设置为环境变量。
+
 ```bash
-# Pick shell rc file (adjust path if needed)
-if [ -n "${ZSH_VERSION}" ]; then
-  SHELL_RC="${ZDOTDIR:-$HOME}/.zshrc"
-elif [ -n "${BASH_VERSION}" ]; then
-  SHELL_RC="$HOME/.bashrc"
-  [ ! -f "$SHELL_RC" ] && [ -f "$HOME/.bash_profile" ] && SHELL_RC="$HOME/.bash_profile"
-else
-  SHELL_RC="$HOME/.profile"
-fi
-touch "$SHELL_RC"
+export PIPPT_APP_ID="your_app_id"
+export PIPPT_APP_SECRET="your_api_secret"
+```
 
-# Both env vars required; prompt for missing values, export, then append to SHELL_RC
-if [ -z "${PIPPT_APP_ID}" ] || [ -z "${PIPPT_APP_SECRET}" ]; then
-  echo "PIPPT_APP_ID and/or PIPPT_APP_SECRET is missing. Get them from the PI console, then enter only what is asked below:"
-  [ -z "${PIPPT_APP_ID}" ] && read -r -p "PIPPT_APP_ID: " PIPPT_APP_ID
-  [ -z "${PIPPT_APP_SECRET}" ] && { read -r -s -p "PIPPT_APP_SECRET (hidden): " PIPPT_APP_SECRET; echo; }
-  export PIPPT_APP_ID PIPPT_APP_SECRET
+> 建议将上述 export 语句写入 `~/.zshrc` 或 `~/.bashrc`，避免每次重开终端失效。
 
-  {
-    echo ""
-    echo "# --- PI PPT credentials (added $(date +%Y-%m-%d)) ---"
-    echo "export PIPPT_APP_ID=\"${PIPPT_APP_ID}\""
-    echo "export PIPPT_APP_SECRET=\"${PIPPT_APP_SECRET}\""
-    echo "# --- PI PPT credentials (end) ---"
-  } >> "$SHELL_RC"
+## 凭证预检
 
-  echo "Appended to: $SHELL_RC"
-  echo "Run in this session: source \"$SHELL_RC\" — new terminals will load these automatically."
-  echo "If you run this script multiple times, edit the file to remove duplicate blocks and keep a single export pair."
+每次调用 API 前，先确认凭证可用。如果环境变量未设置，停止操作并提示用户按 Setup 步骤配置。
+
+```bash
+if [ -z "$PIPPT_APP_ID" ] || [ -z "$PIPPT_APP_SECRET" ]; then
+  echo "缺少PIPPT_APP_ID或PIPPT_APP_SECRET，请按 Setup 步骤配置环境变量 PIPPT_APP_ID 和 PIPPT_APP_SECRET"
+  exit 1
 fi
 ```
 
@@ -60,6 +46,8 @@ python <skill-dir>/scripts/generate_pi_ppt.py --content  --language --cards --fi
 
 ```bash
 python "<skill-dir>/scripts/generate_pi_ppt.py" \
+  --pippt_app_id $PIPPT_APP_ID \
+  --pippt_app_secret $PIPPT_APP_SECRET \
   --content "根据附件内容生成一份结构清晰的商务汇报PPT" \
   --language zh \
   --file "/Users/you/Documents/quarterly_review.docx"
@@ -69,6 +57,8 @@ python "<skill-dir>/scripts/generate_pi_ppt.py" \
 
 ```bash
 python "<skill-dir>/scripts/generate_pi_ppt.py" \
+  --pippt_app_id $PIPPT_APP_ID \
+  --pippt_app_secret $PIPPT_APP_SECRET \
   --content "生成一个关于中国GPU厂商介绍的PPT，商务严肃风格" \
   --language zh \
   --cards 10
