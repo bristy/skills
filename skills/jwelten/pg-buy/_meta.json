@@ -1,11 +1,17 @@
 {
   "owner": "jwelten",
   "slug": "pg-buy",
-  "displayName": "ProxyGate Buy",
+  "displayName": "Pg Buy",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773687446570,
-    "commit": "https://github.com/openclaw/skills/commit/edd4dea5149b3403321fb209780c3a2664b6041f"
+    "version": "0.2.1",
+    "publishedAt": 1774132410773,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773687446570,
+      "commit": "https://github.com/openclaw/skills/commit/edd4dea5149b3403321fb209780c3a2664b6041f"
+    }
+  ]
 }
