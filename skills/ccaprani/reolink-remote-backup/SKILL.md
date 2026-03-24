@@ -1,5 +1,6 @@
 ---
 name: reolink-remote-backup
+version: 0.3.0
 description: Set up reliable off-site Reolink camera backup when cameras are remote (4G/5G/LTE) and home inbound networking is constrained (CGNAT/locked routers). Use for architecture decisions, VPS relay setup, FTP/FTPS ingest, local/NAS pull sync, retention, and troubleshooting upload/auth/path failures.
 ---
 

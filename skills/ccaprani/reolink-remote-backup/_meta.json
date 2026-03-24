@@ -3,9 +3,15 @@
   "slug": "reolink-remote-backup",
   "displayName": "Reolink Remote Backup",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1773470962953,
-    "commit": "https://github.com/openclaw/skills/commit/c0da8fc289ada93a3aa287a50b5c42ce3c76766a"
+    "version": "0.3.0",
+    "publishedAt": 1774097315935,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1773470962953,
+      "commit": "https://github.com/openclaw/skills/commit/c0da8fc289ada93a3aa287a50b5c42ce3c76766a"
+    }
+  ]
 }

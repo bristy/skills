@@ -57,7 +57,44 @@ Likely protocol mismatch or early TLS negotiation failure.
 - Use camera app/web test button if available.
 - Historical microSD archives may need explicit download through Reolink web/app tools.
 
-## 7) VPS fills up
+## 7) rsync fails with `change_dir "/srv/reolink/incoming" failed`
+
+The generated pull script uses a relative source path (`incoming/`) because the
+`reolinkftp` user's home is `/srv/reolink`. If an older script has the absolute
+path, patch it:
+
+```bash
+sed -i "s|VPS_SRC=/srv/reolink/incoming/|VPS_SRC=incoming/|" ~/bin/reolink_pull.sh
+```
+
+Also ensure `/srv/reolink/incoming` exists on the VPS:
+
+```bash
+mkdir -p /srv/reolink/incoming
+chown reolinkftp:reolinkftp /srv/reolink/incoming
+chmod 775 /srv/reolink/incoming
+```
+
+## 8) rsync fails with `protocol version mismatch -- is your shell clean?`
+
+This happens when a **forced rsync command** is set in `authorized_keys` and the
+flags in that command don't match what the client negotiates. Do **not** use a
+forced rsync command for this setup. Instead, use restriction flags only:
+
+```
+no-pty,no-agent-forwarding,no-port-forwarding,no-X11-forwarding ssh-ed25519 AAAA...
+```
+
+Remove a forced command with:
+
+```bash
+sed -i 's|command="rsync[^"]*",||' /srv/reolink/.ssh/authorized_keys
+```
+
+The `reolinkftp` user is already restricted (no sudo, home-dir only) so the
+forced command provides little extra security while breaking rsync negotiation.
+
+## 9) VPS fills up
 
 - Confirm local pull timer active:
   - `systemctl --user list-timers | grep reolink-pull`
