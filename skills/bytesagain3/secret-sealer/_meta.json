@@ -3,9 +3,15 @@
   "slug": "secret-sealer",
   "displayName": "Secret Sealer",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773969588120,
-    "commit": "https://github.com/openclaw/skills/commit/43bf106a6c954bfe2d61d10d3ccb10d886519d9d"
+    "version": "2.0.1",
+    "publishedAt": 1774316714812,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773969588120,
+      "commit": "https://github.com/openclaw/skills/commit/43bf106a6c954bfe2d61d10d3ccb10d886519d9d"
+    }
+  ]
 }
