@@ -3,6 +3,7 @@
 /**
  * Email Sender Policy Skill v2.0.1
  * 自動應用郵件發送政策：UTF-8編碼、表格轉清單、電子報格式化、RFC 822格式
+ */
 
 const fs = require('fs');
 const { argv } = require('process');
