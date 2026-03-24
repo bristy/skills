@@ -1,0 +1,11 @@
+{
+  "owner": "googleworkspace-bot",
+  "slug": "gws-workflow-file-announce",
+  "displayName": "Gws Workflow File Announce",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1774300518896,
+    "commit": null
+  },
+  "history": []
+}
