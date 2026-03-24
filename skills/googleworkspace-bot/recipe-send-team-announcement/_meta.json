@@ -3,11 +3,16 @@
   "slug": "recipe-send-team-announcement",
   "displayName": "Recipe Send Team Announcement",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1774375526357,
-    "commit": "https://github.com/openclaw/skills/commit/f4dca816e047f3da7661f1d4e179a27c21098813"
+    "version": "1.0.7",
+    "publishedAt": 1774390884756,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1774375526357,
+      "commit": "https://github.com/openclaw/skills/commit/f4dca816e047f3da7661f1d4e179a27c21098813"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773494459962,
