@@ -12,7 +12,9 @@ tags:
   - store
   - ecommerce
   - bitcoin
+  - solana
   - usdt
+  - usdc
   - invoicing
   - digital-products
   - monetization
@@ -29,7 +31,7 @@ This skill teaches your agent how to interact with the [InventPay](https://inven
 
 Your agent can:
 
-- Create crypto payment links and multi-currency invoices (BTC, ETH, LTC, USDT)
+- Create crypto payment links and multi-currency invoices (BTC, ETH, LTC, SOL, USDT, USDC)
 - Set up and manage a digital storefront with automatic product delivery
 - Manage a key pool for unique license keys per customer
 - Check balances across all currencies
@@ -112,8 +114,8 @@ Content-Type: application/json
 
 {
   "amount": 50.00,                        // required — payment amount
-  "currency": "USDT_BEP20",              // required — BTC, ETH, LTC, USDT_ERC20, USDT_BEP20
-  "amountCurrency": "USD",               // optional, default "USDT" — USD, USDT, BTC, ETH, LTC
+  "currency": "USDT_BEP20",              // required — BTC, ETH, LTC, USDT_ERC20, USDT_BEP20, SOL, USDC_SOL, USDC_BEP20
+  "amountCurrency": "USD",               // optional, default "USDT" — USD, USDT, BTC, ETH, LTC, SOL
   "orderId": "order-123",                // optional — your reference ID (max 100 chars)
   "description": "Payment for service",  // optional (max 500 chars)
   "callbackUrl": "https://your-site.com/webhook",  // optional — webhook for status updates
@@ -207,7 +209,7 @@ GET /v1/merchant/balance/{currency}
 Header: X-API-Key: <INVENTPAY_API_KEY>
 ```
 
-Currency must be: BTC, ETH, LTC, USDT_ERC20, or USDT_BEP20.
+Currency must be: BTC, ETH, LTC, USDT_ERC20, USDT_BEP20, SOL, USDC_SOL, or USDC_BEP20.
 
 ---
 
@@ -499,7 +501,7 @@ Practical setup for monetizing premium skill files:
 2. **Add skill files as products** — set `contentType: "SKILL"`, paste the raw SKILL.md into `skillContent`, set a price. The backend parses frontmatter automatically for the storefront. Alternatively, use `contentType: "GENERAL"` with a `digitalContent.fileUrl` for a hosted download link.
 3. **Share your store link** — `inventpay.io/store/your-slug`
 4. **Buyers see rich skill cards** — storefront shows skill name, version, author, and tags from parsed frontmatter
-5. **Buyers pay with crypto** — BTC, ETH, LTC, or USDT
+5. **Buyers pay with crypto** — BTC, ETH, LTC, SOL, USDT, or USDC
 6. **Delivery is automatic** — buyer pays, gets the skill file immediately
 7. **Check earnings** — agent calls `GET /v1/merchant/balance`
 
@@ -508,7 +510,7 @@ What sells well: industry-specific skills, complex automation chains, curated sk
 ## Guidelines
 
 - All amounts default to USD/USDT unless specified otherwise
-- Supported cryptos: BTC, ETH, LTC, USDT_ERC20, USDT_BEP20
+- Supported cryptos: BTC, ETH, LTC, USDT_ERC20, USDT_BEP20, SOL, USDC_SOL, USDC_BEP20
 - Payment expiration: 5-1440 minutes (default 30)
 - The API key (`pk_live_...`) is used for all operations
 - Store checkout uses the store slug in the URL path, NOT a store ID
