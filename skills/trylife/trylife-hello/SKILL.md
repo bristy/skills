@@ -1,6 +1,6 @@
 ---
 name: hello
-description: hello, when user input `hello`
+description: trylife-hello, when user input `hello`
 tags: hello, hi, 你好
 license: Apache-2.0
 metadata:
