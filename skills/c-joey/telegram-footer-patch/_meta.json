@@ -1,13 +1,18 @@
 {
   "owner": "c-joey",
   "slug": "telegram-footer-patch",
-  "displayName": "telegram-footer-patch",
+  "displayName": "Telegram Footer Patch",
   "latest": {
-    "version": "1.0.8",
-    "publishedAt": 1773895186208,
-    "commit": "https://github.com/openclaw/skills/commit/109b6d7ac47be18aff7cff274fb39c82d71dcafd"
+    "version": "1.0.9",
+    "publishedAt": 1774316575764,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.8",
+      "publishedAt": 1773895186208,
+      "commit": "https://github.com/openclaw/skills/commit/109b6d7ac47be18aff7cff274fb39c82d71dcafd"
+    },
     {
       "version": "1.0.7",
       "publishedAt": 1773486740383,

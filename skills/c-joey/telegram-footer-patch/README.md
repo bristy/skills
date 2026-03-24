@@ -10,13 +10,21 @@ Patch OpenClaw's Telegram reply pipeline to append a one-line footer in private 
 - Supports dry-run preview
 - Creates a backup before any file change
 - Supports rollback and verification after restart
-- Handles Telegram streaming replies in current OpenClaw builds
+- Targets current OpenClaw bundle layouts conservatively; final success must be confirmed by a real Telegram private-chat reply
 
 ## Recommended flow
 1. Dry-run
 2. Apply
 3. Restart the gateway (**required** to take effect)
-4. Send a test message and verify the footer
+4. Send a real Telegram private-chat test message and verify the footer in the actual delivered reply
+
+> Smoke test / marker verification only proves the patch hit candidate bundle files. If the real Telegram reply still has no footer, treat it as not fixed yet.
+
+## Validated version boundary
+- **Live-validated:** OpenClaw **2026.3.22**
+- **Live-validated bundle path:** `/usr/lib/node_modules/openclaw/dist/agent-runner.runtime-BWpOtdxK.js`
+- **Not live-validated:** other OpenClaw versions/builds
+- **Claim boundary:** for untested versions, say “may be compatible” / “compatibility logic added”, not “supported”
 
 ## Before you run
 - This updates OpenClaw frontend bundle files under `.../openclaw/dist/`.

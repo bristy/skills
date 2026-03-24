@@ -7,14 +7,20 @@ Safety notes:
 - The script creates timestamped backups (*.bak.telegram-footer.*) before writing.
 - If anything fails, it restores from backup automatically.
 
-This version appends the footer for both:
-- text payloads: { text: "..." }
-- html payloads: { html: "..." }  (common when telegram streaming is enabled)
+This version tries to be resilient across OpenClaw bundle layouts:
+- targets explicit likely bundles first
+- optionally auto-discovers by content needle
+- uses a self-contained footer formatter (no formatTokens dependency)
+- supports both {text} and {html} payload shapes
+
+Important boundary:
+- patch/verify success only proves candidate bundle patching + syntax validity
+- final acceptance still requires a real Telegram private-chat reply showing the footer
+- do not treat static verification alone as proof of cross-version compatibility
 """
 
 import argparse
 import datetime as dt
-import glob
 import os
 import pathlib
 import re
@@ -22,7 +28,6 @@ import shutil
 import subprocess
 import sys
 
-# Avoid generating __pycache__/*.pyc in the skill folder.
 sys.dont_write_bytecode = True
 
 MARKER_START = "/* OPENCLAW_TELEGRAM_STATUS_FOOTER_START */"
@@ -32,10 +37,14 @@ SNIPPET_TEMPLATE = r'''
 __MARKER_START__
 const __ocSessionLooksTelegramDirect =
   typeof sessionKey === "string" && sessionKey.includes(":telegram:direct:");
+const __ocReplyProvider =
+  sessionCtx?.Surface || sessionCtx?.Provider || activeSessionEntry?.lastChannel || activeSessionEntry?.channel || "";
+const __ocReplyChatType =
+  sessionCtx?.ChatType || activeSessionEntry?.chatType || "";
 const __ocShouldAppendStatusFooter =
-  (__ocSessionLooksTelegramDirect || activeSessionEntry?.lastChannel === "telegram" || activeSessionEntry?.channel === "telegram") &&
-  activeSessionEntry?.chatType !== "group" &&
-  activeSessionEntry?.chatType !== "channel";
+  (__ocSessionLooksTelegramDirect || __ocReplyProvider === "telegram") &&
+  __ocReplyChatType !== "group" &&
+  __ocReplyChatType !== "channel";
 
 const __ocEscapeHtml = (str) => String(str)
   .replace(/&/g, "&amp;")
@@ -44,8 +53,19 @@ const __ocEscapeHtml = (str) => String(str)
   .replace(/\"/g, "&quot;")
   .replace(/'/g, "&#39;");
 
-// Append footer to the last payload that looks like message text.
-// Handles both {text} and {html} payload shapes.
+const __ocFormatTokens = (value) => {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return "?";
+  if (value >= 1000000) return `${(value / 1000000).toFixed(value >= 10000000 ? 0 : 1).replace(/\.0$/, "")}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(value >= 100000 ? 0 : 1).replace(/\.0$/, "")}k`;
+  return String(Math.round(value));
+};
+
+const __ocBuildTokenUsage = (used, limit) => {
+  const usedLabel = __ocFormatTokens(used);
+  const limitLabel = __ocFormatTokens(limit);
+  return limitLabel === "?" ? usedLabel : `${usedLabel}/${limitLabel}`;
+};
+
 const __ocAppendFooter = (payloads, footerText, footerHtml) => {
   let index = -1;
   for (let i = payloads.length - 1; i >= 0; i -= 1) {
@@ -83,21 +103,15 @@ const __ocAppendFooter = (payloads, footerText, footerHtml) => {
 if (__ocShouldAppendStatusFooter) {
   const __ocTotalTokens = resolveFreshSessionTotalTokens(activeSessionEntry);
   const __ocThinkingLevel = activeSessionEntry?.thinkingLevel || "default";
+  const __ocContextLimit = contextTokensUsed ?? activeSessionEntry?.contextTokens ?? null;
 
   const __ocStatusFooter = [
     `🧠 ${providerUsed && modelUsed ? `${providerUsed}/${modelUsed}` : modelUsed || "unknown"}`,
     `💭 Think: ${__ocThinkingLevel}`,
-    `📊 ${formatTokens(
-      typeof __ocTotalTokens === "number" && Number.isFinite(__ocTotalTokens) && __ocTotalTokens > 0
-        ? __ocTotalTokens
-        : null,
-      contextTokensUsed ?? activeSessionEntry?.contextTokens ?? null
-    )}`
+    `📊 ${__ocBuildTokenUsage(__ocTotalTokens, __ocContextLimit)}`
   ].join(" ");
 
-  // text mode footer includes leading newline so it doesn't stick to the last line
   const __ocFooterText = `\n──────────\n${__ocStatusFooter}`;
-  // html mode footer: escape + <br>
   const __ocFooterHtml = `──────────<br>${__ocEscapeHtml(__ocStatusFooter)}`;
 
   finalPayloads = __ocAppendFooter(finalPayloads, __ocFooterText, __ocFooterHtml);
@@ -114,11 +128,17 @@ PATTERN = re.compile(
     r"(if\s*\(\s*responseUsageLine\s*\)\s*finalPayloads\s*=\s*appendUsageLine\(\s*finalPayloads\s*,\s*responseUsageLine\s*\);)",
     flags=re.M,
 )
-MARKER_BLOCK_RE = re.compile(
-    re.escape(MARKER_START) + r".*?" + re.escape(MARKER_END),
-    flags=re.S,
-)
-TARGET_GLOBS = ["reply-*.js", "compact-*.js", "pi-embedded-*.js"]
+MARKER_BLOCK_RE = re.compile(re.escape(MARKER_START) + r".*?" + re.escape(MARKER_END), flags=re.S)
+NEEDLE_SUBSTR = "appendUsageLine(finalPayloads, responseUsageLine)"
+TARGET_GLOBS = [
+    "agent-runner.runtime-*.js",
+    "reply-*.js",
+    "compact-*.js",
+    "pi-embedded-*.js",
+    "plugin-sdk/thread-bindings-*.js",
+    "model-selection-*.js",
+    "auth-profiles-*.js",
+]
 LEGACY_BLOCK_RE = re.compile(
     r"\n?\s*const shouldAppendStatusFooter = activeSessionEntry\?\.chatType !== \"group\" && activeSessionEntry\?\.chatType !== \"channel\" && \(activeSessionEntry\?\.lastChannel === \"telegram\" \|\| activeSessionEntry\?\.channel === \"telegram\"\);\s*"
     r"if \(shouldAppendStatusFooter\) \{\s*"
@@ -134,48 +154,73 @@ LEGACY_BLOCK_RE = re.compile(
 
 
 def verify_node_syntax(path: pathlib.Path):
-    result = subprocess.run(
-        ["node", "--check", str(path)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = subprocess.run(["node", "--check", str(path)], capture_output=True, text=True, check=False)
     if result.returncode != 0:
         details = (result.stderr or result.stdout or "node --check failed").strip()
         raise RuntimeError(details)
 
 
-def iter_target_files(dist: pathlib.Path) -> list[pathlib.Path]:
-    files: list[pathlib.Path] = []
+def _is_backup_path(path: pathlib.Path) -> bool:
+    return ".bak.telegram-footer." in path.name
+
+
+def _read_text(path: pathlib.Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return path.read_text(encoding="utf-8", errors="ignore")
+
+
+def _looks_like_target_by_content(path: pathlib.Path) -> bool:
+    text = _read_text(path)
+    return NEEDLE_SUBSTR in text and bool(PATTERN.search(text))
+
+
+def iter_target_files(dist: pathlib.Path, auto_discover: bool = False) -> list[pathlib.Path]:
+    files: set[pathlib.Path] = set()
     for pattern in TARGET_GLOBS:
-        files.extend(sorted(dist.glob(pattern)))
-    seen: set[str] = set()
-    unique: list[pathlib.Path] = []
-    for fp in files:
-        key = str(fp)
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(fp)
-    return unique
+        for fp in dist.glob(pattern):
+            if fp.is_file() and not _is_backup_path(fp):
+                files.add(fp)
+
+    if auto_discover:
+        for fp in dist.rglob("*.js"):
+            if not fp.is_file() or _is_backup_path(fp):
+                continue
+            try:
+                if _looks_like_target_by_content(fp):
+                    files.add(fp)
+            except OSError:
+                continue
+
+    return sorted(files)
 
 
-def patch_file(path: pathlib.Path, dry_run: bool):
-    content = path.read_text(encoding="utf-8")
+def analyze_file(path: pathlib.Path) -> dict:
+    content = _read_text(path)
     has_marker = MARKER_START in content
     has_pattern = PATTERN.search(content) is not None
     has_legacy = LEGACY_BLOCK_RE.search(content) is not None
-    backups = sorted(glob.glob(str(path) + ".bak.telegram-footer.*"))
-
     is_candidate = has_marker or has_pattern or has_legacy
+    return {
+        "path": path,
+        "content": content,
+        "has_marker": has_marker,
+        "has_pattern": has_pattern,
+        "has_legacy": has_legacy,
+        "is_candidate": is_candidate,
+    }
+
+
+def patch_file(path: pathlib.Path, dry_run: bool):
+    info = analyze_file(path)
+    content = info["content"]
+    has_marker = info["has_marker"]
+    has_legacy = info["has_legacy"]
+    is_candidate = info["is_candidate"]
     if not is_candidate:
         print(f"[skip] non-target dist bundle: {path}")
         return {"status": "skip", "candidate": False, "changed": False}
-
-    if (not has_marker) and backups:
-        print(
-            f"[info] marker missing but backups exist ({len(backups)}): likely overwritten by upgrade, reapplying: {path}"
-        )
 
     updated = content
     legacy_removed = 0
@@ -183,8 +228,6 @@ def patch_file(path: pathlib.Path, dry_run: bool):
         updated, legacy_removed = LEGACY_BLOCK_RE.subn("\n", updated)
 
     if MARKER_START in updated:
-        # IMPORTANT: use a function replacement so Python's re engine does not
-        # treat backslashes in SNIPPET (e.g. "\n") as escape/backref sequences.
         updated, count = MARKER_BLOCK_RE.subn(lambda _m: SNIPPET, updated, count=1)
         if count == 0:
             print(f"[err] marker block found but could not be replaced: {path}", file=sys.stderr)
@@ -243,10 +286,7 @@ def preflight(dist: pathlib.Path, dry_run: bool) -> int:
         return 2
     if not dry_run:
         if not os.access(dist, os.W_OK):
-            print(
-                f"[err] no write permission for dist directory: {dist} (try sudo or adjust permissions)",
-                file=sys.stderr,
-            )
+            print(f"[err] no write permission for dist directory: {dist} (try sudo or adjust permissions)", file=sys.stderr)
             return 2
     else:
         if not os.access(dist, os.R_OK):
@@ -259,6 +299,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Patch OpenClaw dist files to append Telegram status footer.")
     parser.add_argument("--dist", default="/usr/lib/node_modules/openclaw/dist", help="OpenClaw dist directory")
     parser.add_argument("--dry-run", action="store_true", help="Preview only, do not write")
+    parser.add_argument("--auto-discover", action="store_true", help="Also scan dist/**/*.js for the injection needle")
+    parser.add_argument("--list-targets", action="store_true", help="Print resolved target file list, then exit")
+    parser.add_argument("--verify", action="store_true", help="Exit non-zero if any real candidate file lacks the marker")
     args = parser.parse_args()
 
     dist = pathlib.Path(args.dist)
@@ -266,10 +309,35 @@ def main() -> int:
     if rc != 0:
         return rc
 
-    files = iter_target_files(dist)
+    files = iter_target_files(dist, auto_discover=args.auto_discover)
     if not files:
         print("[err] no target dist files found", file=sys.stderr)
         return 2
+
+    if args.list_targets:
+        for fp in files:
+            info = analyze_file(fp)
+            print(
+                f"{fp}  candidate={str(info['is_candidate']).lower()}  marker={str(info['has_marker']).lower()}  needle={str(info['has_pattern']).lower()}  legacy={str(info['has_legacy']).lower()}"
+            )
+        return 0
+
+    if args.verify:
+        missing: list[pathlib.Path] = []
+        candidate_count = 0
+        for fp in files:
+            info = analyze_file(fp)
+            if not info["is_candidate"]:
+                continue
+            candidate_count += 1
+            if not info["has_marker"]:
+                missing.append(fp)
+        if missing:
+            for fp in missing:
+                print(f"[err] marker missing in candidate: {fp}", file=sys.stderr)
+            return 1
+        print(f"[ok] marker present in {candidate_count} candidate target(s)")
+        return 0
 
     changed = 0
     errors = 0
@@ -285,10 +353,7 @@ def main() -> int:
         return 1
 
     if args.dry_run:
-        if changed:
-            print(f"[done] changed files: {changed}")
-        else:
-            print("[done] no files changed")
+        print(f"[done] changed files: {changed}" if changed else "[done] no files changed")
         return 0
 
     print(f"[done] changed files: {changed}")

@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Revert OpenClaw dist JS bundles from the latest telegram-footer backups.
-
-Safety notes:
-- This script restores files under the OpenClaw installation directory.
-- It requires backups created by patch_reply_footer.py (*.bak.telegram-footer.*).
-- It makes a safety copy of the current file before restoring.
-"""
+"""Revert OpenClaw dist JS bundles from the latest telegram-footer backups."""
 
 import argparse
 import glob
@@ -15,38 +9,38 @@ import shutil
 import subprocess
 import sys
 
-# Avoid generating __pycache__/*.pyc in the skill folder.
 sys.dont_write_bytecode = True
 
 MARKER_START = "/* OPENCLAW_TELEGRAM_STATUS_FOOTER_START */"
-TARGET_GLOBS = ["reply-*.js", "compact-*.js", "pi-embedded-*.js"]
+TARGET_GLOBS = [
+    "agent-runner.runtime-*.js",
+    "reply-*.js",
+    "compact-*.js",
+    "pi-embedded-*.js",
+    "plugin-sdk/thread-bindings-*.js",
+    "model-selection-*.js",
+    "auth-profiles-*.js",
+]
 
 
 def verify_node_syntax(path: pathlib.Path):
-    result = subprocess.run(
-        ["node", "--check", str(path)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = subprocess.run(["node", "--check", str(path)], capture_output=True, text=True, check=False)
     if result.returncode != 0:
         details = (result.stderr or result.stdout or "node --check failed").strip()
         raise RuntimeError(details)
 
 
+def _is_backup_path(path: pathlib.Path) -> bool:
+    return ".bak.telegram-footer." in path.name
+
+
 def iter_target_files(dist: pathlib.Path) -> list[pathlib.Path]:
-    files: list[pathlib.Path] = []
+    files: set[pathlib.Path] = set()
     for pattern in TARGET_GLOBS:
-        files.extend(sorted(dist.glob(pattern)))
-    seen: set[str] = set()
-    unique: list[pathlib.Path] = []
-    for fp in files:
-        key = str(fp)
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(fp)
-    return unique
+        for fp in dist.glob(pattern):
+            if fp.is_file() and not _is_backup_path(fp):
+                files.add(fp)
+    return sorted(files)
 
 
 def revert_file(path: pathlib.Path, dry_run: bool) -> bool:
@@ -120,10 +114,7 @@ def main() -> int:
         if revert_file(f, args.dry_run):
             changed += 1
 
-    if changed == 0:
-        print("[done] no files restored")
-    else:
-        print(f"[done] restored files: {changed}")
+    print("[done] no files restored" if changed == 0 else f"[done] restored files: {changed}")
     return 0
 
 
