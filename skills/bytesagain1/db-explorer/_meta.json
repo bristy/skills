@@ -3,11 +3,16 @@
   "slug": "db-explorer",
   "displayName": "Db Explorer",
   "latest": {
-    "version": "2.0.2",
-    "publishedAt": 1774231535540,
-    "commit": "https://github.com/openclaw/skills/commit/1f98d1f0dc3ff57a958eff334d22e6f7f1c3a8d0"
+    "version": "2.0.3",
+    "publishedAt": 1774312488616,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.0.2",
+      "publishedAt": 1774231535540,
+      "commit": "https://github.com/openclaw/skills/commit/1f98d1f0dc3ff57a958eff334d22e6f7f1c3a8d0"
+    },
     {
       "version": "2.0.0",
       "publishedAt": 1773919129589,
