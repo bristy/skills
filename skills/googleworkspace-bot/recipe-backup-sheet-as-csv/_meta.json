@@ -3,11 +3,16 @@
   "slug": "recipe-backup-sheet-as-csv",
   "displayName": "Recipe Backup Sheet As Csv",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773432594549,
-    "commit": "https://github.com/openclaw/skills/commit/e5e7dd5a9b5895ae712b46f9ca91e692a88a6a1c"
+    "version": "1.0.2",
+    "publishedAt": 1774300554901,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773432594549,
+      "commit": "https://github.com/openclaw/skills/commit/e5e7dd5a9b5895ae712b46f9ca91e692a88a6a1c"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1772847344261,
