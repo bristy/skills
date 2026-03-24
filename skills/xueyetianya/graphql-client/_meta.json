@@ -3,9 +3,15 @@
   "slug": "graphql-client",
   "displayName": "Graphql Client",
   "latest": {
-    "version": "2.0.0",
-    "publishedAt": 1773919178970,
-    "commit": "https://github.com/openclaw/skills/commit/061d2aac2ee3232b2b5b94525db28d449970eee0"
+    "version": "2.0.2",
+    "publishedAt": 1774312804942,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "2.0.0",
+      "publishedAt": 1773919178970,
+      "commit": "https://github.com/openclaw/skills/commit/061d2aac2ee3232b2b5b94525db28d449970eee0"
+    }
+  ]
 }
