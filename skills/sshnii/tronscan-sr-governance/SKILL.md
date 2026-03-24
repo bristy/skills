@@ -47,11 +47,51 @@ metadata:
 
 - **Prerequisite**: [TronScan MCP Guide](https://mcpdoc.tronscan.org)
 
+## Tools
+
+### getWitnessList
+
+- **API**: `getWitnessList` — Get Super Representative list
+- **Input**: Supports type filter (SR / partner / candidate)
+- **Use when**: User asks for "SR list", "super representatives", or "candidates".
+- **Response**: SR list with vote count, ranking, etc.
+
+### getAccountVotes
+
+- **API**: `getAccountVotes` — Get account vote record
+- **Input**: Account address
+- **Use when**: User asks "who did this address vote for", "my votes", or "vote destination of an address".
+- **Response**: SRs voted for and vote amounts.
+
+### getChainParameters
+
+- **API**: `getChainParameters` — Get current TRON blockchain configuration parameters
+- **Use when**: User asks for "chain parameters", "transaction fees", "energy price", "bandwidth price", or "network config".
+- **Response**: All chain parameters including tx fees, energy/bandwidth price.
+
+### getProposals
+
+- **API**: `getProposals` — Get governance proposal list
+- **Use when**: User asks for "governance proposals", "proposal list", or "voting proposals".
+- **Response**: Proposal content, vote info, participant details.
+
+### getWitnessVoteInfo
+
+- **API**: `getWitnessVoteInfo` — Get vote metrics and history for a specific witness
+- **Input**: Witness address
+- **Use when**: User asks for "SR X's votes", "SR ranking change", or "witness historical data".
+- **Response**: Vote count, ranking change, and other metrics.
+
+### getWitnessGeneralInfo
+
+- **API**: `getWitnessGeneralInfo` — Get witness aggregate statistics
+- **Use when**: User asks for "total votes", "block stats", "witness count", or "network vote overview".
+- **Response**: Total vote count, block stats, witness count, etc.
 
 ## Troubleshooting
 
 - **MCP connection failed**: If you see "Connection refused", verify TronScan MCP is connected in Settings > Extensions.
-- **API rate limit / 429**: Apply for an API key at [TronScan Developer API](https://tronscan.org/#/developer/api) and add it to MCP config.
+- **API rate limit / 429**: TronScan API has call count and frequency limits when no API key is used. If you encounter rate limiting or 429 errors, go to [TronScan Developer API](https://tronscan.org/#/developer/api) to apply for an API key, then add it to your MCP configuration and retry.
 
 ### Invalid witness address
 Ensure the address is a valid TRON base58 format (starts with T). For voter list of an SR, use `getVoteList` (Account API) with the SR address.
