@@ -3,11 +3,16 @@
   "slug": "gws-shared",
   "displayName": "Gws Shared",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773393359848,
-    "commit": "https://github.com/openclaw/skills/commit/6d2fe23517c47b723cb42b67cbfb6ae57d1c4476"
+    "version": "1.0.2",
+    "publishedAt": 1774300499991,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773393359848,
+      "commit": "https://github.com/openclaw/skills/commit/6d2fe23517c47b723cb42b67cbfb6ae57d1c4476"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1772753174930,
