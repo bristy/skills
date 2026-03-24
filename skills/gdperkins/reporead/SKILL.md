@@ -1,6 +1,6 @@
 ---
 name: reporead
-version: 1.1.0
+version: 1.2.0
 description: Analyze GitHub repositories using RepoRead AI. Use when the user asks to "analyze a repo", "generate docs", "security audit a repo", "create a README", or wants AI-powered repository analysis. Supports MCP server integration and REST API.
 metadata:
   clawdis:
