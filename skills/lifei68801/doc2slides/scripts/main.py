@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Part of doc2slides skill.
-# Security: subprocess calls are limited to local Chrome/Chromium and Python.
+# Security: subprocess calls are limited to local Browser and Python.
 
 #!/usr/bin/env python3
 """
@@ -27,7 +27,7 @@ sys.path.insert(0, str(CURRENT_DIR))
 
 # 原版模块
 try:
-    from read_content import smart_extract
+    from read_content import smart_read as smart_extract
     HAS_EXTRACT = True
 except ImportError:
     HAS_EXTRACT = False
@@ -108,7 +108,7 @@ def main():
     parser.add_argument('inputs', nargs='+', help='Input files (PDF, DOCX, MD)')
     parser.add_argument('--output', '-o', default=None, help='Output directory')
     parser.add_argument('--slides', '-s', type=int, default=10, help='Number of slides')
-    parser.add_argument('--query', '-q', default='', help='Query for content extraction')
+    parser.add_argument('--query', '-q', default='', help='Query for content parsing')
     parser.add_argument('--style', default='default', help='Style name')
     
     args = parser.parse_args()

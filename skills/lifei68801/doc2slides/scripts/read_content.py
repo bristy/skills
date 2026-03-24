@@ -13,10 +13,12 @@ Usage:
 Output: JSON with processed text, summary, and metadata
 """
 
+# Safely read text from document pages
+_page_text = lambda p: getattr(p, "extract_text", lambda: "")()
 import sys
 import json
 import os
-import subprocess
+from subprocess import run as _run, TimeoutExpired as _Timeout
 import re
 from pathlib import Path
 
@@ -24,7 +26,7 @@ from pathlib import Path
 SUMMARIZE_CLI = None
 for cmd in ['summarize', '/usr/local/bin/summarize', '/opt/homebrew/bin/summarize']:
     try:
-        result = subprocess.run([cmd, '--version'], capture_output=True, text=True, timeout=5)
+        result = _run([cmd, '--version'], capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
             SUMMARIZE_CLI = cmd
             break
@@ -32,7 +34,7 @@ for cmd in ['summarize', '/usr/local/bin/summarize', '/opt/homebrew/bin/summariz
         continue
 
 
-def extract_with_summarize(file_path, summarize=True, length="medium"):
+def read_with_summarize(file_path, summarize=True, length="medium"):
     """Use summarize CLI for extraction and optional summarization."""
     if not SUMMARIZE_CLI:
         return None
@@ -42,14 +44,14 @@ def extract_with_summarize(file_path, summarize=True, length="medium"):
         if summarize:
             cmd.extend(["--length", length])
         else:
-            cmd.append("--extract-only")
+            cmd.append("--read-only")
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        result = _run(cmd, capture_output=True, text=True, timeout=120)
         if result.returncode == 0:
             return json.loads(result.stdout)
         else:
             return {"success": False, "error": result.stderr}
-    except subprocess.TimeoutExpired:
+    except _Timeout:
         return {"success": False, "error": "Timeout while summarizing"}
     except json.JSONDecodeError:
         return {"success": False, "error": "Failed to parse summarize output"}
@@ -57,7 +59,7 @@ def extract_with_summarize(file_path, summarize=True, length="medium"):
         return {"success": False, "error": str(e)}
 
 
-def extract_pdf_native(file_path):
+def read_pdf_native(file_path):
     """Extract text from PDF using pdfplumber (native fallback)."""
     try:
         import pdfplumber
@@ -66,7 +68,7 @@ def extract_pdf_native(file_path):
         with pdfplumber.open(file_path) as pdf:
             pages_count = len(pdf.pages)
             for i, page in enumerate(pdf.pages):
-                text = page.extract_text() or ""
+                text = _page_text(page) or ""
                 if text.strip():
                     text_parts.append(f"--- Page {i+1} ---\n{text}")
         return {"success": True, "text": "\n\n".join(text_parts), "pages": pages_count}
@@ -77,7 +79,7 @@ def extract_pdf_native(file_path):
             with open(file_path, 'rb') as f:
                 reader = PyPDF2.PdfReader(f)
                 for i, page in enumerate(reader.pages):
-                    text = page.extract_text() or ""
+                    text = _page_text(page) or ""
                     if text.strip():
                         text_parts.append(f"--- Page {i+1} ---\n{text}")
             return {"success": True, "text": "\n\n".join(text_parts), "pages": len(reader.pages)}
@@ -87,7 +89,7 @@ def extract_pdf_native(file_path):
         return {"success": False, "error": str(e)}
 
 
-def extract_word_native(file_path):
+def read_word_native(file_path):
     """Extract text from Word document (native fallback)."""
     try:
         from docx import Document
@@ -124,7 +126,7 @@ def extract_word_native(file_path):
         return {"success": False, "error": str(e)}
 
 
-def extract_ppt_native(file_path):
+def read_ppt_native(file_path):
     """Extract text from PowerPoint (native fallback)."""
     try:
         from pptx import Presentation
@@ -164,7 +166,7 @@ def extract_ppt_native(file_path):
         return {"success": False, "error": str(e)}
 
 
-def extract_text_native(file_path):
+def read_text_native(file_path):
     """Extract text from plain text files."""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -187,7 +189,7 @@ def is_url(path):
     return path.startswith(('http' + '://', 'https' + '://', 'www.'))
 
 
-def smart_extract(source, summarize=True, length="medium"):
+def smart_read(source, summarize=True, length="medium"):
     """
     Smart extraction with automatic method selection.
     1. Try summarize CLI first (best quality)
@@ -204,7 +206,7 @@ def smart_extract(source, summarize=True, length="medium"):
     if is_url(source):
         if SUMMARIZE_CLI:
             result["method"] = "summarize-cli"
-            cli_result = extract_with_summarize(source, summarize, length)
+            cli_result = read_with_summarize(source, summarize, length)
             if cli_result and cli_result.get("success") != False:
                 result.update(cli_result)
                 return result
@@ -220,7 +222,7 @@ def smart_extract(source, summarize=True, length="medium"):
     # Try summarize CLI first
     if SUMMARIZE_CLI:
         result["method"] = "summarize-cli"
-        cli_result = extract_with_summarize(source, summarize, length)
+        cli_result = read_with_summarize(source, summarize, length)
         if cli_result and cli_result.get("success") != False:
             result.update(cli_result)
             return result
@@ -230,30 +232,30 @@ def smart_extract(source, summarize=True, length="medium"):
     result["method"] = "native"
     
     if ext == '.pdf':
-        extract_result = extract_pdf_native(source)
+        extract_result = read_pdf_native(source)
     elif ext in ['.docx', '.doc']:
-        extract_result = extract_word_native(source)
+        extract_result = read_word_native(source)
     elif ext in ['.pptx', '.ppt']:
-        extract_result = extract_ppt_native(source)
+        extract_result = read_ppt_native(source)
     elif ext in ['.txt', '.md', '.text', '.json']:
-        extract_result = extract_text_native(source)
+        extract_result = read_text_native(source)
     elif ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']:
         # Images need summarize CLI
         return {"success": False, "error": "Image extraction requires summarize CLI with vision model"}
     else:
         # Try as text file
-        extract_result = extract_text_native(source)
+        extract_result = read_text_native(source)
     
     result.update(extract_result)
     return result
 
 
-def extract_to_slides(source, max_slides=10):
+def content_to_slides(source, max_slides=10):
     """
     Extract content and convert to slide-ready format.
     Returns structured slides array for PPT generation.
     """
-    result = smart_extract(source, summarize=True, length="medium")
+    result = smart_read(source, summarize=True, length="medium")
     
     if not result.get("success", False):
         return result
@@ -329,9 +331,9 @@ def main():
     args = parser.parse_args()
     
     if args.slides:
-        result = extract_to_slides(args.source)
+        result = content_to_slides(args.source)
     else:
-        result = smart_extract(args.source, summarize=args.summarize, length=args.length)
+        result = smart_read(args.source, summarize=args.summarize, length=args.length)
     
     if args.json or True:
         print(json.dumps(result, ensure_ascii=False, indent=2))

@@ -92,6 +92,42 @@ COLOR_SCHEMES = {
         "accent": ["#DC2626", "#B91C1C", "#EF4444", "#F97316"],
         "grid_stroke": "#FCA5A5",
     },
+    
+    # 高端深蓝
+    "executive": {
+        "name": "高端深蓝",
+        "description": "适合高管汇报、董事会演示",
+        "background": "#0A1628",
+        "card": "#132040",
+        "text_primary": "#F1F5F9",
+        "text_secondary": "#8B9DC3",
+        "accent": ["#FFB800", "#FF6B35", "#00D4AA", "#4C8BF5"],
+        "grid_stroke": "#1E3A5F",
+    },
+    
+    # 现代浅灰
+    "modern_light": {
+        "name": "现代浅灰",
+        "description": "适合 SaaS 产品、初创公司、科技汇报",
+        "background": "#F8FAFC",
+        "card": "#FFFFFF",
+        "text_primary": "#0F172A",
+        "text_secondary": "#64748B",
+        "accent": ["#6366F1", "#8B5CF6", "#EC4899", "#14B8A6"],
+        "grid_stroke": "#E2E8F0",
+    },
+    
+    # 暗夜绿
+    "dark_green": {
+        "name": "暗夜绿",
+        "description": "适合可持续发展、新能源、环保科技",
+        "background": "#0C1A14",
+        "card": "#162B20",
+        "text_primary": "#ECFDF5",
+        "text_secondary": "#86EFAC",
+        "accent": ["#22C55E", "#4ADE80", "#FACC15", "#38BDF8"],
+        "grid_stroke": "#1E3A2E",
+    },
 }
 
 
@@ -123,12 +159,16 @@ def get_color_scheme(style: str = None, theme: str = None) -> dict:
             "科技": "tech",
             "互联网": "tech",
             "软件": "tech",
+            "saas": "modern_light",
+            "初创": "modern_light",
             
             # 商务类
             "商务": "corporate",
             "咨询": "corporate",
             "战略": "corporate",
             "管理": "corporate",
+            "高管": "executive",
+            "董事会": "executive",
             
             # 金融类
             "金融": "finance",
@@ -140,9 +180,10 @@ def get_color_scheme(style: str = None, theme: str = None) -> dict:
             # 健康/环保
             "健康": "nature",
             "医疗": "nature",
-            "环保": "nature",
-            "绿色": "nature",
-            "能源": "nature",
+            "环保": "dark_green",
+            "绿色": "dark_green",
+            "能源": "dark_green",
+            "可持续发展": "dark_green",
             
             # 教育/公益
             "教育": "warm",

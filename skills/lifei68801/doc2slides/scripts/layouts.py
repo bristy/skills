@@ -348,7 +348,123 @@ Hub & Spoke:
 | **下一步行动/计划** | `list` | `10. Action Plan` |
 | **核心结论/摘要** | `mixed` | `11. Executive Summary` |
 | **产品定价/套餐** | `list` | `14. Pricing Cards` |
+| **趋势/体量感** | `data` | `19. Area Chart` (面积图) |
+| **排名/分类对比** | `data` | `20. Horizontal Bar Chart` (水平条形图) |
+| **转化率/漏斗** | `data` | `21. Funnel Chart` (漏斗图) |
+| **多维占比拆分** | `data` | `22. Stacked Bar Chart` (堆叠柱状图) |
+| **双Y轴/组合指标** | `data` | `23. Combo Chart` (组合图) |
+| **KPI+图表混合** | `mixed` | `24. Card + Chart Mix` |
+| **章节过渡** | `title` | `25. Banner Transition` |
 """
+
+# 布局去重逻辑
+ALL_LAYOUTS = [
+    "COVER", "DASHBOARD", "BIG_NUMBER", "COMPARISON", "PYRAMID",
+    "CARD", "ACTION_PLAN", "CONTENT", "SUMMARY", "PIE_CHART",
+    "RADAR_CHART", "TABLE", "GAUGE", "AREA_CHART", "H_BAR_CHART",
+    "FUNNEL", "STACKED_BAR", "COMBO_CHART", "CARD_CHART_MIX", "BANNER_TRANSITION"
+]
+
+# 每种布局的视觉差异类别（用于智能去重 - 连续页面选择不同类别）
+LAYOUT_CATEGORIES = {
+    "COVER": "title",
+    "DASHBOARD": "data_dense",
+    "BIG_NUMBER": "data_highlight",
+    "COMPARISON": "split",
+    "PYRAMID": "visual",
+    "CARD": "list",
+    "ACTION_PLAN": "process",
+    "CONTENT": "text",
+    "SUMMARY": "text",
+    "PIE_CHART": "chart",
+    "RADAR_CHART": "chart",
+    "TABLE": "data_dense",
+    "GAUGE": "chart",
+    "AREA_CHART": "chart",
+    "H_BAR_CHART": "chart",
+    "FUNNEL": "visual",
+    "STACKED_BAR": "chart",
+    "COMBO_CHART": "chart",
+    "CARD_CHART_MIX": "mixed",
+    "BANNER_TRANSITION": "title",
+}
+
+
+def dedup_layout(suggested: str, prev_layouts: list, max_history: int = 3) -> str:
+    """确保布局与最近几页不重复。
+    
+    Args:
+        suggested: 原始建议布局
+        prev_layouts: 之前页面使用的布局列表（从旧到新）
+        max_history: 检查最近几页
+    
+    Returns:
+        去重后的布局名
+    """
+    if not prev_layouts:
+        return suggested
+    
+    recent = prev_layouts[-max_history:]
+    prev_categories = [LAYOUT_CATEGORIES.get(l, "unknown") for l in recent]
+    
+    # 如果建议的布局与最近页面重复或同类，找一个不同类别的
+    suggested_cat = LAYOUT_CATEGORIES.get(suggested, "unknown")
+    
+    if suggested in recent:
+        # 完全重复 → 找一个视觉差异最大的
+        candidates = []
+        for layout in ALL_LAYOUTS:
+            if layout in recent:
+                continue
+            cat = LAYOUT_CATEGORIES.get(layout, "unknown")
+            if cat != suggested_cat:
+                candidates.append((layout, cat))
+        
+        if candidates:
+            # 优先选不同类别
+            return candidates[0][0]
+        else:
+            # 所有类别都用过了，选不在最近3页的
+            for layout in ALL_LAYOUTS:
+                if layout not in recent:
+                    return layout
+            return suggested
+    
+    if suggested_cat in prev_categories:
+        # 同类别重复 → 找不同类别的
+        candidates = []
+        for layout in ALL_LAYOUTS:
+            cat = LAYOUT_CATEGORIES.get(layout, "unknown")
+            if cat not in prev_categories and layout not in recent:
+                candidates.append(layout)
+        
+        if candidates:
+            return candidates[0]
+        # 没有完全不同类别的，接受建议
+    
+    return suggested
+
+
+def get_layout_suggestion_map() -> dict:
+    """获取内容类型到推荐布局的映射。
+    
+    Returns:
+        dict: content_type -> [layout_list]
+    """
+    return {
+        "title": ["COVER", "BANNER_TRANSITION", "BIG_NUMBER"],
+        "data": ["DASHBOARD", "CARD_CHART_MIX", "BIG_NUMBER", "H_BAR_CHART", "AREA_CHART", "FUNNEL", "TABLE", "COMBO_CHART", "PIE_CHART", "RADAR_CHART", "GAUGE", "STACKED_BAR"],
+        "data_dense": ["TABLE", "DASHBOARD", "H_BAR_CHART"],
+        "list": ["CARD", "ACTION_PLAN", "COMPARISON", "PYRAMID", "CONTENT"],
+        "text": ["CONTENT", "SUMMARY", "CARD"],
+        "mixed": ["CARD_CHART_MIX", "DASHBOARD", "COMPARISON"],
+        "process": ["ACTION_PLAN", "FUNNEL"],
+        "chart": ["AREA_CHART", "H_BAR_CHART", "PIE_CHART", "RADAR_CHART", "GAUGE", "STACKED_BAR", "COMBO_CHART"],
+        "visual": ["PYRAMID", "FUNNEL", "RADAR_CHART", "BIG_NUMBER"],
+        "split": ["COMPARISON", "CARD_CHART_MIX"],
+        "data_highlight": ["BIG_NUMBER", "GAUGE", "DASHBOARD"],
+        "title": ["COVER", "BANNER_TRANSITION"],
+    }
 
 # SVG组件库 - 常用的可视化元素
 SVG_COMPONENTS = """

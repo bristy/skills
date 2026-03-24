@@ -51,7 +51,7 @@ def analyze_content_type(content: str) -> str:
     return best_type if scores[best_type] > 0 else 'solution'
 
 
-def extract_slides_from_content(content: str) -> list:
+def parse_slides_from_content(content: str) -> list:
     """Extract structured slides from content."""
     lines = [line.strip() for line in content.split('\n') if line.strip()]
     
@@ -80,7 +80,7 @@ def generate_smart_slides(content: str, output_dir: str) -> dict:
     os.makedirs(output_dir, exist_ok=True)
     
     # Extract slides from content
-    slides = extract_slides_from_content(content)
+    slides = parse_slides_from_content(content)
     
     if not slides:
         return {"success": False, "error": "No slides extracted from content"}

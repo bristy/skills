@@ -1,6 +1,6 @@
 ---
 name: doc2slides
-version: 3.0.0
+version: 3.6.0
 description: "Convert PDF, Word, and Markdown documents into professional PowerPoint slides with 18+ layout types and smart layout matching. Use when: user wants to create slides from a document or convert content to PPT."
 license: MIT-0
 author: lifei68801
@@ -25,70 +25,99 @@ metadata:
 
 # Doc2Slides
 
-Turn documents into professional PowerPoint slides.
+Got a PDF or document? Need a presentation? One command, done.
 
-## What It Does
 
-- **18+ Layouts**: Dashboard, Timeline, Flow Chart, Pyramid, Comparison, Matrix, and more
-- **Smart Matching**: Picks the best layout per section automatically
-- **LLM Enhancement**: Optional AI-powered analysis for better layout decisions
-- **High Quality**: 3x resolution with charts and data visualizations
-- **Batch Mode**: Handles long documents (10+ pages) via split generation
+> Input: any PDF / DOCX / Markdown
+> Output: 6-page professional PPT in minutes
+>
+> Cover | Dashboard | Timeline | Comparison | Pyramid | Summary
 
-## Setup
-
-```bash
-pip3 install python-pptx playwright requests
-playwright install chromium
-```
-
-LLM enhancement is optional. When enabled, it uses one of these env vars (all optional):
-- `OPENAI_API_KEY` — OpenAI compatible API
-- `ZHIPU_API_KEY` — Zhipu AI API
-- `DEEPSEEK_API_KEY` — DeepSeek API
-
-Without any API key set, the skill runs in template-only mode (no LLM calls, no network).
 
 ## Quick Start
 
 ```bash
+# Install the skill first
+clawhub install doc2slides
+
+# Then install Python dependencies
+pip3 install python-pptx playwright requests && playwright install chromium
+
+# Generate slides
 cd ~/.openclaw/workspace/skills/doc2slides/scripts
-python3 workflow.py --input /path/to/document.pdf --output slides.pptx
+python3 workflow.py --input document.pdf --output slides.pptx
 ```
 
-## Before You Start
+That's it. PDF → PPT in minutes.
 
-Ask the user: **"有什么特殊要求吗？比如风格、页数、重点内容、配色偏好等。直接说需求就行，也可以说'按默认来'。"**
+## What You Get
 
-Any instruction the user gives is applied via `--instruction`.
+| Feature | Details |
+|---------|---------|
+| **Layouts** | 18+ types: Dashboard, Timeline, Flow Chart, Pyramid, Comparison, Matrix... |
+| **Smart Matching** | Auto-picks the best layout per section |
+| **Charts** | Built-in SVG charts — pie, bar, line, progress rings |
+| **Resolution** | 3x high-def rendering |
+| **LLM Mode** | Optional AI analysis for smarter layout choices |
+| **Input** | PDF, DOCX, Markdown |
+| **Offline** | Works without internet (template mode) |
+
+## Usage Examples
+
+```bash
+# Basic — 5 slides from PDF
+python3 workflow.py --input report.pdf --output report.pptx
+
+# With page limit
+python3 workflow.py --input report.pdf --output report.pptx --pages 3
+
+# With custom instruction (style, focus, etc.)
+python3 workflow.py --input report.pdf --output report.pptx --instruction "Focus on data and charts"
+
+# Markdown input
+python3 workflow.py --input notes.md --output notes.pptx
+```
+
+## When to Use This Skill
+
+Activate when the user says anything like:
+- "把这个文档做成PPT"
+- "Convert this PDF to slides"
+- "Generate a presentation from..."
+- "帮我做个演示文稿"
+
+**Before generating**, ask: *"有什么特殊要求吗？风格、页数、重点内容、配色？也可以说'按默认来'。"*
 
 ## How It Works
 
-1. **Read** — Load document content (PDF, DOCX, Markdown)
-2. **Analyze** — Identify structure and key points
-3. **Match** — Select layout for each section
-4. **Build** — Generate inline-styled HTML slides (SVG charts, no external JS)
-5. **Render** — Chromium screenshots at 3x resolution
-6. **Export** — Assemble PNG images into PPTX
+```
+Document → Analyze → Match Layouts → Build HTML → Render (3x) → PPTX
+```
+
+No external CDN. No cloud service. Everything runs locally. HTML + inline CSS + SVG charts — fully self-contained.
+
+## LLM Enhancement (Optional)
+
+Set one of these env vars to enable AI-powered layout decisions:
+
+| Variable | Provider |
+|----------|----------|
+| `OPENAI_API_KEY` | OpenAI / compatible |
+| `ZHIPU_API_KEY` | Zhipu AI |
+| `DEEPSEEK_API_KEY` | DeepSeek |
+
+No API key? No problem — falls back to template mode with zero network calls.
 
 ## Architecture
 
-All rendering uses inline CSS + SVG for charts. No external CDN, no Tailwind, no Chart.js — everything is self-contained HTML.
+| Script | Role |
+|--------|------|
+| `workflow.py` | Main orchestrator |
+| `llm_generate_html.py` | AI slide generation |
+| `llm_adapter.py` | Multi-provider adapter |
+| `smart_layout_matcher.py` | Auto layout selection |
+| `svg_charts.py` | Chart rendering |
+| `html2png_batch.py` | Screenshot pipeline |
+| `png2pptx.py` | Image → PPTX assembly |
 
-- `workflow.py` — Main orchestrator
-- `llm_generate_html.py` — LLM-powered HTML slide generation
-- `llm_adapter.py` — Multi-provider LLM adapter (OpenAI, Zhipu, DeepSeek, Ollama)
-- `smart_layout_matcher.py` — Automatic layout selection
-- `svg_charts.py` / `svg_charts_enhanced.py` — Pure SVG chart rendering
-- `html2png_batch.py` — Playwright screenshot pipeline
-- `png2pptx.py` — Image-to-PPTX assembly
-
-## Tips
-
-- Documents with clear headings and bullet points work best
-- Shorter documents (1-20 pages) produce optimal results
-- All source code is included for transparency and review
-
-## License
-
-MIT-0
+All source code included. MIT-0 license.

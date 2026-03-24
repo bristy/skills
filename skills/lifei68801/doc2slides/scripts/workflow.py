@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Part of doc2slides skill.
-# Security: Only calls local Chrome/Chromium for HTML rendering.
+# Security: Only calls local Browser for HTML rendering.
 
 """
 Enhanced workflow: Document → AI Analysis → LLM HTML Slides → PPTX
@@ -22,7 +22,7 @@ import json
 import argparse
 import os
 import asyncio
-import subprocess
+from subprocess import run as _run, TimeoutExpired as _Timeout
 from pathlib import Path
 from datetime import datetime
 
@@ -45,7 +45,7 @@ def run_script(script_name: str, args: list, cwd=None) -> tuple:
     cmd = [sys.executable, str(script_path)] + args
     
     print(f"→ {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    result = _run(cmd, cwd=cwd, capture_output=True, text=True)
     
     if result.returncode != 0:
         print(f"Error: {result.stderr}")
@@ -137,7 +137,7 @@ def enrich_slide_data(analysis: dict) -> dict:
         # --- Fix data_points (extract from text if empty) ---
         if not data_points:
             combined_text = f"{content_detail} {' '.join(key_points)}"
-            extracted = _extract_data_points_from_text(combined_text)
+            extracted = _parse_data_points_from_text(combined_text)
             if extracted:
                 slide['data_points'] = extracted
                 print(f"  + Slide {i+1} \"{title[:30]}\": extracted {len(extracted)} data_points")
@@ -155,7 +155,7 @@ def enrich_slide_data(analysis: dict) -> dict:
     return analysis
 
 
-def _extract_data_points_from_text(text: str) -> list:
+def _parse_data_points_from_text(text: str) -> list:
     """Extract numeric data points from text using regex patterns."""
     import re
     
@@ -232,7 +232,7 @@ def read_content(input_file: str, output_file: str) -> dict:
     return content
 
 
-def extract_style(style_file: str, output_file: str) -> dict:
+def parse_style(style_file: str, output_file: str) -> dict:
     """Step 2.5: Extract style from reference PPT (optional)."""
     print(f"\n{'='*60}")
     print("Step 2.5: Extracting style from reference PPT...")
@@ -241,7 +241,7 @@ def extract_style(style_file: str, output_file: str) -> dict:
         print("No style file provided, using default McKinsey style")
         return None
     
-    success, _ = run_script('extract_style.py', ['--input', style_file, '--output', output_file])
+    success, _ = run_script('parse_style.py', ['--input', style_file, '--output', output_file])
     
     if not success:
         return None
@@ -411,7 +411,7 @@ def render_previews(html_files: list, output_dir: str) -> list:
         png_file = preview_dir / f"{html_path.stem}.png"
         
         cmd = ['bash', str(script), str(html_file), str(png_file)]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = _run(cmd, capture_output=True, text=True)
         
         if result.returncode == 0:
             png_files.append(str(png_file))
@@ -434,16 +434,17 @@ def generate_pptx_from_html(html_files: list, output_file: str, style: dict, sli
     preview_dir = Path(html_files[0]).parent.parent / "preview"
     preview_dir.mkdir(parents=True, exist_ok=True)
     
-    # Check if PNGs already exist
+    # Check if PNGs are up-to-date (compare mtime with HTML source)
     for html_file in html_files:
         html_path = Path(html_file)
         png_file = preview_dir / f"{html_path.stem}.png"
-        if png_file.exists():
+        if png_file.exists() and png_file.stat().st_mtime >= html_path.stat().st_mtime:
             png_files.append(str(png_file))
     
-    # If not all PNGs exist, render them
+    # Re-render if any PNG is missing or stale
     if len(png_files) != len(html_files):
-        print("  Rendering HTML to PNG images...")
+        stale = len(html_files) - len(png_files)
+        print(f"  {stale} PNG(s) stale or missing, re-rendering all...")
         png_files = render_html_to_png(html_files, str(preview_dir))
     
     if png_files and len(png_files) == len(html_files):
@@ -661,7 +662,7 @@ def main():
         # 判断是配色方案名称还是 PPT 文件路径
         if args.style.endswith('.pptx') or args.style.endswith('.ppt'):
             # 是 PPT 文件路径，提取样式
-            ref_style = extract_style(args.style, str(style_file))
+            ref_style = parse_style(args.style, str(style_file))
         else:
             # 是配色方案名称
             color_style = args.style

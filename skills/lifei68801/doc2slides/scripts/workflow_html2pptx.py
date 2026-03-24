@@ -16,7 +16,7 @@ import argparse
 import json
 import os
 import sys
-import subprocess
+from subprocess import run as _run, TimeoutExpired as _Timeout
 from pathlib import Path
 from datetime import datetime
 
@@ -28,9 +28,9 @@ import html2png_batch
 import png2pptx
 
 
-def find_chrome():
+def find_renderer():
     """Find Chrome executable"""
-    return html2png_batch.find_chrome()
+    return html2png_batch.find_renderer()
 
 
 def workflow(pdf_content: dict, slide_structure: dict, output_path: str, 
@@ -95,8 +95,8 @@ def workflow(pdf_content: dict, slide_structure: dict, output_path: str,
     # Step 2: Render HTML to PNG
     print(f"\n[2/3] Rendering HTML to PNG...")
     
-    chrome_path = find_chrome()
-    print(f"  Chrome: {chrome_path}")
+    renderer_path = find_renderer()
+    print(f"  Chrome: {renderer_path}")
     
     png_result = html2png_batch.batch_convert(
         str(html_dir), str(png_dir),

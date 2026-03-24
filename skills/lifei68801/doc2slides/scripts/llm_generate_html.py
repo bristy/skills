@@ -150,11 +150,25 @@ try:
     from svg_charts_enhanced import (
         progress_ring, bar_chart, kpi_card_big, 
         comparison_card, pyramid_with_cards, timeline_horizontal,
+        area_chart, horizontal_bar_chart, funnel_chart, stacked_bar_chart, combo_chart,
+        trend_arrow, kpi_card_gradient, kpi_card_glass, decorative_elements_v2,
         ICONS, decorative_elements
     )
     HAS_SVG_CHARTS = True
 except ImportError:
     HAS_SVG_CHARTS = False
+
+try:
+    from layouts import dedup_layout, ALL_LAYOUTS, LAYOUT_CATEGORIES
+    HAS_LAYOUT_DEDUP = True
+except ImportError:
+    HAS_LAYOUT_DEDUP = False
+
+try:
+    from enhanced_prompt_v2 import build_prompt
+    HAS_BUILD_PROMPT = True
+except ImportError:
+    HAS_BUILD_PROMPT = False
 
 
 # HTML scaffold - minimal, no CDN
@@ -247,7 +261,7 @@ def fix_broken_data_labels(data_points: List[Dict]) -> List[Dict]:
     return fixed_points
 
 
-def extract_numbers_from_text(text: str) -> List[Dict]:
+def parse_numbers_from_text(text: str) -> List[Dict]:
     """
     Extract numeric data points from text as a fallback.
     
@@ -355,7 +369,7 @@ async def preprocess_slide_data_async(
         key_points_text = ' '.join(key_points) if key_points else ''
         combined_text = f"{content_detail} {key_points_text}"
         
-        extracted = extract_numbers_from_text(combined_text)
+        extracted = parse_numbers_from_text(combined_text)
         if extracted:
             data_points = extracted
             slide_data['data_points'] = data_points
@@ -593,7 +607,7 @@ def preprocess_slide_data(slide_data: Dict[str, Any], smart_matcher=None) -> Dic
                 content_detail = slide_data.get('content_detail', '')
                 key_points_text = ' '.join(key_points) if key_points else ''
                 combined_text = f"{content_detail} {key_points_text}"
-                extracted = extract_numbers_from_text(combined_text)
+                extracted = parse_numbers_from_text(combined_text)
                 if extracted:
                     data_points = extracted
                     slide_data['data_points'] = data_points
@@ -995,6 +1009,7 @@ class LLMHTMLGenerator:
         
         self.llm = LLMAdapter(model=model)
         self.instruction = instruction  # User instruction
+        self.prev_layouts = []  # Track previous layouts for dedup
         
         # Get color scheme
         if HAS_COLOR_SCHEMES:
@@ -1025,11 +1040,27 @@ class LLMHTMLGenerator:
         # Preprocess slide data
         slide_data = preprocess_slide_data(slide_data)
         
+        # --- Layout dedup: ensure adjacent slides use different layouts ---
+        suggested_layout = slide_data.get('layout', slide_data.get('template', slide_data.get('layout_suggestion', 'CONTENT')))
+        if HAS_LAYOUT_DEDUP and self.prev_layouts:
+            deduped_layout = dedup_layout(suggested_layout, self.prev_layouts)
+            if deduped_layout != suggested_layout:
+                print(f"  🔄 Layout dedup: {suggested_layout} → {deduped_layout}")
+                slide_data['layout'] = deduped_layout
+                slide_data['layout_suggestion'] = deduped_layout
+        
+        self.prev_layouts.append(slide_data.get('layout', suggested_layout))
+        
         # Prepare prompt with color scheme
         slide_json = json.dumps(slide_data, ensure_ascii=False, indent=2)
         
-        # Inject color scheme into prompt
-        if HAS_COLOR_SCHEMES:
+        # --- Use build_prompt for dynamic color scheme + prev_layout injection ---
+        if HAS_BUILD_PROMPT:
+            base_prompt = build_prompt(
+                scheme=self.color_scheme, 
+                prev_layout=self.prev_layouts[-2] if len(self.prev_layouts) >= 2 else None
+            )
+        elif HAS_COLOR_SCHEMES:
             base_prompt = inject_colors_into_prompt(SLIDE_PROMPT, self.color_scheme)
         else:
             base_prompt = SLIDE_PROMPT
@@ -1088,7 +1119,7 @@ class LLMHTMLGenerator:
                 prompt=prompt,
                 max_tokens=4000,
                 temperature=0.3,
-                timeout=180.0  # 3 minutes timeout for each slide
+                timeout=240.0  # 4 minutes timeout for each slide
             )
             
             # Extract content
@@ -1134,10 +1165,17 @@ class LLMHTMLGenerator:
 请重新生成一个内容充实的完整页面。
 """
         
-        # All retries failed, return last attempt anyway
-        print(f"  ❌ All {max_retries} attempts failed, returning last result")
+        # All retries failed — check if content is valid HTML before falling back
+        if '<div' not in content and '<svg' not in content and '<table' not in content:
+            print(f"  ⚠️ LLM returned non-HTML content (thinking/process text), falling back to template mode")
+            html = self._fallback_template_html(slide_data)
+            if html:
+                return html
+            # If template fallback also fails, return empty scaffold
+            title = slide_data.get('title', 'Slide')
+            return HTML_SCAFFOLD.format(title=title, content=f'<div style="padding:80px;"><h2>{title}</h2><p style="color:#999;font-size:24px;">（LLM生成失败，请手动编辑此页）</p></div>')
         
-        # Enforce minimum font sizes even on failed attempts
+        print(f"  ❌ All {max_retries} attempts failed, returning last result")
         content = enforce_minimum_font_sizes(content)
         title = slide_data.get('title', 'Slide')
         return HTML_SCAFFOLD.format(title=title, content=content)
@@ -1176,6 +1214,63 @@ class LLMHTMLGenerator:
             print(f"  ✓ Saved {output_file.name}")
         
         return html_files
+
+    @staticmethod
+    def _fallback_template_html(slide_data: Dict[str, Any]) -> str:
+        """
+        Fallback: generate a basic HTML slide using template logic when LLM fails.
+        Produces a clean, content-filled slide based on slide_data without AI.
+        """
+        from subprocess import run as _run; import os, json as _json, tempfile
+
+        script_path = os.path.join(os.path.dirname(__file__), 'generate_html.py')
+        if not os.path.exists(script_path):
+            print("  ⚠️ Template script not found, cannot fallback")
+            return None
+
+        title = slide_data.get('title', 'Untitled Slide')
+        layout = slide_data.get('layout', slide_data.get('template', slide_data.get('layout_suggestion', 'CONTENT')))
+        key_points = slide_data.get('key_points', [])
+        data_points = slide_data.get('data_points', slide_data.get('stats', []))
+
+        # Build template data
+        tpl_data = {
+            'template': layout,
+            'title': title,
+            'content': key_points,
+            'stats': data_points,
+            **slide_data
+        }
+
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as tmp:
+                tmp_path = tmp.name
+
+            result = _run(
+                ['python3', script_path,
+                 '--template', layout,
+                 '--output', tmp_path,
+                 '--data', _json.dumps(tpl_data, ensure_ascii=False)],
+                capture_output=True, text=True, timeout=60
+            )
+
+            if result.returncode == 0 and os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 200:
+                with open(tmp_path, 'r', encoding='utf-8') as f:
+                    html = f.read()
+                os.unlink(tmp_path)
+                if '<div' in html or '<svg' in html:
+                    print(f"  ✓ Template fallback succeeded for: {title}")
+                    return html
+            else:
+                print(f"  ⚠️ Template fallback script failed: {result.stderr[:200] if result.stderr else 'empty output'}")
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+        except Exception as e:
+            print(f"  ⚠️ Template fallback error: {e}")
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
+        return None
 
 
 async def main():
@@ -1219,3 +1314,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+

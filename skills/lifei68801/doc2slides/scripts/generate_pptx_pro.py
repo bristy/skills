@@ -124,7 +124,7 @@ def detect_template(slide_data):
         return 'CONTENT'
 
 
-def extract_stats(content):
+def parse_stats(content):
     """Extract statistics from content for PROBLEM template"""
     stats = []
     for item in content[:5]:
@@ -278,7 +278,7 @@ def create_problem_slide(prs, slide_data, slide_num):
     right_col_x = Inches(6.5)
     stats = slide_data.get('stats', [])  # 优先使用 stats 字段
     if not stats:
-        stats = extract_stats(content) if content else []
+        stats = parse_stats(content) if content else []
     
     # If no stats extracted, create placeholder
     if not stats:

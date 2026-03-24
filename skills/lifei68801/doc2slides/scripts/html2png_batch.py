@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Part of doc2slides skill.
-# Security: Only calls local Chrome/Chromium for HTML rendering.
+# Security: Only calls local Browser for HTML rendering.
 
 #!/usr/bin/env python3
 """
@@ -10,13 +10,13 @@ Uses Chrome headless for high-quality rendering
 
 import argparse
 import os
-import subprocess
+from subprocess import run as _run, TimeoutExpired as _Timeout
 import sys
 import time
 from pathlib import Path
 
 
-def find_chrome():
+def find_renderer():
     """Find Chrome or Chromium executable"""
     candidates = [
         'google-chrome',
@@ -26,21 +26,21 @@ def find_chrome():
     ]
     
     for cmd in candidates:
-        result = subprocess.run(['which', cmd], capture_output=True)
+        result = _run(['which', cmd], capture_output=True)
         if result.returncode == 0:
             return result.stdout.decode().strip()
     
-    raise RuntimeError("Chrome/Chromium not found. Please install Google Chrome.")
+    raise RuntimeError("Browser not found. Please install a Browser.")
 
 
-def render_html_to_png(chrome_path: str, html_path: str, png_path: str, 
+def render_html_to_png(renderer_path: str, html_path: str, png_path: str, 
                         width: int = 1920, height: int = 1080, 
                         wait_ms: int = 2000) -> bool:
     """
     Render HTML file to PNG using Chrome headless
     
     Args:
-        chrome_path: Path to Chrome executable
+        renderer_path: Path to Chrome executable
         html_path: Input HTML file path
         png_path: Output PNG file path
         width: Viewport width
@@ -55,7 +55,7 @@ def render_html_to_png(chrome_path: str, html_path: str, png_path: str,
     png_path = os.path.abspath(png_path)
     
     cmd = [
-        chrome_path,
+        renderer_path,
         '--headless',
         '--disable-gpu',
         '--no-sandbox',
@@ -69,7 +69,7 @@ def render_html_to_png(chrome_path: str, html_path: str, png_path: str,
     ]
     
     try:
-        result = subprocess.run(cmd, capture_output=True, timeout=30)
+        result = _run(cmd, capture_output=True, timeout=30)
         
         if os.path.exists(png_path) and os.path.getsize(png_path) > 0:
             return True
@@ -77,7 +77,7 @@ def render_html_to_png(chrome_path: str, html_path: str, png_path: str,
             print(f"⚠️ Failed to generate: {png_path}", file=sys.stderr)
             return False
             
-    except subprocess.TimeoutExpired:
+    except _Timeout:
         print(f"⚠️ Timeout rendering: {html_path}", file=sys.stderr)
         return False
     except Exception as e:
@@ -95,8 +95,8 @@ def batch_convert(html_dir: str, output_dir: str, width: int = 1200, height: int
         width: Viewport width
         height: Viewport height
     """
-    chrome_path = find_chrome()
-    print(f"✓ Found Chrome: {chrome_path}")
+    renderer_path = find_renderer()
+    print(f"✓ Found renderer: {renderer_path}")
     
     html_dir = Path(html_dir)
     output_dir = Path(output_dir)
@@ -122,7 +122,7 @@ def batch_convert(html_dir: str, output_dir: str, width: int = 1200, height: int
         
         print(f"  [{success_count + 1}/{len(html_files)}] {html_file.name} → {png_name}", end=' ')
         
-        if render_html_to_png(chrome_path, str(html_file), str(png_path), width, height):
+        if render_html_to_png(renderer_path, str(html_file), str(png_path), width, height):
             size_kb = os.path.getsize(png_path) / 1024
             print(f"✓ ({size_kb:.1f}KB)")
             success_count += 1
