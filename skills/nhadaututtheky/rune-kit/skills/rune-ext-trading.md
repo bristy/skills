@@ -85,7 +85,7 @@ Called By ← logic-guardian (L2): when project is classified as trading domain
 ~2,000–4,000 tokens per skill activation. `sonnet` default for code generation; `haiku` for Grep/file-scan steps; `opus` if regulatory compliance or security audit context is detected. Full pack activation (all 7 skills) runs ~14,000–28,000 tokens end-to-end.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

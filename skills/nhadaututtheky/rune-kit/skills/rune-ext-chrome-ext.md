@@ -98,7 +98,7 @@ Called By ← preflight (L2): runs cws-preflight as part of broader pre-deploy a
 ~1,500–3,000 tokens per skill activation. `haiku` for file scans (Grep, Glob, manifest reading); `sonnet` for scaffold generation, storage schema, and message type definitions; `sonnet` for cws-preflight audit and store listing copy; `sonnet` for AI integration wiring. Full pack activation (all 6 skills) runs ~12,000–18,000 tokens end-to-end. `cws-preflight` is the heaviest single skill (~3,000 tokens) due to multi-pass scanning.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

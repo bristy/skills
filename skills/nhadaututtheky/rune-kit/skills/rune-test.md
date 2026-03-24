@@ -250,6 +250,51 @@ For non-trivial features (3+ test files or 20+ test cases), create a `TEST.md` i
 
 **Why TEST.md**: Planning tests before code catches missing edge cases early. Appending results creates permanent evidence. One document = complete testing story.
 
+## Skill Behavior Tests (Eval Scenarios)
+
+For testing SKILL.md behavior (not code), use **Eval Scenarios** — unit tests for skill files, not code files.
+
+### Eval Scenario Format
+
+```markdown
+## Eval: E[NN] — [scenario name]
+
+### Prompt
+[The exact situation/message an agent receives]
+
+### Expected Reasoning
+[Step-by-step reasoning the agent SHOULD follow]
+
+### Must Include
+- [Assertion 1: what the output MUST contain or do]
+- [Assertion 2]
+
+### Must NOT
+- [Anti-pattern 1: what the output MUST NOT do]
+- [Anti-pattern 2]
+
+### Category
+happy-path | adversarial | edge-case | jailbreak | credential-leak
+```
+
+### Eval Coverage Requirements
+
+A skill is **behavior-tested** when it has evals covering:
+
+| Category | Min Evals | Purpose |
+|----------|-----------|---------|
+| Happy path | 1 | Core workflow executes correctly |
+| Edge case | 1 | Empty input, missing context, unusual state |
+| Adversarial | 1 | Time pressure, sunk cost, authority pressure |
+| Jailbreak / injection | 1 | Prompt injection attempt, "ignore instructions" |
+
+**Minimum**: 4 evals per skill (1 per category). Security-critical skills (sentinel, safeguard): 8+ evals.
+
+### Eval Storage
+
+Save eval files as `skills/<name>/evals.md`. Each eval is a numbered scenario (E01–E24 range). skill-forge Phase 7 checks for evals presence before ship.
+
+
 ## Error Recovery
 
 - If test framework not found: ask calling skill to specify, or check `package.json` `devDependencies`
@@ -305,6 +350,96 @@ For non-trivial features (3+ test files or 20+ test cases), create a `TEST.md` i
 | "It's about spirit not ritual" | Violating the letter IS violating the spirit. Write the test first. |
 | "I mentally tested it" | Mental testing is not testing. Run the command, show the output. |
 | "This is different because..." | It's not. Write the test first. |
+
+## Advanced: Oracle-Injection E2E Testing
+
+For **data pipelines, AI workflows, and multi-stage processing** where comparing full output structures is impractical, use oracle injection:
+
+1. **Generate a UUID oracle token**: `const oracle = crypto.randomUUID()`
+2. **Inject into synthetic input**: embed the oracle in realistic test data that flows through the pipeline
+3. **Run the full pipeline**: input → all stages → output
+4. **Search for oracle in output**: if found → data flowed end-to-end correctly
+
+```
+// Example: testing a document processing pipeline
+const oracle = "ORACLE-" + crypto.randomUUID();
+const testDoc = `Meeting notes: discussed ${oracle} integration timeline`;
+const result = await pipeline.process(testDoc);
+assert(result.output.includes(oracle), "Oracle not found — pipeline lost data");
+```
+
+**When to use**: E2E tests for pipelines with 3+ stages, LLM-based processing, ETL workflows, or any system where output structure is complex/non-deterministic but data preservation is critical.
+
+**When NOT to use**: Unit tests, simple CRUD, or when exact output comparison is feasible.
+
+
+## Spec→Test Traceability
+
+When a plan with acceptance criteria exists (`.rune/features/<name>/plan.md` or phase file), every criterion MUST map to at least one test case.
+
+```
+Plan Acceptance Criteria → Test Case → Implementation
+
+AC-1: "User can reset password via email" → test_password_reset_sends_email()
+AC-2: "Rate limit: max 3 reset attempts/hour" → test_password_reset_rate_limit()
+AC-3: "Expired tokens rejected" → test_expired_reset_token_rejected()
+```
+
+**Validation step** (after writing tests): Cross-check plan's acceptance criteria against test names. For each criterion:
+- Has test → OK
+- No test → flag as UNTESTED REQUIREMENT (more serious than uncovered lines)
+
+**Why this is stronger than coverage**: Coverage checks that lines were EXECUTED. Traceability checks that INTENT was VERIFIED. You can have 100% coverage but miss a requirement if the test doesn't assert the right behavior.
+
+**Skip if**: No plan exists (ad-hoc fix), or plan has no acceptance criteria section.
+
+## Eval-Driven Development
+
+Define **capability evals** and **regression evals** BEFORE writing implementation code. Evals go beyond unit tests — they verify that the agent/system can handle the feature's intent, not just its mechanics.
+
+### Two Eval Types
+
+| Type | Purpose | Pass Criteria | When |
+|------|---------|---------------|------|
+| **Capability eval** | Can the system do this new thing? | pass@k: ≥1 success in k attempts (k=3-5) | Before implementation |
+| **Regression eval** | Did we break existing behavior? | pass^k: ALL k attempts must pass | After implementation |
+
+**pass@k** (capability): At least 1 of k runs succeeds. Used for new features where some variance is acceptable. Threshold: ≥90% pass@3 for standard features, ≥95% pass@5 for critical paths.
+
+**pass^k** (regression): ALL k runs must pass. Used for existing behavior that must never break. If ANY run fails, it's a regression. Threshold: 100% pass^3.
+
+### Eval File Format
+
+Store evals in `.rune/evals/<feature>.md`:
+
+```markdown
+# Eval: <feature name>
+
+## Capability Evals (pass@k)
+| ID | Description | k | Threshold | Status |
+|----|-------------|---|-----------|--------|
+| CAP-1 | [what the system should be able to do] | 3 | 90% | pending |
+
+## Regression Evals (pass^k)
+| ID | Description | k | Status |
+|----|-------------|---|--------|
+| REG-1 | [existing behavior that must not break] | 3 | pending |
+```
+
+### Anti-Pattern: Eval Overfitting
+
+Do NOT overfit evals to specific prompts or known examples. Evals should test the **capability**, not the **exact input**.
+
+- BAD: `"When user says 'hello', respond with 'Hi there!'"` — tests exact string match
+- GOOD: `"When user greets, respond with a greeting"` — tests capability
+
+### Integration with TDD
+
+1. Write eval definitions (capability + regression) → `.rune/evals/<feature>.md`
+2. Write unit/integration tests (RED phase) → test files
+3. Implement feature (GREEN phase) → source files
+4. Run evals to verify capability achieved + no regressions
+5. Preflight checks eval results as part of quality gate
 
 ## Red Flags — STOP and Start Over
 
@@ -386,11 +521,32 @@ Partial mock missing fields that downstream code consumes. Your test passes beca
 If mock setup is 30 lines and the actual test assertion is 3 lines, the test is testing infrastructure, not behavior. This is a code smell that indicates wrong abstraction level.
 **Gate**: "Is my mock setup longer than my test logic?" → If yes: test at a higher level (integration) or extract mock factories.
 
+### Anti-Pattern 6: Test Slop (Framework-Behavior Tests)
+Tests that verify the framework works rather than YOUR code works. If the test would still pass with an empty component/function, it's testing infrastructure.
+**Gate**: "Would this test pass if I deleted my business logic?" → If yes: STOP. Rewrite to test behavior that YOUR code introduces.
+
+Examples of test slop:
+- "renders without crashing" (tests that React works, not your component)
+- "route responds with 200" without checking response body (tests Express, not your handler)
+- Asserting a mock was called N times without checking the RESULT of those calls
+- Type existence tests (`typeof result === 'object'`) when you should test the actual value
+
 **Red flags — any of these means STOP and rethink:**
 - Mock setup longer than test logic
 - `*-mock` test IDs in assertions
 - Methods only called in test files
 - Can't explain in one sentence why a mock is needed
+- Test would pass with empty implementation (test slop)
+
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Test files | Source files | Co-located or `__tests__/` per project convention |
+| Test plan + results | Markdown | `TEST.md` in test directory (non-trivial features only) |
+| Eval scenarios | Markdown | `skills/<name>/evals.md` (for skill behavior testing) |
+| Coverage report | Inline stdout | Shown in Test Report |
+| Test Report | Markdown (inline) | Emitted to calling skill (cook, fix, review) |
 
 ## Sharp Edges
 
@@ -434,8 +590,10 @@ SELF-VALIDATION (run before emitting Test Report):
 
 ~$0.03-0.08 per invocation. Sonnet for writing tests, Bash for running them. Frequent invocation in TDD workflow.
 
+**Scope guardrail**: Do not modify source or implementation files to make tests pass unless explicitly delegated by the parent agent.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

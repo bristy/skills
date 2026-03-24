@@ -112,6 +112,34 @@ Called By ← mcp-builder (L2): when building Zalo-specific MCP server
 4. Credentials (tokens, cookies, secrets) MUST never be logged or committed
 5. Webhook signature verification MUST NOT be skipped — even in development
 
+## Sharp Edges
+
+| Failure Mode | Severity | Mitigation |
+|---|---|---|
+| OAuth2 access token expires (1h) without auto-refresh causing silent API failures | HIGH | Implement token refresh middleware that intercepts 401 responses and retries with new token before propagating errors |
+| zca-js session lost when running personal bot and Zalo app simultaneously on same account | HIGH | Use a dedicated account for bot automation — single-session limit is non-negotiable on Track B |
+| Webhook signature verification skipped in development, then deployed to production unsigned | HIGH | Always validate `X-Zalo-Signature` header from first commit — skip in dev only via explicit `SKIP_WEBHOOK_VERIFY=true` env flag |
+| Rate limit hit causes account ban with no warning (HTTP 429 mishandled as transient error) | HIGH | Implement token bucket per endpoint; treat sustained 429s as ban-risk signal and back off for 60+ seconds |
+
+## References
+
+| Reference | Trigger |
+|-----------|---------|
+| [VietQR & Banking](references/vietqr-banking.md) | Payment, bank transfer, QR code patterns detected |
+| [Conversation Management](references/conversation-management.md) | Polls, auto-reply, mute/archive, advanced messaging |
+| [MCP Production](references/mcp-production.md) | MCP server deployment, cursor pagination, pm2 setup |
+| [Multi-Account & Proxy](references/multi-account-proxy.md) | Multi-account setup, proxy configuration, VPS deployment |
+| [Listen Mode](references/listen-mode.md) | WebSocket listener, real-time events, webhook forwarding |
+| [Eval Scenarios](references/eval-scenarios.md) | Quality gate — 24 test scenarios (functional + security) |
+
+## Credits
+
+This pack was originally inspired by and incorporates patterns from:
+
+- **[zalo-agent-cli](https://github.com/PhucMPham/zalo-agent-cli)** by PhucMPham (MIT) — CLI tool for Zalo automation, 90+ commands, MCP server, VietQR banking integration
+- **[openzalo](https://github.com/darkamenosa/openzalo)** by darkamenosa — OpenClaw channel plugin for Zalo personal accounts via openzca CLI
+- **[zca-js](https://github.com/RFS-ADRENO/zca-js)** — Unofficial Zalo client library (reverse-engineered API)
+
 ## Done When
 
 - OA OAuth2 flow working with auto-refresh
@@ -122,7 +150,7 @@ Called By ← mcp-builder (L2): when building Zalo-specific MCP server
 - Track B: QR login + personal/group messaging working with risk gate shown
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

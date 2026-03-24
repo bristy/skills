@@ -51,6 +51,7 @@ project/
     ├── decisions.md       # Empty, ready for session-bridge
     ├── progress.md        # Empty, ready for session-bridge
     ├── session-log.md     # Empty, ready for session-bridge
+    ├── instincts.md       # Empty, ready for session-bridge instinct learning
     └── DEVELOPER-GUIDE.md # Human-readable onboarding for new developers
 ```
 
@@ -111,6 +112,19 @@ Write_file to create each file:
 - `.rune/decisions.md` — create with header `# Architecture Decisions` and one placeholder row in a markdown table (Date | Decision | Rationale | Status)
 - `.rune/progress.md` — create with header `# Progress Log` and one placeholder entry
 - `.rune/session-log.md` — create with header `# Session Log` and current date as first entry
+- `.rune/instincts.md` — create with header `# Project Instincts` and a description: "Learned trigger→action patterns. Managed by session-bridge. See session-bridge SKILL.md Step 5.7 for format."
+
+### Step 5.5 — Load Existing Instincts
+
+If `.rune/instincts.md` already exists and contains instinct entries, read it and include a summary in the Onboard Report under `### Learned Instincts`. This tells the agent what project-specific behaviors have been learned from previous sessions.
+
+For each instinct with confidence ≥0.6, include in the report:
+- Trigger and action (one line)
+- Confidence level
+
+Instincts with confidence <0.6 are still learning — mention count but don't list individually.
+
+**Why**: Onboard is the first skill that runs in a new session. Surfacing instincts here ensures the agent starts with project-specific learned behaviors, not just static conventions.
 
 ### Step 6b — Generate DEVELOPER-GUIDE.md
 
@@ -196,6 +210,24 @@ Based on your detected stack ([detected frameworks]), these extension packs may 
   Install: [link or command when available]
 ```
 
+### Step 6d — Context Budget Check
+
+Audit the project's baseline context cost from MCP servers and agent configurations. This helps developers understand why their context window fills up faster than expected.
+
+1. Count MCP tools available (from session start messages or `settings.json`)
+2. Check CLAUDE.md line count
+3. If total MCP tools >80 or CLAUDE.md >150 lines, include a **Context Budget Advisory** in the Onboard Report:
+
+```
+### Context Budget Advisory
+- **MCP tools loaded**: [count] across [N] servers
+- **CLAUDE.md size**: [N] lines
+- **Estimated baseline**: ~[N]k tokens before any work begins
+- **Recommendation**: [specific advice — disable unused MCP servers, move CLAUDE.md details to .rune/]
+```
+
+**Skip if**: Total MCP tools ≤80 AND CLAUDE.md ≤150 lines (healthy baseline).
+
 ### Step 7 — Commit
 Run_command to stage and commit the generated files:
 ```bash
@@ -264,6 +296,10 @@ If any of the `.rune/` files already exist, do not overwrite them (they may cont
 ### Skipped (already exist)
 - [list of files not overwritten]
 
+### Learned Instincts (if any)
+- [trigger] → [action] (confidence: [0.6-0.9]) — for each high-confidence instinct
+- [N] low-confidence instincts still learning
+
 ### Observations
 - [notable patterns or anomalies found]
 - [potential issues detected]
@@ -296,17 +332,29 @@ Known failure modes for this skill. Check these before declaring done.
 ## Done When
 
 - CLAUDE.md written (or merged) with all detected tech stack fields populated
-- .rune/ directory initialized with conventions, decisions, progress, session-log
+- .rune/ directory initialized with conventions, decisions, progress, session-log, instincts
 - .rune/DEVELOPER-GUIDE.md written with setup commands from actual scan
 - All generated commands verified to exist in package.json/Makefile/etc.
 - Onboard Report emitted with Generated + Skipped + Observations sections
+
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Project AI config | Markdown | `CLAUDE.md` (project root) |
+| Detected conventions | Markdown | `.rune/conventions.md` |
+| Decision log (initialized) | Markdown | `.rune/decisions.md` |
+| Developer onboarding guide | Markdown | `.rune/DEVELOPER-GUIDE.md` |
+| Session/progress files | Markdown | `.rune/progress.md`, `.rune/session-log.md` |
 
 ## Cost Profile
 
 ~2000-5000 tokens input, ~1000-2000 tokens output. Sonnet for analysis quality.
 
+**Scope guardrail:** onboard generates project context files — it does not modify source code, install dependencies, or change project configuration.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

@@ -43,6 +43,7 @@ Legacy refactoring orchestrator for safely modernizing messy codebases. Rescue r
 - `session-bridge` (L3): save rescue state between sessions
 - `onboard` (L2): generate context for unfamiliar legacy project
 - `dependency-doctor` (L3): audit dependencies in legacy project
+- `context-pack` (L3): create structured handoff briefings before spawning subagents
 - `neural-memory` | Phase start + phase end | Recall past refactoring patterns, capture new ones
 
 ## Called By (inbound)
@@ -416,6 +417,16 @@ Rollback point: git tag rune-rescue-baseline (set in Phase 0)
 - **Rollback Tag**: [git tag name]
 ```
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Rescue state | Markdown | `RESCUE-STATE.md` (updated each session) |
+| Characterization tests | Source files | Written by `rune-safeguard.md` per module |
+| Refactored modules | Source files | Modified in-place, committed per surgery session |
+| Health score comparison | Inline (Rescue Report) | Baseline vs final autopsy scores |
+| Rescue Report | Markdown (inline) | Emitted at session end (per module and final) |
+
 ## Sharp Edges
 
 Known failure modes for this skill. Check these before declaring done.
@@ -442,7 +453,7 @@ Known failure modes for this skill. Check these before declaring done.
 ~$0.10-0.30 per session. Sonnet for surgery, opus for autopsy. Multi-session workflow.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

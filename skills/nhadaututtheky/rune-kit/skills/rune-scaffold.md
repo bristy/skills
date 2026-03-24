@@ -252,6 +252,16 @@ Max 3 fix-verify loops. If still failing after 3 → report failures to user wit
 9. MUST respect user's existing project if scaffolding into non-empty directory — warn and ask before overwriting
 10. Generated files MUST be < 500 LOC each — split large files
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Project directory structure | Directories + files | Project root (per plan) |
+| Source code | Source files | Per plan file list |
+| Test suite | Source files | Co-located or `tests/` per framework convention |
+| Documentation | Markdown | `README.md`, `ARCHITECTURE.md`, `docs/API.md` as applicable |
+| Scaffold Report | Markdown (inline) | Emitted at session end |
+
 ## Sharp Edges
 
 | Failure Mode | Severity | Mitigation |
@@ -281,7 +291,7 @@ Max 3 fix-verify loops. If still failing after 3 → report failures to user wit
 ~10000-20000 tokens total (across all sub-skill invocations). Sonnet for orchestration — sub-skills use their own model selection (ba uses opus, git uses haiku, etc.). Most expensive L1 skill due to 9-phase pipeline, but runs rarely (project creation is infrequent).
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

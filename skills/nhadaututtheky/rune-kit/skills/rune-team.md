@@ -69,6 +69,26 @@ Lite Mode Phases:
 
 Standard team workflow with worktree isolation (Phases 1-5 as documented below).
 
+### Complexity Tiers (DAG Stage Selection)
+
+Before decomposing, classify the task into a complexity tier. Each tier defines a different DAG (directed acyclic graph) of stages, ensuring the right amount of process for the task's complexity.
+
+| Tier | Signals | DAG Stages | Context Windows |
+|------|---------|------------|-----------------|
+| **Trivial** | ≤3 files, single module, no shared contracts | impl → test | 1 (single cook) |
+| **Medium** | 4-10 files, 2-3 modules, shared interfaces | research → plan → impl → test → review → fix | 3 (plan, impl+test, review+fix) |
+| **Large** | 10+ files, 3+ modules, breaking changes or RFC | research → plan → impl → test → review₁ → fix → review₂ → final merge | 4+ (plan, impl+test, review₁+fix, review₂+merge) |
+
+**Key principle — reviewer isolation**: The agent that writes code MUST NOT review its own code. Each review stage uses a **separate context window** (separate Task invocation) that has never seen the implementation reasoning. This prevents author bias from contaminating the review.
+
+**Stage → Context Window mapping**:
+- `research + plan` = Context Window 1 (opus — architectural reasoning)
+- `impl + test` = Context Window 2 (sonnet — code writing)
+- `review₁ + fix` = Context Window 3 (sonnet — fresh eyes, no impl context)
+- `review₂ + merge` = Context Window 4 (sonnet — final verification, Large tier only)
+
+**Merge queue**: When multiple streams complete at different times, use dependency order for merging. If a later stream's merge creates conflicts with an already-merged stream, provide the conflicting stream's cook report as **conflict context** to the resolution agent — never resolve blindly.
+
 ## Calls (outbound)
 
 - `plan` (L2): high-level task decomposition into independent workstreams
@@ -81,6 +101,7 @@ Standard team workflow with worktree isolation (Phases 1-5 as documented below).
 - `completion-gate` (L3): validate workstream completion claims against evidence
 - `constraint-check` (L3): audit HARD-GATE compliance across parallel streams
 - `worktree` (L3): create isolated worktrees for parallel cook instances
+- `context-pack` (L3): create structured handoff briefings before spawning subagents
 - L4 extension packs: domain-specific patterns when context matches (e.g., @rune/mobile when porting web to mobile)
 
 ## Called By (inbound)
@@ -436,6 +457,16 @@ Dependent streams    → SEQUENTIAL (respecting dependency order)
 All streams done     → MERGE sequentially (avoid conflicts)
 ```
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Workstream assignments | Markdown (inline) | NEXUS Handoff Templates emitted per stream |
+| Cook Reports (per stream) | Markdown (inline) | Collected from each parallel cook instance |
+| Merged implementation | Source files | `main` branch after Phase 4 merge |
+| Integration test results | Inline stdout | Captured in Phase 5 verify |
+| Team Report | Markdown (inline) | Emitted at end of session |
+
 ## Sharp Edges
 
 Known failure modes for this skill. Check these before declaring done.
@@ -468,8 +499,10 @@ Known failure modes for this skill. Check these before declaring done.
 
 ~$0.20-0.50 per session. Opus for coordination. Most expensive orchestrator but handles largest tasks.
 
+**Scope guardrail**: Do not invoke launch, rescue, or scaffold autonomously unless explicitly delegated by the parent agent.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

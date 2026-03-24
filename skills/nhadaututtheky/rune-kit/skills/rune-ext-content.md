@@ -89,12 +89,19 @@ Called By ← marketing (L2): when creating blog content
 | Sitemap includes draft/unpublished pages | MEDIUM | Filter sitemap to `status === 'published'` only; add `noindex` to draft preview pages |
 | `hreflang` tags point to wrong locale | MEDIUM | Generate hreflang from route params, not hardcoded; test with hreflang validator |
 
+## Done When
+
+- Blog architecture set up with pagination, RSS feed, and canonical URLs all resolving correctly
+- CMS integration live with preview mode, publish webhooks triggering ISR revalidation and search index updates
+- All translation keys resolved with fallback locale — no raw keys visible in any locale
+- SEO audit passing: valid JSON-LD structured data, complete sitemap (published pages only), and hreflang tags verified
+
 ## Cost Profile
 
 ~16,000–28,000 tokens per full pack run (all 7 skills). Individual skill: ~2,000–5,000 tokens. Sonnet default. Use haiku for detection scans and alt-text audits; escalate to sonnet for CMS integration, SEO audit, video pipeline, and content scoring.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

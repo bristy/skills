@@ -106,7 +106,7 @@ infra-as-code → monitoring: IaC provisions monitoring infrastructure (alerts, 
 ~16,000–28,000 tokens per full pack run (all 9 skills). Individual skill: ~2,000–4,500 tokens. Sonnet default. Use haiku for config detection scans; escalate to sonnet for config generation and security audit.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

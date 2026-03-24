@@ -1,6 +1,6 @@
 # Rune Skill Index
 
-> Platform: openclaw | Skills: 59 | Extensions: 14
+> Platform: openclaw | Skills: 61 | Extensions: 14
 
 ## Core Skills
 
@@ -14,6 +14,7 @@
 - rune-completion-gate.md
 - rune-constraint-check.md
 - rune-context-engine.md
+- rune-context-pack.md
 - rune-cook.md
 - rune-db.md
 - rune-debug.md
@@ -55,6 +56,7 @@
 - rune-session-bridge.md
 - rune-skill-forge.md
 - rune-skill-router.md
+- rune-slides.md
 - rune-surgeon.md
 - rune-team.md
 - rune-test.md

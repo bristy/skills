@@ -238,12 +238,23 @@ How to push back:
 - Tests pass after each individual fix
 - Review Intake Report emitted
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Review Intake Report | Markdown table | inline |
+| Categorized feedback (P0–P4) | Classified list | inline |
+| Verdict per item (CORRECT/PUSHBACK/YAGNI/DEFER) | Table | inline |
+| Action plan (changes applied) | File list with descriptions | inline |
+
 ## Cost Profile
 
 ~2000-5000 tokens depending on feedback volume. Sonnet for evaluation logic, haiku for scout/grep verification.
 
+**Scope guardrail:** review-intake processes the feedback items provided — it does not pull new reviews, open PRs, or change architectural decisions without owner confirmation.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

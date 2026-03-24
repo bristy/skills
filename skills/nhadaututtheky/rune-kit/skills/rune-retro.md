@@ -314,12 +314,23 @@ SELF-VALIDATION (run before emitting report):
 - Narrative report emitted
 - No code was modified
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Retrospective narrative report | Markdown (~800-1500 words) | inline |
+| Retro JSON snapshot | JSON | `.rune/retros/{YYYY-MM-DD}.json` |
+| Per-person breakdown | Markdown sections | inline |
+| Action items + habits | Ordered lists | inline |
+
 ## Cost Profile
 
 ~3000-5000 tokens input (git history parsing), ~2000-4000 tokens output (narrative). Sonnet for analysis quality. Runs infrequently (weekly/sprint cadence).
 
+**Scope guardrail:** retro is read-only — it analyzes and reports. It does NOT modify code, create PRs, or change any files except its own output artifacts in `.rune/retros/`.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

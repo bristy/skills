@@ -49,7 +49,8 @@ Solve the #1 developer complaint: context loss across sessions. Session-bridge a
 ├── decisions.md      — Architectural decisions log
 ├── conventions.md    — Established patterns & style
 ├── progress.md       — Task progress tracker
-└── session-log.md    — Brief log of each session
+├── session-log.md    — Brief log of each session
+└── instincts.md      — Learned project-specific patterns (trigger→action)
 ```
 
 ## Execution
@@ -149,6 +150,59 @@ Edit_file to append a one-line entry to `.rune/session-log.md`:
 ```
 [YYYY-MM-DD HH:MM] — [brief description of session accomplishments]
 ```
+
+#### Step 5.5 — Autonomous Loop Notes (when inside team or headless)
+
+When session-bridge is invoked by `cook` running inside `team` or in autonomous mode (`claude -p`), persist iteration state to `.rune/task-notes.md`:
+
+```markdown
+# Task Notes: [task name]
+## What Worked (with evidence)
+- [approach]: [outcome, test output, or file path as proof]
+
+## What Failed
+- [approach]: [why it failed, error message]
+
+## What's Left
+- [ ] [remaining task with specific next step]
+
+## Key Context for Next Iteration
+- [critical info that would be lost on context reset]
+```
+
+**Why**: In autonomous loops, each `claude -p` invocation starts with zero context. Without this file, the next iteration repeats failed approaches and loses progress. The notes bridge the gap between independent invocations.
+
+**Rules**: Agent reads `.rune/task-notes.md` at start (Step 1 of Load Mode), updates at end. Keep concise — max 50 lines. Prune completed items.
+
+#### Step 5.7 — Instinct Extraction (Project-Scoped Learning)
+
+Extract atomic "instincts" — learned trigger→action patterns — from this session and persist to `.rune/instincts.md`. Instincts are project-scoped by default to prevent cross-project contamination.
+
+**Instinct format:**
+
+```markdown
+## [YYYY-MM-DD] Instinct: <short name>
+
+**Trigger:** <when this pattern applies — specific condition>
+**Action:** <what to do — specific behavior>
+**Confidence:** <0.3–0.9>
+**Evidence:** <what happened that taught this — file, error, outcome>
+```
+
+**Extraction rules:**
+
+| Signal | Example | Confidence |
+|--------|---------|------------|
+| Repeated manual correction by user | "Don't use X, use Y here" (2+ times) | 0.7–0.9 |
+| Failed approach → successful pivot | Tried approach A, failed, approach B worked | 0.5–0.7 |
+| Project-specific convention discovered | "This codebase uses X pattern for Y" | 0.4–0.6 |
+| One-off preference (may not generalize) | User chose a specific library once | 0.3–0.4 |
+
+**Promotion to global**: When the same instinct (matching trigger+action) appears in `.rune/instincts.md` across 2+ projects at confidence ≥0.8, promote it to Neural Memory via Step 6 with tag `[cross-project, instinct]`. Until then, it stays project-local.
+
+**Pruning**: At session start (Load Mode Step 1), review instincts older than 30 days with confidence <0.5 — remove them. Instincts that conflict with current conventions should be removed immediately.
+
+**Max instincts**: Keep `.rune/instincts.md` under 20 entries. When full, evict the lowest-confidence entry.
 
 #### Step 6 — Cross-Project Knowledge Extraction (Neural Memory Bridge)
 
@@ -294,7 +348,7 @@ Known failure modes for this skill. Check these before declaring done.
 ~100-300 tokens per save. ~500-1000 tokens per load. Always haiku. Negligible cost.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

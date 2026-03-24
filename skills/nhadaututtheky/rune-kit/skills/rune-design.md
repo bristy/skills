@@ -450,6 +450,15 @@ Trading/Fintech — Data-Dense Dark — Web
 | Persistence Gate | .rune/design-system.md written before reporting done | Write file first |
 | Platform Gate | Platform detected before generating tokens | Default to web, note assumption |
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Design system file | Markdown | `.rune/design-system.md` |
+| Design report | Markdown | inline (chat output) |
+| Accessibility audit findings | Markdown list | inline + appended to design-system.md |
+| UX writing guidelines | Markdown section | `.rune/design-system.md` § UX Writing |
+
 ## Sharp Edges
 
 Known failure modes for this skill. Check these before declaring done.
@@ -480,7 +489,7 @@ Known failure modes for this skill. Check these before declaring done.
 ~2000-5000 tokens input, ~800-1500 tokens output. Sonnet for design reasoning quality.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

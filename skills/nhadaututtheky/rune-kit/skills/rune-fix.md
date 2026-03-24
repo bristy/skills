@@ -129,7 +129,6 @@ When fix is called repeatedly (e.g., by cook Phase 4, or iterative fix loops), t
 - A full test suite run shows zero regressions
 - Scope is narrowed to a single file
 
-> Source: garrytan/gstack v0.9.0 (qa skill) — prevents runaway fix loops where each fix introduces new risk.
 
 ### Step 5: Post-Fix Hardening (Defense-in-Depth)
 
@@ -212,7 +211,7 @@ If fix requires touching >3 files not in the diagnosis → re-diagnose. You're p
 ```
 ## Fix Report
 - **Task**: [what was fixed/implemented]
-- **Status**: complete | partial | blocked
+- **Status**: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
 
 ### Changes
 - `path/to/file.ts` — [description of change]
@@ -223,9 +222,37 @@ If fix requires touching >3 files not in the diagnosis → re-diagnose. You're p
 - Types: PASS | FAIL
 - Tests: PASS | FAIL ([n] passed, [m] failed)
 
+### Concerns (if DONE_WITH_CONCERNS)
+- [concern]: [impact assessment] — [suggested remediation]
+
+### Context Needed (if NEEDS_CONTEXT)
+- [what is unknown]: [why it blocks] — [two most likely answers]
+
+### Blocker (if BLOCKED)
+- [specific blocker]: [what was attempted]
+
 ### Notes
 - [any caveats or follow-up needed]
 ```
+
+### Status Protocol (Subagent Contract)
+
+Fix returns one of four statuses to its caller (cook, debug, review, surgeon). The caller uses this to route next actions.
+
+| Status | When | Example |
+|--------|------|---------|
+| `DONE` | Fix applied, tests pass, no issues | Clean bug fix, all green |
+| `DONE_WITH_CONCERNS` | Fix works but has side effects or caveats worth noting | "Tests pass but performance regressed 15% — consider optimizing in follow-up" |
+| `NEEDS_CONTEXT` | Cannot apply fix without clarification — ambiguous spec or missing info | "Two valid interpretations of the expected behavior — need user input" |
+| `BLOCKED` | Hard blocker — exhausted fix attempts, broken dependency, fundamental incompatibility | "3 fix attempts failed — triggering debug escalation" |
+
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Code changes | Source files | Per debug report / plan file paths |
+| Fix Report | Markdown (inline) | Emitted to calling skill (cook, debug, review, surgeon) |
+| Verification output | Inline (Fix Report) | Lint + types + test results |
 
 ## Sharp Edges
 
@@ -250,14 +277,19 @@ Known failure modes for this skill. Check these before declaring done.
 - Tests pass for the fixed functionality (actual output shown)
 - Lint and type check pass
 - hallucination-guard verified any new imports
-- Fix Report emitted with changed files and verification results
+- Fix Report emitted with 4-state status, changed files, and verification results
+- If `DONE_WITH_CONCERNS`: concerns listed with impact + remediation
+- If `NEEDS_CONTEXT`: specific questions stated with two likely answers
+- If `BLOCKED`: blocker + all attempted approaches documented
 
 ## Cost Profile
 
 ~2000-5000 tokens input, ~1000-3000 tokens output. Sonnet for code writing quality. Most active skill during implementation.
 
+**Scope guardrail**: Do not refactor unrelated code or create new features beyond the diagnosed fix target unless explicitly delegated by the parent agent.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

@@ -218,6 +218,16 @@ File: src/middleware/auth.ts:47
 | Security Gate | sentinel ran before closing incident | Run sentinel — do not skip |
 | Postmortem Gate | All sections populated (Timeline, RCA, Prevention Actions) before status = Resolved | Complete or note as DRAFT |
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Incident response report | Markdown | inline (chat output) |
+| Incident timeline | Text (HH:MM format) | inline + postmortem |
+| Postmortem document | Markdown | `.rune/incidents/INCIDENT-<date>-<slug>.md` |
+| Prevention actions table | Markdown table | postmortem |
+| Journal entry (incident ADR) | Text | `.rune/adr/` (via `rune-journal.md`) |
+
 ## Sharp Edges
 
 Known failure modes for this skill. Check these before declaring done.
@@ -245,7 +255,7 @@ Known failure modes for this skill. Check these before declaring done.
 ~3000-8000 tokens input, ~1000-2500 tokens output. Sonnet for response coordination.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

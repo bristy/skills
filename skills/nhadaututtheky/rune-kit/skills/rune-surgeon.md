@@ -206,12 +206,24 @@ Known failure modes for this skill. Check these before declaring done.
 - Surgery committed with message format `refactor(<module>): <pattern> — <description>`
 - journal updated with module health delta and remaining work
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Refactored module | Edited source files (max 5) | in-place |
+| Before/after diff | Git diff | via `git diff` |
+| Surgery Report | Markdown | inline |
+| Git commit(s) | Conventional commits | git history |
+| Journal entry | Text | via `journal` L3 |
+
 ## Cost Profile
 
 ~3000-6000 tokens input, ~1000-2000 tokens output. Sonnet. One module per session.
 
+**Scope guardrail:** surgeon operates on ONE module per session (max 5 files). Any work beyond that scope must be deferred to a separate surgeon session.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

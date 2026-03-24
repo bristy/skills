@@ -299,6 +299,18 @@ Docs Update Report:
 5. MUST NOT generate docs for code that doesn't exist yet (unless explicitly creating spec docs)
 6. API docs MUST match actual route signatures — wrong API docs are worse than no docs
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| README.md | Markdown | project root |
+| ARCHITECTURE.md | Markdown | project root (if 10+ files) |
+| API reference | Markdown | `docs/API.md` |
+| Changelog entry | Markdown (Keep a Changelog) | `CHANGELOG.md` |
+| Docs update report | Markdown | inline (chat output) |
+
+**Scope guardrail:** Documents only what exists in the codebase — never invents features, endpoints, or APIs.
+
 ## Sharp Edges
 
 | Failure Mode | Severity | Mitigation |
@@ -341,7 +353,7 @@ Docs Update Report:
 ~2000-5000 tokens input, ~1000-3000 tokens output. Sonnet — documentation requires understanding code patterns but not deep architectural reasoning.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

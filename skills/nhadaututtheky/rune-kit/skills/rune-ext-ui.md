@@ -135,7 +135,7 @@ web-vitals → react-health: slow LCP/TBT traces back to bundle bloat identified
 ~24,000–38,000 tokens per full pack run (all 10 skills). Individual skill: ~2,000–5,000 tokens. Sonnet default. Use haiku for detection scans (Step 1 of each skill); escalate to sonnet for generation, refactoring, and report writing. Use `design-decision` first when starting a new project — it reduces token cost of subsequent skills by pre-scoping palette and typography choices.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

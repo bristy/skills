@@ -3,11 +3,16 @@
   "slug": "rune-kit",
   "displayName": "Rune",
   "latest": {
-    "version": "2.2.6",
-    "publishedAt": 1774013023426,
-    "commit": "https://github.com/openclaw/skills/commit/bd350c8031dc1a80a6d79b1315d5295ec6a2c2bf"
+    "version": "2.4.0",
+    "publishedAt": 1774379604711,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.2.6",
+      "publishedAt": 1774013023426,
+      "commit": "https://github.com/openclaw/skills/commit/bd350c8031dc1a80a6d79b1315d5295ec6a2c2bf"
+    },
     {
       "version": "2.2.4",
       "publishedAt": 1773756108837,

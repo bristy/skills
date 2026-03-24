@@ -203,12 +203,24 @@ Known failure modes for this skill. Check these before declaring done.
 - journal called with health score and surgery queue
 - Autopsy Report emitted with overall health tier and top-3 issues
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Health score per module | Scored table (0-100) | inline |
+| RESCUE-REPORT.md | Markdown + Mermaid | project root |
+| Surgery queue (priority order) | Ordered list | RESCUE-REPORT.md |
+| Git archaeology findings | Bash output + summary | inline |
+| Journal entry | Text | via `journal` L3 |
+
 ## Cost Profile
 
 ~5000-10000 tokens input, ~2000-4000 tokens output. Opus for deep analysis. Most expensive L2 skill but runs once per rescue.
 
+**Scope guardrail:** autopsy assesses — it does not refactor. All surgery is delegated to `surgeon` after the report is complete.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

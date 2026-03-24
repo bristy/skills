@@ -2,8 +2,8 @@
   "id": "rune",
   "name": "Rune",
   "kind": "skills",
-  "description": "58-skill mesh for AI coding assistants. Routes all code tasks through specialized skills. 200+ connections, 14 extension packs.",
-  "version": "2.2.6",
+  "description": "59-skill mesh for AI coding assistants. Routes all code tasks through specialized skills. 200+ connections, 14 extension packs.",
+  "version": "2.4.0",
   "skills": [
     "./skills"
   ],

@@ -240,12 +240,23 @@ Ensure the next session can pick up where this one left off:
 - Manifest summary saved to journal + neural memory for cross-session handoff
 - Tests pass after any logic edit
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Logic manifest | JSON | `.rune/logic-manifest.json` |
+| Validation report (SYNCED / DRIFT) | Markdown | inline |
+| Pre-edit gate summary | Structured text | inline |
+| ADR entries for logic changes | Markdown | via `journal` L3 |
+
 ## Cost Profile
 
 ~1,000-2,000 tokens for manifest load + pre-edit gate. ~3,000-5,000 tokens for full project scan (Phase 3). Sonnet for code analysis; haiku for file scanning via scout.
 
+**Scope guardrail:** logic-guardian protects existing logic — it does not implement new features or refactor code.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

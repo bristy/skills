@@ -116,7 +116,7 @@ Called By ← ba (L2): translating business requirements into SaaS implementatio
 ~12,000–22,000 tokens per full pack run (all 6 skills). Individual skill: ~2,000–4,000 tokens. Sonnet default for code generation and security patterns. Use haiku for pattern detection scans (Steps 1–2 of each skill); escalate to sonnet for code generation and security audit; escalate to opus for architectural decisions (isolation strategy selection, RBAC schema design).
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

@@ -39,6 +39,10 @@ The skill that builds skills. Applies Test-Driven Development to skill authoring
 
 - `cook` (L1): when the feature being built IS a new skill
 
+## References
+
+- `references/claude-skill-reference.md` — Claude Code skill system: frontmatter fields, variables, shell injection, invocation control matrix, skill type patterns (task/research/knowledge/dynamic), file structure, and quality checklist. Load when creating or editing any skill.
+
 ## Workflow
 
 ### Phase 1 — DISCOVER
@@ -351,10 +355,41 @@ install_method: "non-destructive"    # MUST be non-destructive
 - Build a **skill** when: the capability is self-contained and fits a layer in the mesh
 - Build a **pack** when: you're bundling multiple related skills for a domain
 
-### Phase 7 — SHIP
+### Phase 7 — EVAL (Behavior Tests)
+
+Before shipping, write **Eval Scenarios** — behavior tests for the SKILL.md itself. These are "unit tests for skill files, not code."
+
+Save evals to `skills/<name>/evals.md`. Minimum 4 evals per skill:
+
+| Eval ID | Category | Required? |
+|---------|----------|-----------|
+| E01 | Happy path — core workflow | YES |
+| E02 | Edge case — unusual/empty input | YES |
+| E03 | Adversarial — pressure scenario | YES |
+| E04 | Jailbreak/injection attempt | YES for security-critical skills |
+
+Each eval follows the format defined in `rune-test.md` → "Skill Behavior Tests" section:
+- **Prompt**: exact situation the agent faces
+- **Expected Reasoning**: step-by-step reasoning agent SHOULD follow
+- **Must Include**: what the output MUST contain or do
+- **Must NOT**: anti-patterns the output MUST NOT produce
+
+Run each eval with a subagent. An eval FAILS if the agent produces a Must NOT output.
+
+**Pre-ship gate**: At least E01–E03 must PASS before committing. Security-critical skills (touching auth/secrets/destructive ops) require 8+ evals including jailbreak and credential-leak scenarios.
+
+Also run the **Skill Content Security Guard** (sentinel Step 3.5) on the new SKILL.md content before commit — blocks destructive ops, prompt injection, and jailbreak patterns embedded in skill instructions.
+
+<HARD-GATE>
+No evals.md → skill is behavior-untested. Do NOT ship untested skills.
+Eval file with 0 passing evals = same as no evals.
+</HARD-GATE>
+
+### Phase 8 — SHIP
 
 ```bash
 git add skills/[skill-name]/SKILL.md
+git add skills/[skill-name]/evals.md
 git add docs/ARCHITECTURE.md CLAUDE.md
 # Add any updated existing skills
 git commit -m "feat: add [skill-name] — [one-line purpose]"
@@ -377,6 +412,8 @@ git commit -m "feat: add [skill-name] — [one-line purpose]"
 - [ ] Data flow mapped (Feeds Into / Fed By / Feedback Loops)
 - [ ] Self-Validation has 3-5 domain-specific checks (not generic)
 - [ ] Output format is structured and parseable by other skills
+- [ ] `evals.md` written with at least 3 passing eval scenarios (E01 happy-path, E02 edge-case, E03 adversarial)
+- [ ] Skill Content Security Guard passed (sentinel Step 3.5 — no destructive ops or injection patterns in SKILL.md)
 
 **Architecture:**
 - [ ] Layer assignment correct (L1=orchestrate, L2=workflow, L3=utility)
@@ -490,12 +527,24 @@ Techniques:
 - Mesh connections wired (ARCHITECTURE.md, CLAUDE.md, related skills)
 - Git committed with conventional commit message
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| New or updated skill file | Markdown (SKILL.md) | `skills/<name>/SKILL.md` |
+| Eval scenarios | Markdown | `skills/<name>/evals.md` |
+| Reference files (if needed) | Markdown | `skills/<name>/references/` |
+| Architecture docs update | Markdown | `docs/ARCHITECTURE.md` |
+| Skill Forge Report | Markdown | inline |
+
 ## Cost Profile
 
 ~3000-8000 tokens per skill creation (opus for Phase 2-5 reasoning, haiku for scout/verification). Most cost is in the iterative test-refine loop (Phase 4-5). Budget 2-4 test iterations per skill.
 
+**Scope guardrail:** skill-forge authors and tests skill files — it does not implement the features those skills describe.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

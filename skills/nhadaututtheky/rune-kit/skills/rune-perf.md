@@ -43,6 +43,11 @@ Performance regression gate. Analyzes code changes for patterns that cause measu
 - `review` (L2): performance patterns detected in diff
 - `deploy` (L2): pre-deploy perf regression check
 
+## References
+
+- `references/cost-reference.md` — Cost priority hierarchy, quick wins checklist, instance right-sizing, data transfer traps, serverless optimization, observability cost control, managed vs self-hosted matrix, unit economics tracking. Load when cost analysis or FinOps context detected.
+- `references/scalability-reference.md` — Bottleneck identification flow, performance thresholds, API patterns (cursor pagination, rate limiting, circuit breaker, graceful shutdown), caching strategies, queue-based load leveling, concurrency patterns, K8s HPA, CDN headers, load testing. Load when scaling or infrastructure optimization context detected.
+
 ## Executable Steps
 
 ### Step 1 — Scope
@@ -297,12 +302,23 @@ Known failure modes for this skill. Check these before declaring done.
 - Benchmark scripts ran (if configured) or INFO: skipped
 - Perf Report emitted with PASS/WARN/BLOCK verdict
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Perf Report with verdict | Markdown (PASS/WARN/BLOCK) | inline |
+| Per-finding details | Structured list (file:line + impact) | inline |
+| Lighthouse scores (if ran) | Score table | inline |
+| Framework-specific findings | Categorized list | inline |
+
 ## Cost Profile
 
 ~3000-8000 tokens input, ~500-1500 tokens output. Sonnet for pattern recognition.
 
+**Scope guardrail:** perf investigates and reports only — it does not fix code. All fixes are delegated to `fix` (L2) after the report is reviewed.
+
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

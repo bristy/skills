@@ -117,7 +117,6 @@ Zero issues found = red flag — look harder, not a sign of quality.
 This prevents rubber-stamping where the gate confirms everything without scrutiny.
 </HARD-GATE>
 
-> Source: msitarzewski/agency-agents (50.8k★) — "Default to finding 3-5 issues. Zero issues = red flag, look harder."
 
 For each claim + evidence pair:
 
@@ -130,11 +129,22 @@ IF no evidence found:
   → UNCONFIRMED (agent may be right but didn't prove it)
 ```
 
+**3-Axis verification** — categorize each claim into one of three axes, then ensure all axes are covered:
+
+| Axis | Question | Example Claims |
+|------|----------|----------------|
+| **Completeness** | Were all planned tasks done? All specs implemented? | "implemented feature X", "all TODO items done", "migration created" |
+| **Correctness** | Does output match spec intent? Do tests verify real behavior? | "tests pass", "build succeeds", "lint clean", "fixed the bug" |
+| **Coherence** | Does it follow project patterns? Consistent with existing code? | "follows conventions", "uses existing patterns", "no new deps needed" |
+
+If an axis has ZERO claims → flag as gap: "No [Completeness/Correctness/Coherence] evidence found — agent may have skipped this dimension."
+
 **Adversarial validation checklist** (run AFTER initial verdicts):
 1. Re-read each CONFIRMED claim — is the evidence actually proving THIS claim, or a different one?
 2. Check for **partial completion** — did the agent do 80% but claim 100%? (e.g., "implemented feature" but only the happy path)
 3. Check for **scope mismatch** — does the evidence prove the SPECIFIC claim or a broader/narrower version?
 4. If all claims are CONFIRMED on first pass, apply **skeptic sweep**: re-examine the weakest 2 claims with heightened scrutiny
+5. Check **axis coverage** — are all 3 axes (Completeness/Correctness/Coherence) represented? Missing axis = investigation gap
 
 ### Step 4 — Report
 
@@ -245,6 +255,7 @@ Completion Gate Report with status (CONFIRMED/UNCONFIRMED/CONTRADICTED), claim v
 - All completion claims extracted from agent output
 - Each claim matched against tool output evidence
 - Verdict table emitted with claim/evidence/verdict for each item
+- All 3 verification axes (Completeness/Correctness/Coherence) have at least one claim checked
 - Overall verdict: CONFIRMED / UNCONFIRMED / CONTRADICTED
 - If not CONFIRMED: specific gaps listed with remediation steps
 
@@ -253,7 +264,7 @@ Completion Gate Report with status (CONFIRMED/UNCONFIRMED/CONTRADICTED), claim v
 ~500-1000 tokens input, ~200-500 tokens output. Haiku for speed. Runs frequently as part of cook's quality phase.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

@@ -100,7 +100,6 @@ Choose the framework that fits the requirement type. Use it to STRUCTURE the 5 Q
 | **INVEST** | User stories for sprint-sized features | **I**ndependent, **N**egotiable, **V**aluable, **E**stimable, **S**mall, **T**estable |
 | **Jobs-to-be-Done** | Product features, user workflows | "When [situation], I want to [motivation] so I can [expected outcome]" |
 
-> Source: K-Dense claude-scientific-skills (literature-review PICO pattern), adapted for software BA.
 
 **PICO Example (data feature):**
 ```
@@ -163,7 +162,6 @@ When presenting options, alternatives, or scope decisions to the user, rate each
 
 **Anti-pattern**: "Choose B — it covers 90% of the value with less code." → If A is only 70 lines more, choose A. The last 10% is where production bugs hide.
 
-> Source: garrytan/gstack v0.9.0 — "Boil the Lake" principle. Completeness is cheap when AI makes the marginal cost near-zero.
 
 ### Step 4 — Scope Definition
 
@@ -316,6 +314,15 @@ Saved to `.rune/features/<feature-name>/requirements.md`
 6. MUST ask ONE question at a time — don't overwhelm user with 5 questions at once
 7. MUST NOT skip BA for non-trivial tasks — "just build it" gets redirected to Question 1
 
+## Returns
+
+| Artifact | Format | Location |
+|----------|--------|----------|
+| Requirements document | Markdown | `.rune/features/<feature-name>/requirements.md` |
+| User stories with acceptance criteria | Markdown (GIVEN/WHEN/THEN) | inline + requirements.md |
+| Scope definition (in/out/assumptions) | Markdown sections | requirements.md |
+| Non-functional requirements table | Markdown table | requirements.md |
+
 ## Sharp Edges
 
 Known failure modes for this skill. Check these before declaring done.
@@ -347,7 +354,7 @@ Known failure modes for this skill. Check these before declaring done.
 ~3000-6000 tokens input, ~1500-3000 tokens output. Opus for deep requirement analysis — understanding WHAT to build is the most expensive mistake to get wrong.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)

@@ -98,7 +98,7 @@ sentinel catches: known CVEs in deps, hardcoded secrets, obvious injection patte
 ~10,000–28,000 tokens per full pack audit depending on codebase size and number of skills invoked. opus default for auth/crypto/payment/compliance review — these require maximum reasoning depth. haiku for initial pattern scanning (scout phase) and dependency inventory. sonnet for supply-chain analysis and API hardening code generation. Expect 5–10 minutes elapsed for a mid-size application running the full pack.
 
 ---
-> **Rune Skill Mesh** — 58 skills, 200+ connections, 14 extension packs
-> Source: https://github.com/rune-kit/rune (MIT)
+> **Rune Skill Mesh** — 59 skills, 200+ connections, 14 extension packs
+> [Landing Page](https://rune-kit.github.io/rune) · [Source](https://github.com/rune-kit/rune) (MIT)
 > **Rune Pro** ($49 lifetime) — product, sales, data-science, support packs → [rune-kit/rune-pro](https://github.com/rune-kit/rune-pro)
 > **Rune Business** ($149 lifetime) — finance, legal, HR, enterprise-search packs → [rune-kit/rune-business](https://github.com/rune-kit/rune-business)
