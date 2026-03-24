@@ -3,9 +3,15 @@
   "slug": "doctorclaw-meeting-prep",
   "displayName": "DoctorClaw Meeting Prep",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773666212290,
-    "commit": "https://github.com/openclaw/skills/commit/0cb6afc177685d23bab1b1365747265ac229be6a"
+    "version": "1.0.1",
+    "publishedAt": 1774357410485,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773666212290,
+      "commit": "https://github.com/openclaw/skills/commit/0cb6afc177685d23bab1b1365747265ac229be6a"
+    }
+  ]
 }
