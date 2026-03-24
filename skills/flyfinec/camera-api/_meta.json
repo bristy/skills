@@ -3,11 +3,16 @@
   "slug": "camera-api",
   "displayName": "Camera API",
   "latest": {
-    "version": "0.3.7",
-    "publishedAt": 1774024318983,
-    "commit": "https://github.com/openclaw/skills/commit/9ee12b4aa56e63bdf2b8fe5f4d9217cc6d4e04b0"
+    "version": "1.0.1",
+    "publishedAt": 1774320719778,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.3.7",
+      "publishedAt": 1774024318983,
+      "commit": "https://github.com/openclaw/skills/commit/9ee12b4aa56e63bdf2b8fe5f4d9217cc6d4e04b0"
+    },
     {
       "version": "0.2.0",
       "publishedAt": 1773668786750,
