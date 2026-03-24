@@ -3,11 +3,16 @@
   "slug": "diffview",
   "displayName": "Diffview",
   "latest": {
-    "version": "2.0.1",
-    "publishedAt": 1773830475394,
-    "commit": "https://github.com/openclaw/skills/commit/c95983cbaccafac94b3911fe54c26d1a266c35d1"
+    "version": "3.0.2",
+    "publishedAt": 1774314881072,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.0.1",
+      "publishedAt": 1773830475394,
+      "commit": "https://github.com/openclaw/skills/commit/c95983cbaccafac94b3911fe54c26d1a266c35d1"
+    },
     {
       "version": "1.0.6",
       "publishedAt": 1773673732745,
