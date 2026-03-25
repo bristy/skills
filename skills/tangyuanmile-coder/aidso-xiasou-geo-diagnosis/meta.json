@@ -1,0 +1,11 @@
+{
+  "openclaw": {
+    "emoji": "📊",
+    "requires": {
+      "anyBins": [
+        "python3"
+      ]
+    },
+    "primaryEnv": "GEO_API_TOKEN"
+  }
+}
