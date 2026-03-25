@@ -7,6 +7,26 @@ description: Calculate whether a product bundle improves average order value wit
 
 Compare bundle upside against margin reality so the offer is not just bigger, but smarter.
 
+## 先交互，再计算
+
+开始时先问：
+1. bundle 结构是什么？
+   - 固定套装
+   - 买 A 加价购 B
+   - 多件折扣
+2. 你们想看的是 AOV 提升，还是 contribution margin 改善？
+3. 是否要考虑 attach rate、运费变化、赠品成本、潜在自我蚕食？
+4. 你们有没有现有 bundle 评估逻辑？
+5. 要沿用现有逻辑，还是让我给推荐框架？
+
+## Python script guidance
+
+有结构化数据时：
+- 生成 Python 脚本建模 bundle 方案
+- 输出 baseline vs bundle scenario
+- 展示 attach rate / margin sensitivity
+- 返回可复用脚本
+
 ## Solves
 
 Many ecommerce teams make pricing or offer decisions with incomplete economics:
@@ -35,11 +55,12 @@ Goal:
 
 ## Workflow
 
-1. Clarify the baseline commercial setup.
+1. Clarify the baseline commercial setup and bundle logic.
 2. Model the scenario inputs that change order economics.
 3. Surface upside, downside, and sensitivity.
 4. Identify the biggest weak points or break-even pressure.
 5. Recommend whether to test, revise, or avoid the scenario.
+6. Return reusable Python script.
 
 ## Output
 
@@ -48,6 +69,7 @@ Goal:
 3. Margin / break-even implications
 4. Key risks and weak points
 5. Recommendation
+6. Python script
 
 ## Quality bar
 
