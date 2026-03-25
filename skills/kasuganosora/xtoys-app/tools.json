@@ -2,18 +2,18 @@
   "tools": [
     {
       "name": "xtoys_control",
-      "description": "通过 webhook 控制 xtoys.app 设备。注意：xtoys 一次只能操作一个地方，切换部位时会自动将之前的部位设置为0。支持身体部位：left_nipple(左边乳头), right_nipple(右边乳头), both_nipples(两边乳头), left_breast(左边乳房), right_breast(右边乳房), both_breasts(两边乳房), clitoris(阴蒂), vagina(阴道), anus(后庭)。特殊指令：stop/pause(停止/暂停当前正在刺激的部位)。将任意部位的level设为0即可停止该部位。",
+      "description": "Control xtoys.app devices via webhook. Note: xtoys can only operate one body part at a time. When switching parts, the previous part will automatically be set to 0. Supports body parts: left_nipple, right_nipple, both_nipples, left_breast, right_breast, both_breasts, clitoris, vagina, anus. Special commands: stop/pause (stop/pause current stimulation). Set any part's level to 0 to stop it.",
       "parameters": {
         "type": "object",
         "properties": {
           "action": {
             "type": "string",
-            "description": "身体部位/动作",
+            "description": "Body part or action",
             "enum": ["left_nipple", "right_nipple", "both_nipples", "left_breast", "right_breast", "both_breasts", "clitoris", "vagina", "anus", "stop", "pause"]
           },
           "level": {
             "type": "integer",
-            "description": "强度等级 0-100。0=停止该部位，100=最大强度",
+            "description": "Intensity level 0-100. 0=stop, 100=max intensity",
             "minimum": 0,
             "maximum": 100,
             "default": 50
@@ -25,7 +25,7 @@
     },
     {
       "name": "xtoys_stop",
-      "description": "停止所有 xtoys.app 设备",
+      "description": "Stop current xtoys.app stimulation",
       "parameters": {
         "type": "object",
         "properties": {}
@@ -34,7 +34,7 @@
     },
     {
       "name": "xtoys_list",
-      "description": "列出 xtoys.app 支持的 action 列表",
+      "description": "List supported xtoys.app actions",
       "parameters": {
         "type": "object",
         "properties": {}
@@ -43,7 +43,7 @@
     },
     {
       "name": "xtoys_test",
-      "description": "测试 xtoys.app 连接是否可用",
+      "description": "Test xtoys.app connection availability",
       "parameters": {
         "type": "object",
         "properties": {}

@@ -3,9 +3,15 @@
   "slug": "xtoys-app",
   "displayName": "Xtoys.app Webhook Controller",
   "latest": {
-    "version": "1.1.1",
-    "publishedAt": 1774096054473,
-    "commit": "https://github.com/openclaw/skills/commit/c2a3029fc08809b2edc89b23932d44e303f623f9"
+    "version": "1.1.2",
+    "publishedAt": 1774096465558,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.1",
+      "publishedAt": 1774096054473,
+      "commit": "https://github.com/openclaw/skills/commit/c2a3029fc08809b2edc89b23932d44e303f623f9"
+    }
+  ]
 }
