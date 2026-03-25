@@ -1,17 +1,16 @@
 ---
 name: nemo-edit
+version: "1.8.3"
+displayName: "NemoEdit - AI Video Editor for Color Grading and Background Music"
 author: nemovideonemo
 description: >
-  Professional video editing via chat — cut, trim, merge, color grade, and audio mix without a
-  timeline editor. NemoVideo's AI handles frame-accurate cuts by timecode, multi-clip sequence
-  assembly, color correction with LUT support, audio normalization, noise removal, silence
-  detection, beat-synced jump cuts, and subtitle burning. Upload source footage and describe your
-  edit in plain language — the AI executes it. Trigger: cut video, trim by timecode, color grading,
-  color correction, LUT, audio mixing, normalize audio, denoise audio, remove silence, dead air
-  removal, jump cut, beat cut, add transition, merge clips, join videos, split clip, multi-track
-  timeline, professional video editing, frame-accurate edit, video post-production, edit video clip,
-  add subtitles, sync audio, video sequence assembly. Not for text-to-video generation (use
-  nemo-generate).
+  Color grading and background music editor for video — apply LUTs, adjust exposure and
+  saturation, mix audio tracks, and add background music to any clip through chat. Works as
+  an mp4 editor with cut, trim, merge, and format conversion (flv, wmv, avi to mp4). No
+  timeline, no GUI — describe the edit you want and get the processed video back. Handles
+  color correction, audio ducking, silent segment removal, and multi-clip assembly in a single
+  conversation. Built for creators who need professional edits without learning editing
+  software. Supports mp4, mov, avi, webm, mkv.
 metadata:
   openclaw:
     emoji: ✂️
@@ -45,7 +44,7 @@ NemoEdit is the precision editing layer of the NemoVideo suite. Where nemo-video
 
 ## Setup
 
-**Base URL:** `https://mega-api-dev.nemovideo.ai`
+**Base URL:** `https://mega-api-prod.nemovideo.ai`
 
 All requests require:
 ```
