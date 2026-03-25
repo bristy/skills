@@ -3,11 +3,16 @@
   "slug": "zenstudio",
   "displayName": "ZenStudio CLI",
   "latest": {
-    "version": "1.2.3",
-    "publishedAt": 1774239085350,
-    "commit": "https://github.com/openclaw/skills/commit/646b6631b08b097475e08701e8743bcc600f2ae3"
+    "version": "1.2.5",
+    "publishedAt": 1774341714362,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.2.3",
+      "publishedAt": 1774239085350,
+      "commit": "https://github.com/openclaw/skills/commit/646b6631b08b097475e08701e8743bcc600f2ae3"
+    },
     {
       "version": "1.2.2",
       "publishedAt": 1774081116233,
