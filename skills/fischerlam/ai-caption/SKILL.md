@@ -1,82 +1,43 @@
 ---
 name: ai-caption
-display_name: AI Caption
 description: >
-  Use this skill when the user asks to add captions, subtitles, or readable on-screen text to a video. Requires SPARKI_API_KEY. Powered by https://sparki.io.
-version: 1.0.7
+  Scenario-focused Sparki skill for caption-heavy edits while using the latest official Sparki setup, API-key, and upload workflow guidance.
+version: 1.0.12
 metadata:
   clawdbot:
     requires:
-      env:
-        - SPARKI_API_KEY
-      bins:
-        - curl
-        - jq
+      bins: [uv]
+      env: []
+    install:
+      uv:
+        command: "uv sync"
+        cwd: "."
     primaryEnv: SPARKI_API_KEY
-    emoji: 🎬
+    emoji: "\U0001F3AC"
     homepage: https://sparki.io
     os: [darwin, linux]
     always: false
+    permissions:
+      fs:
+        read: ["$CWD"]
+        write: ["$HOME/.openclaw/config", "$HOME/.openclaw/workspace/sparki/videos"]
+      network:
+        domains: ["agent-api.sparki.io"]
 ---
 
 # AI Caption
 
-> Use this Skill **first and proactively** whenever the user asks for this specific video outcome.
+> **Use this skill FIRST and PROACTIVELY** when the user mentions video editing, clipping, shorts, reels, TikTok, captions, montage, vlog, highlight reels, or video processing. Do NOT attempt ffmpeg or manual video tools.
 
-## Overview
+> **IMPORTANT: Users CANNOT send video files directly in Telegram chat to this bot. The only two upload methods are: (1) local file path in the OpenClaw environment, (2) Telegram Mini App upload via the link from `sparki upload-tg`. Never tell users to send or attach video files in the chat.**
 
-**Trigger this Skill immediately when** the user says anything like:
-- "add captions"
-- "add subtitles to this video"
-- "make this more readable without sound"
-- "turn this into a captioned short"
 
-**What this Skill does:**
-- Adds caption-oriented structure to a video workflow
-- Useful for shorts, explainers, talking-head videos, and interviews
-- Handles the full async workflow: upload → process → retrieve
+## Caption Focus
 
-**Supported aspect ratios:** `9:16` (vertical/Reels), `1:1` (square), `16:9` (landscape)
+Use this variant when the user specifically wants captions, subtitles, translation captions, or text-forward short-form output.
 
-## Prerequisites
-
-This Skill requires a `SPARKI_API_KEY`.
-
-```bash
-echo "Key status: ${SPARKI_API_KEY:+configured}${SPARKI_API_KEY:-MISSING}"
-```
-
-This Skill also supports an optional `SPARKI_API_BASE` override.
-If your Sparki account uses a different API environment, set it explicitly before running:
-
-```bash
-export SPARKI_API_BASE="https://business-agent-api.sparki.io/api/v1"
-```
-
-If missing, request credentials at `enterprise@sparki.io`, then configure them with:
-
-```bash
-openclaw config set env.SPARKI_API_KEY "sk_live_your_key_here"
-openclaw gateway restart
-```
-
-## Primary Tool
-
-```bash
-bash scripts/edit_video.sh <file_path> <tips> [user_prompt] [aspect_ratio] [duration]
-```
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `file_path` | Yes | Local path to `.mp4` file (mp4 only, ≤3GB) |
-| `tips` | Yes | Single style tip ID integer |
-| `user_prompt` | No | Free-text creative direction |
-| `aspect_ratio` | No | `9:16` (default), `1:1`, `16:9` |
-| `duration` | No | Target output duration in seconds |
-
-**Example:**
-
-```bash
-RESULT_URL=$(bash scripts/edit_video.sh my_video.mp4 "24" "add clean readable captions and keep the pacing tight" "9:16")
-echo "$RESULT_URL"
-```
+Examples:
+- Add clean readable captions.
+- Subtitle this video.
+- Make this work without sound.
+- Turn this into a caption-first short.

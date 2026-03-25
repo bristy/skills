@@ -3,11 +3,16 @@
   "slug": "ai-caption",
   "displayName": "AI Caption",
   "latest": {
-    "version": "1.0.8",
-    "publishedAt": 1773825843359,
-    "commit": "https://github.com/openclaw/skills/commit/d2f20e26d199fd9d995d852275621ecece262d3c"
+    "version": "1.0.12",
+    "publishedAt": 1774307194746,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.8",
+      "publishedAt": 1773825843359,
+      "commit": "https://github.com/openclaw/skills/commit/d2f20e26d199fd9d995d852275621ecece262d3c"
+    },
     {
       "version": "1.0.6",
       "publishedAt": 1773760048590,

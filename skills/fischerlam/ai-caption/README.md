@@ -1,38 +1,28 @@
 # ai-caption
 
 [![ClawHub Skill](https://img.shields.io/badge/ClawHub-Skill-blueviolet)](https://clawhub.io)
-[![Version](https://img.shields.io/badge/version-1.0.7-blue)](SKILL.md)
+[![Version](https://img.shields.io/badge/version-1.0.12-blue)](SKILL.md)
 
-> **AI Caption.**
-> Scenario-specific AI video editing powered by Sparki.
->
-> Powered by [Sparki](https://sparki.io).
+> **Add clean, readable captions and make videos work better without sound.**
 
-## What It Does
+## Best for
+Caption-first shorts, subtitle-heavy edits, and spoken videos that need to stay readable on mute.
 
-This skill is a scenario-focused wrapper around Sparki's AI video editing workflow.
-
-- Uploads a video file
-- Creates an AI processing job with scene-specific defaults
-- Polls until processing completes
-- Returns a result download URL
-
-## Best For
-- "add captions"
-- "add subtitles to this video"
-- "make this more readable without sound"
-- "turn this into a captioned short"
-
-## Quick Start
+## Quick start
 
 ```bash
-export SPARKI_API_KEY="sk_live_your_key_here"
-export SPARKI_API_BASE="https://business-agent-api.sparki.io/api/v1"
-RESULT_URL=$(bash scripts/edit_video.sh my_video.mp4 "24" "add clean readable captions and keep the pacing tight" "9:16")
-echo "$RESULT_URL"
+sparki run --file ./video.mp4 --mode prompt-driven --prompt "add clean readable captions and tighten the pacing" --aspect-ratio 9:16
 ```
 
-## Notes
-- Requires `SPARKI_API_KEY`
-- Optionally set `SPARKI_API_BASE` to the API endpoint provided for your Sparki account
-- Supports `9:16`, `1:1`, `16:9`
+## Prompt templates
+- Add clean readable captions and tighten the pacing.
+- Make this a caption-first short that still works without sound.
+- Subtitle this video clearly and keep the edit fast and readable.
+
+## Related skills
+- `long-to-short`
+- `tiktok-viral-editor`
+- `talking-head-editor`
+
+## Shared core
+This skill follows the latest official Sparki setup, API-key, upload, and command guidance from the main `sparki-video-editor` skill.
