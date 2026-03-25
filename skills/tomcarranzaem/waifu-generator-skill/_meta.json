@@ -3,11 +3,16 @@
   "slug": "waifu-generator-skill",
   "displayName": "Waifu Generator Skill",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773970526903,
-    "commit": "https://github.com/openclaw/skills/commit/7c3cd7ebfe3943f3ee7513cc4ffd26bedc0776b6"
+    "version": "1.1.5",
+    "publishedAt": 1774393090640,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773970526903,
+      "commit": "https://github.com/openclaw/skills/commit/7c3cd7ebfe3943f3ee7513cc4ffd26bedc0776b6"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1773889130946,

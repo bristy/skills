@@ -50,7 +50,10 @@ function resolveToken() {
 
 const TOKEN = resolveToken();
 if (!TOKEN) {
-  console.error("Error: NETA_TOKEN not found. Set it via --token, NETA_TOKEN env var, ~/.openclaw/workspace/.env, or ~/developer/clawhouse/.env");
+  console.error('\n✗ NETA_TOKEN not found.');
+  console.error('  Global: sign up at https://www.neta.art/ → get token at https://www.neta.art/open/');
+  console.error('  China:  sign up at https://app.nieta.art/ → get token at https://app.nieta.art/security');
+  console.error('  Then:   export NETA_TOKEN=your_token_here');
   process.exit(1);
 }
 
@@ -78,8 +81,7 @@ const body = {
   rawPrompt: [{ type: "freetext", value: prompt, weight: 1 }],
   width: dimensions.width,
   height: dimensions.height,
-  meta: { entrance: "PICTURE,VERSE" },
-  context_model_series: "8_image_edit",
+  meta: { entrance: "PICTURE,CLI" },
 };
 
 if (refPictureUuid) {
@@ -91,7 +93,7 @@ if (refPictureUuid) {
 
 // --- Submit job ---
 async function submitJob() {
-  const res = await fetch("https://api.talesofai.cn/v3/make_image", {
+  const res = await fetch(`${process.env.NETA_API_URL || 'https://api.talesofai.cn'}/v3/make_image`, {
     method: "POST",
     headers: HEADERS,
     body: JSON.stringify(body),
@@ -110,7 +112,7 @@ async function submitJob() {
 
 // --- Poll for result ---
 async function pollTask(taskUuid) {
-  const url = `https://api.talesofai.cn/v1/artifact/task/${taskUuid}`;
+  const url = `${process.env.NETA_API_URL || 'https://api.talesofai.cn'}/v1/artifact/task/${taskUuid}`;
   const MAX_ATTEMPTS = 90;
   const INTERVAL_MS = 2000;
 
@@ -126,9 +128,11 @@ async function pollTask(taskUuid) {
     const data = await res.json();
     const status = data.task_status;
 
-    if (status === "PENDING" || status === "MODERATION") {
-      continue;
-    }
+    if (['PENDING', 'MODERATION'].includes(status)) { continue; }
+  if (['FAILURE', 'TIMEOUT', 'DELETED', 'ILLEGAL_IMAGE'].includes(status)) {
+    console.error('Error: generation failed with status ' + status + (pollData.err_msg ? ' — ' + pollData.err_msg : ''));
+    process.exit(1);
+  }
 
     // Done — extract image URL
     const imageUrl =

@@ -1,1 +1,7 @@
-{"name":"waifu-generator-skill","version":"1.1.0","type":"module","description":"Waifu Generator — AI-powered waifu generator ai image generator","license":"MIT"}
+{
+  "name": "waifu-generator-skill",
+  "version": "1.1.5",
+  "type": "module",
+  "description": "Waifu Generator — AI-powered waifu generator ai image generator",
+  "license": "MIT"
+}
