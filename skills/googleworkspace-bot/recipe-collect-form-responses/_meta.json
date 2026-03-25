@@ -3,11 +3,16 @@
   "slug": "recipe-collect-form-responses",
   "displayName": "Recipe Collect Form Responses",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1774300564393,
-    "commit": "https://github.com/openclaw/skills/commit/3342b7f6f36fddf4d4af9bdeab116e0ebe140acd"
+    "version": "1.0.8",
+    "publishedAt": 1774460048053,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1774300564393,
+      "commit": "https://github.com/openclaw/skills/commit/3342b7f6f36fddf4d4af9bdeab116e0ebe140acd"
+    },
     {
       "version": "1.0.0",
       "publishedAt": 1772921141827,
