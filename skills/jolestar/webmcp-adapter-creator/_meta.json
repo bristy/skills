@@ -1,11 +1,17 @@
 {
   "owner": "jolestar",
   "slug": "webmcp-adapter-creator",
-  "displayName": "WebMCP Adapter Creator",
+  "displayName": "Webmcp Adapter Creator",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1773759389925,
-    "commit": "https://github.com/openclaw/skills/commit/6d2ab1e6ff5c018093919f540b9a9e6c0546721f"
+    "version": "0.1.1",
+    "publishedAt": 1774368637399,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1773759389925,
+      "commit": "https://github.com/openclaw/skills/commit/6d2ab1e6ff5c018093919f540b9a9e6c0546721f"
+    }
+  ]
 }
