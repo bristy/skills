@@ -1,0 +1,19 @@
+name: alphalens-api
+version: 1.0.4
+author: walidmustapha
+description: Use the AlphaLens API for organization and product discovery and pipeline workflows. Use when the user wants to query AlphaLens data, find similar companies or products, build target lists, enrich pipeline items, or integrate against the AlphaLens API.
+license: MIT-0
+
+config:
+  ALPHALENS_API_KEY:
+    type: string
+    required: true
+    description: "API key for AlphaLens"
+    secret: true
+
+metadata:
+  openclaw:
+    requires:
+      env: ["ALPHALENS_API_KEY"]
+    primaryEnv: ALPHALENS_API_KEY
+    homepage: https://alphalens.ai
