@@ -3,9 +3,15 @@
   "slug": "feishu-send",
   "displayName": "Feishu Send",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1773813037157,
-    "commit": "https://github.com/openclaw/skills/commit/9019b6b907a5edc256d5d26c937c163954ea662c"
+    "version": "1.2.0",
+    "publishedAt": 1774244771695,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1773813037157,
+      "commit": "https://github.com/openclaw/skills/commit/9019b6b907a5edc256d5d26c937c163954ea662c"
+    }
+  ]
 }
