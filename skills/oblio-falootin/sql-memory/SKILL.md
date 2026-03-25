@@ -1,6 +1,8 @@
 ---
 name: sql-memory
-description: "Semantic memory layer for OpenClaw agents. Use when: (1) persisting agent memories with importance scoring, (2) hierarchical memory rollups (daily→weekly→monthly→yearly), (3) queuing tasks for agents, (4) logging activity and audit trails, (5) managing knowledge bases with semantic search. Provides remember/recall/search/queue_task/log_event APIs. Built on sql-connector for reliable parameterized SQL execution."
+version: 2.1.0-alpha
+status: alpha
+description: "Semantic memory layer for OpenClaw agents. Use when: (1) persisting agent memories with importance scoring, (2) hierarchical memory rollups (daily→weekly→monthly→yearly), (3) queuing tasks for agents, (4) logging activity and audit trails, (5) managing knowledge bases with semantic search. Provides remember/recall/search/queue_task/log_event/add_todo APIs. Built on sql-connector. Requires SQL Server schema setup — see README. ALPHA: use at your own risk, API may change."
 ---
 
 # SQL Memory Skill
@@ -10,7 +12,7 @@ description: "Semantic memory layer for OpenClaw agents. Use when: (1) persistin
 
 Provides agent-friendly memory operations: remember, recall, search, forget, plus task queue management, knowledge indexing, activity logging, and hierarchical memory rollups. All operations go through the SQL Connector skill for reliable, parameterized SQL execution.
 
-See `scripts/sql_memory.py` for full implementation.
+See `sql_memory.py` for full implementation.
 
 ## Dependencies
 
