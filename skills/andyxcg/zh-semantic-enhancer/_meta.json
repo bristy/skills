@@ -3,9 +3,15 @@
   "slug": "zh-semantic-enhancer",
   "displayName": "Zh Semantic Enhancer",
   "latest": {
-    "version": "1.1.0",
-    "publishedAt": 1773899446366,
-    "commit": "https://github.com/openclaw/skills/commit/ce390d33fa12d7da4d4bf2d99013aed2bf0e86fc"
+    "version": "1.2.0",
+    "publishedAt": 1774144392539,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.0",
+      "publishedAt": 1773899446366,
+      "commit": "https://github.com/openclaw/skills/commit/ce390d33fa12d7da4d4bf2d99013aed2bf0e86fc"
+    }
+  ]
 }
