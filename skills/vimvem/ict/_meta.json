@@ -1,11 +1,17 @@
 {
   "owner": "vimvem",
   "slug": "ict",
-  "displayName": "Ict",
+  "displayName": "ict",
   "latest": {
-    "version": "4.0.1",
-    "publishedAt": 1774191342719,
-    "commit": "https://github.com/openclaw/skills/commit/c7fb515705d7510e639ec992997980a413ef8cfa"
+    "version": "4.0.8",
+    "publishedAt": 1774317400748,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "4.0.1",
+      "publishedAt": 1774191342719,
+      "commit": "https://github.com/openclaw/skills/commit/c7fb515705d7510e639ec992997980a413ef8cfa"
+    }
+  ]
 }

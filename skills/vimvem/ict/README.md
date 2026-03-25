@@ -1,11 +1,11 @@
-# skill-ict
+# ict
 
 Claw Skill 质量检验工具 - 多语言安全审计
 
 ## 功能
 
 - **多语言支持**: Python, Shell, JavaScript/TypeScript
-- **17 项安全检测**: 凭证收集、代码执行、数据外泄、提示词注入等
+- **23 项安全检测**: 凭证收集、代码执行、数据外泄、提示词注入等
 - **组合威胁检测**: 同时收集凭证又发起网络调用
 - **防误报机制**: 自动过滤检测规则定义
 - **白名单支持**: 可配置信任的 skill
@@ -14,7 +14,7 @@ Claw Skill 质量检验工具 - 多语言安全审计
 
 ```bash
 # CLI 使用
-python skill_ict.py /path/to/skill-folder
+python ict.py /path/to/skill-folder
 ```
 
 ## 使用方法
@@ -23,19 +23,19 @@ python skill_ict.py /path/to/skill-folder
 
 ```bash
 # 基本用法
-python skill_ict.py /path/to/skill-folder
+python ict.py /path/to/skill-folder
 
 # 输出 JSON
-python skill_ict.py /path/to/skill-folder --json
+python ict.py /path/to/skill-folder --json
 
 # 使用白名单
-python skill_ict.py /path/to/skill-folder --allowlist allowlist.json
+python ict.py /path/to/skill-folder --allowlist allowlist.json
 ```
 
 ### Python API
 
 ```python
-from skill_ict import audit_skill
+from ict import audit_skill
 
 result = audit_skill("/path/to/skill-folder")
 print(result['overall_score'])
@@ -72,4 +72,4 @@ print(result['overall_score'])
 
 ## 版本
 
-v3.0.1
+v4.0.8

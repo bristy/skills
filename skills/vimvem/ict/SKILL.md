@@ -18,7 +18,7 @@ metadata:
 - **Description**: Automated tool for checking Claw Skill quality, supports code style, security vulnerabilities, documentation completeness and code-documentation consistency
 - **Triggers**: quality check, audit, inspect skill, skill quality, ICT, batch scan, full scan, security check, global scan
 - **Category**: devtools
-- **Version**: 3.2.7
+- **Version**: 4.0.8
 
 > ⚠️ **Security Notice**: This tool contains malicious code pattern detection rules for static analysis. Detection rules contain keywords like exec, eval, C2 - this is normal for audit functionality and will not execute malicious code.
 
@@ -35,10 +35,10 @@ clawhub install ict
 cd ict
 
 # Make executable
-chmod +x skill_ict.py
+chmod +x ict.py
 
 # Run directly
-python3 skill_ict.py --help
+python3 ict.py --help
 ```
 
 ## Usage
@@ -46,36 +46,36 @@ python3 skill_ict.py --help
 ### CLI
 ```bash
 # Single Skill Audit
-python skill_ict.py <skill_folder_path>
-python skill_ict.py <skill_folder_path> --json
+python ict.py <skill_folder_path>
+python ict.py <skill_folder_path> --json
 
 # 5-Dimension Trust Score
-python skill_ict.py <skill_folder_path> --score
+python ict.py <skill_folder_path> --score
 
 # Trend Tracking
-python skill_ict.py <skill_folder_path> --save-trend
-python skill_ict.py <skill_folder_path> --trend
+python ict.py <skill_folder_path> --save-trend
+python ict.py <skill_folder_path> --trend
 
 # Compare Two Skills
-python skill_ict.py <skill_folder_path> --compare <other_skill_path>
+python ict.py <skill_folder_path> --compare <other_skill_path>
 
 # Diff Audit
-python skill_ict.py <old_folder_path> --diff <new_folder_path>
+python ict.py <old_folder_path> --diff <new_folder_path>
 
 # Batch Scan
-python skill_ict.py --all
-python skill_ict.py --all --skills-dir /path/to/skills
+python ict.py --all
+python ict.py --all --skills-dir /path/to/skills
 ```
 
 ### API
 ```python
-from skill_ict import audit_skill
+from ict import audit_skill
 result = audit_skill("/path/to/skill-folder")
 ```
 
 ## Features
 
-### Security Checks (20 items)
+### Security Checks (23 items)
 
 | # | Check | Description |
 |---|-------|-------------|
@@ -98,7 +98,7 @@ result = audit_skill("/path/to/skill-folder")
 | 17 | SSH Remote | SSH/scp commands |
 | 18 | Privilege Escalation | sudo, chmod 777 |
 | 19 | Hidden Files | Access to .files |
-| 20 | Unusual Ports | 4444, 5555, 1337, etc |
+| 23 | Unusual Ports | 4444, 5555, 1337, etc |
 
 ### Supported Languages
 - Python (.py)
@@ -168,7 +168,7 @@ Grade: A(90+), B(75+), C(60+), D(40+), F(<40)
 - **描述**: 自动化检查 Claw Skill 质量的工具，支持代码风格，安全漏洞、文档完整性和代码文档一致性检查
 - **触发词**: 质检, audit, 检查skill, skill质量, ICT, 批量扫描, 全部扫描, 安全体检, 全局扫描
 - **分类**: devtools
-- **版本**: 3.3.0
+- **版本**: 4.0.8
 
 > ⚠️ **安全说明**: 本工具包含恶意代码模式检测规则，用于静态分析审计目标代码。检测规则本身包含 exec、eval、C2 等敏感关键字，这是正常的审计功能，不会执行任何恶意操作。
 
@@ -185,10 +185,10 @@ clawhub install ict
 cd ict
 
 # 添加执行权限
-chmod +x skill_ict.py
+chmod +x ict.py
 
 # 直接运行
-python3 skill_ict.py --help
+python3 ict.py --help
 ```
 
 ## 使用方法
@@ -196,36 +196,36 @@ python3 skill_ict.py --help
 ### CLI
 ```bash
 # 单个 Skill 审查
-python skill_ict.py <skill_folder_path>
-python skill_ict.py <skill_folder_path> --json
+python ict.py <skill_folder_path>
+python ict.py <skill_folder_path> --json
 
 # 5维度信任评分
-python skill_ict.py <skill_folder_path> --score
+python ict.py <skill_folder_path> --score
 
 # 趋势追踪
-python skill_ict.py <skill_folder_path> --save-trend
-python skill_ict.py <skill_folder_path> --trend
+python ict.py <skill_folder_path> --save-trend
+python ict.py <skill_folder_path> --trend
 
 # 对比两个 Skills
-python skill_ict.py <skill_folder_path> --compare <other_skill_path>
+python ict.py <skill_folder_path> --compare <other_skill_path>
 
 # Diff审计
-python skill_ict.py <old_folder_path> --diff <new_folder_path>
+python ict.py <old_folder_path> --diff <new_folder_path>
 
 # 批量扫描
-python skill_ict.py --all
-python skill_ict.py --all --skills-dir /path/to/skills
+python ict.py --all
+python ict.py --all --skills-dir /path/to/skills
 ```
 
 ### API
 ```python
-from skill_ict import audit_skill
+from ict import audit_skill
 result = audit_skill("/path/to/skill-folder")
 ```
 
 ## 功能
 
-### 安全检查 (20项)
+### 安全检查 (23项)
 
 | # | 检测项 | 说明 |
 |---|--------|------|
@@ -248,7 +248,7 @@ result = audit_skill("/path/to/skill-folder")
 | 17 | SSH远程 | SSH/scp命令 |
 | 18 | 权限提升 | sudo, chmod 777 |
 | 19 | 隐藏文件 | 访问.files |
-| 20 | 非寻常端口 | 4444, 5555, 1337等 |
+| 23 | 非寻常端口 | 4444, 5555, 1337等 |
 
 ### 支持语言
 - Python (.py)
