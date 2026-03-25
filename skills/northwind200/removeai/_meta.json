@@ -1,0 +1,11 @@
+{
+  "owner": "northwind200",
+  "slug": "removeai",
+  "displayName": "清除中文AI味",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774233849002,
+    "commit": null
+  },
+  "history": []
+}
