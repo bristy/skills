@@ -1,0 +1,11 @@
+{
+  "owner": "spacesq",
+  "slug": "s2-spectrum-perception",
+  "displayName": "S2-SP-OS Wave/Spectrum Radar",
+  "latest": {
+    "version": "2.0.3",
+    "publishedAt": 1774193317450,
+    "commit": null
+  },
+  "history": []
+}
