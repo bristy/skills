@@ -85,15 +85,31 @@ openclaw hooks list
 
 ### 5. (Optional) Enable Visible Learning Notices
 
-Add the following preference block to `TOOLS.md` for visible learning notices:
+Use the OpenClaw config gate below if you want the hook to inject a stronger instruction for visible learning notices:
+
+```json
+{
+  "skills": {
+    "entries": {
+      "claw-self-improvement": {
+        "config": {
+          "message": true
+        }
+      }
+    }
+  }
+}
+```
+
+If you also want phrasing guidance, add the following preference block to `TOOLS.md`:
 
 ```markdown
 ### claw-self-improvement
 - UX preference: when you add a new entry to `.learnings/` during a user-facing reply, append one short confirmation line.
-- For raw logs, say something like: `Noted — logged to .learnings/LEARNINGS.md.` or `Noted — logged to .learnings/ERRORS.md.`
-- For promotions, say: `Promoted a durable rule to .learnings/PROMOTED.md.`
+- For raw logs, say: `Noted — logged to .learnings/LEARNINGS.md.`, `Noted — logged to .learnings/ERRORS.md.` or `Noted — logged to .learnings/FEATURE_REQUESTS.md.`
+- For promotions, say: `Promoted — new rule to .learnings/PROMOTED.md.`
 - Keep the notice brief and only include it once per reply.
-- Skip the notice when there is no user-visible reply, when replying `NO_REPLY`, or when the extra line would be distracting.
+- Skip the notice when there is no user-visible reply, or when replying `NO_REPLY`.
 ```
 
 
