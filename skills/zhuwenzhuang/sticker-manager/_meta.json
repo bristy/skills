@@ -1,11 +1,17 @@
 {
   "owner": "zhuwenzhuang",
   "slug": "sticker-manager",
-  "displayName": "sticker-manager (表情包管理)",
+  "displayName": "Sticker Manager",
   "latest": {
-    "version": "0.2.2",
-    "publishedAt": 1774198751998,
-    "commit": "https://github.com/openclaw/skills/commit/366b8c999de28e091f6deb0371ab40de7e73ed64"
+    "version": "0.3.0",
+    "publishedAt": 1774331428634,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.2.2",
+      "publishedAt": 1774198751998,
+      "commit": "https://github.com/openclaw/skills/commit/366b8c999de28e091f6deb0371ab40de7e73ed64"
+    }
+  ]
 }

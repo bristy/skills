@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
+
+### Added
+- Generic animation-preservation rule for sticker collection
+- Support for animated GIPHY page sources resolving to real GIF assets
+
+### Changed
+- `collect_stickers.py` now follows a generic animation-preservation rule: suffix → Content-Type → downloaded file validation
+- animated-looking sources are no longer silently downgraded to static WEBP/PNG previews during collection
+
+### Fixed
+- animated GIPHY page sources now resolve to real GIF assets instead of static preview files
+- collector now rejects static fallback downloads when the source looked animated
+
+## 0.2.1
 
 ### Added
 - Support for saving stickers from recent chat/media history
