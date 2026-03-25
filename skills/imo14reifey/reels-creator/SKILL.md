@@ -1,13 +1,16 @@
 ---
+license: MIT-0
 name: reels-creator
-version: "1.0.1"
+version: "1.0.5"
 displayName: "Reels Creator - AI Instagram Reels and Short Video Maker"
 description: >
-  AI Reels and TikTok video creator — generate and edit short-form vertical videos
-  directly in chat. Create Instagram Reels, TikTok videos, and YouTube Shorts with
-  AI-powered editing. Handles vertical video formatting, transitions, captions, and
-  music. Works as a social media video maker for content creators. Supports mp4, mov,
-  avi, webm, mkv.
+  Instagram reels maker and TikTok video maker — generate and edit short-form vertical
+  videos directly in chat. Create Instagram Reels, TikTok videos, and YouTube Shorts
+  with AI-powered editing. Handles vertical video formatting, transitions, captions,
+  and music. Works as a social media video maker and short clip maker for content
+  creators. Supports mp4, mov, avi, webm, mkv.
+homepage: https://nemovideo.com
+repository: https://github.com/nemovideo/nemovideo_skills
 metadata: {"openclaw": {"emoji": "🎵", "requires": {"env": [], "configPaths": ["~/.config/nemovideo/"]}, "primaryEnv": "NEMO_TOKEN"}}
 ---
 
