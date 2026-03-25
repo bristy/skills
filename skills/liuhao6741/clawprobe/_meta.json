@@ -1,11 +1,17 @@
 {
   "owner": "liuhao6741",
   "slug": "clawprobe",
-  "displayName": "clawprobe",
+  "displayName": "Clawprobe",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773827829811,
-    "commit": "https://github.com/openclaw/skills/commit/ce01ce6625fed29d7f589e34b9a0b102120787fc"
+    "version": "0.6.9",
+    "publishedAt": 1774084763653,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773827829811,
+      "commit": "https://github.com/openclaw/skills/commit/ce01ce6625fed29d7f589e34b9a0b102120787fc"
+    }
+  ]
 }
