@@ -40,7 +40,7 @@ metadata: {"openclaw":{"emoji":"🌐","requires":{"env":["RELAY_TOKEN","RELAY_PO
 运行 scripts/ctl.js 控制浏览器：
 
 ```bash
-cd /home/zavi/.openclaw/workspace/skills/chrome-relay-browser/scripts
+cd ~/.openclaw/workspace/skills/chrome-relay-browser/scripts
 node ctl.js <command> [args]
 ```
 
