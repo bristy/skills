@@ -1,14 +1,37 @@
 {
-  "package_name": "powpow_investment_upload",
-  "version": "0.1.0",
-  "description": "OpenClaw + ClawHub 跨平台上传包：PowPow 投融资技能",
+  "package_name": "powpow-financing-plan",
+  "slug": "powpow-financing-plan-openclaw",
+  "version": "1.0.4",
+  "description": "PowPow 融资计划 - 投资人挑战版，互动式融资BP展示，双向筛选机制",
+  "author": "durenzidu",
+  "email": "dongtao@outlook.com",
+  "license": "MIT-0",
   "contents": [
-    {"path": "openclaw_skill.json", "description": "OpenClaw 原始技能 JSON"},
-    {"path": "clawhub_skill.json", "description": "ClawHub 兼容 JSON"},
-    {"path": "openclaw_financing_plan.json", "description": "OpenClaw 新融资计划技能 JSON"},
-    {"path": "clawhub_financing_plan.json", "description": "ClawHub 新融资计划技能 JSON"},
-    {"path": "README_upload.md", "description": "上传说明"},
-    {"path": "SKILL.md", "description": "技能文档（SKILL.md）"},
-    {"path": "manifest.json", "description": "打包清单（当前文件）"}
+    { "path": "SKILL.md", "description": "技能主文档，包含完整定义和对话流程" },
+    { "path": "skill.json", "description": "技能结构化数据文件" },
+    { "path": "manifest.json", "description": "打包清单（当前文件）" }
+  ],
+  "changelog": [
+    {
+      "version": "1.0.4",
+      "date": "2026-03-25",
+      "changes": [
+        "新增互动问答模式：根据用户记忆生成个性化问题",
+        "优化触发指令：更新为更自然的表达方式",
+        "更新邮件签名：投资人触达系统",
+        "新增团队规模：一人公司 + 8个AI员工",
+        "新增发邮件激励：额外获得200万满减券"
+      ]
+    },
+    {
+      "version": "1.0.1",
+      "date": "2026-03-25",
+      "changes": [
+        "全新投资人挑战模式",
+        "满减券机制：初始估值2000万，每题获得100万满减券",
+        "投资人画像生成：6个维度评分 + 标签",
+        "邮件通知：投资人口吻写给创始人的自我介绍邮件"
+      ]
+    }
   ]
 }
