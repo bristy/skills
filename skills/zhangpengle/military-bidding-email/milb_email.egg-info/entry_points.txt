@@ -1,0 +1,2 @@
+[console_scripts]
+milb-email = milb_email.fetcher:main

@@ -3,11 +3,16 @@
   "slug": "military-bidding-email",
   "displayName": "military bidding email",
   "latest": {
-    "version": "0.1.2",
-    "publishedAt": 1774075348626,
-    "commit": "https://github.com/openclaw/skills/commit/92087ce10d7dec58dbfa404e9a91e3a1a456e25f"
+    "version": "0.1.4",
+    "publishedAt": 1774328831365,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.1.2",
+      "publishedAt": 1774075348626,
+      "commit": "https://github.com/openclaw/skills/commit/92087ce10d7dec58dbfa404e9a91e3a1a456e25f"
+    },
     {
       "version": "0.1.1",
       "publishedAt": 1774075328705,

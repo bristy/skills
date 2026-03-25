@@ -1,63 +1,74 @@
 ---
-name: military-bidding-email
-description: 军工采购商机邮件报告技能。自动抓取全军武器装备采购信息网、军队采购网、国防科大采购信息网的招标商机，生成 Excel 报告并发送邮件。当用户说"发送商机邮件"、"发邮件给我"、"商机报告"时触发。
+name: milb-email
+description: 军工采购商机专用推报工具。根据商机数据自动生成 Excel 并通过 himalaya 发送邮件。当用户说"milb-email"、"军工商机邮件"、"推送军工商机"、"军工商机通报"时触发。注意：这不是通用邮件客户端，仅用于执行 milb 业务逻辑。
+metadata: {"openclaw":{"emoji":"📧","requires":{"bins":["milb-email","himalaya"]},"install":"pip install -e {baseDir}"}}
 ---
 
-# 军工采购商机邮件发送工具
+# Milb Email
 
-自动抓取军工采购招标信息并发送邮件报告。
+自动抓取商机并发送邮件报告。
 
-## 功能
+## 环境变量要求
 
-1. 自动抓取三个数据源的招标信息：
-   - 全军武器装备采购信息网 (weain.mil.cn)
-   - 军队采购网 (plap.mil.cn)
-   - 国防科大采购信息网 (nudt.edu.cn)
+该技能必须在 `.env` 中配置以下核心参数才能激活：
 
-2. 各渠道自动获取最新日期数据
+- `EMAIL_TO`, `EMAIL_CC`, `EMAIL_FROM`: 收发件地址
+- `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`: SMTP 服务器信息
+- `EMAIL_SMTP_USER`, `EMAIL_SMTP_PASSWORD`: 认证信息
+- `EMAIL_SUBJECT_PREFIX`, `EMAIL_BODY_INTRO`: 邮件模板配置
+- `EMAIL_RECIPIENT_NAME`, `EMAIL_SENDER_NAME`: 称呼和签名
 
-3. 自动筛选符合公司能力范围的商机
+## 快速使用
 
-4. 生成Excel并发送邮件
+- `/milb-email` → 发送昨日报告（默认，解决军队采购网白天更新的问题）
+- `/milb-email --help` → 显示帮助信息
+- `/milb-email --today` → 发送今日报告（获取各渠道最新数据）
+- `/milb-email --date 2026-03-23` → 发送指定日期报告
+- `/milb-email --keywords "模型,仿真"` → 使用自定义关键词筛选
+- `/milb-email --to test@example.com` → 测试发送至指定收件人
 
-## 配置
+## 参数说明
 
-邮件通过 **himalaya** CLI 发送（已配置腾讯企业邮）：
-- 发件人: formulas@formulas.cc
-- 收件人: zhangpengle@formulas.cc
-- 抄送: wangzilong@formulas.cc, fuyan@formulas.cc
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| 无参数 | 默认昨日 | 启用 |
+| `--today` | 今日（获取各渠道最新数据） | - |
+| `--date YYYY-MM-DD` | 指定日期 | - |
+| `--keywords WORDS` | 关键词，逗号分隔 | 配置中的默认关键词 |
+| `--to ADDRESS` | 测试发送至指定收件人 | .env 中的配置 |
 
-## 使用方法
+## 数据源
 
-### 命令行执行
+- 全军武器装备采购信息网
+- 军队采购网
+- 国防科大采购信息网
 
-```bash
-# 抓取并发送今日商机报告
-python3 fetcher.py
+## 触发词
 
-# 抓取指定日期的报告
-python3 fetcher.py --date 2026-03-11
+发送邮件、推送报告、邮件通知、商机通报
 
-# 抓取并指定关键词
-python3 fetcher.py --keywords "模型,仿真,数据,AI,软件"
-```
+## 配置文件
 
-### Python调用
+配置文件位于 `milb_email/.env`（独立配置），可配置以下参数：
 
-```python
-from fetcher import send_bidding_report
+| 环境变量 | 用途 |
+|----------|------|
+| `EMAIL_TO` | 收件人，逗号分隔 |
+| `EMAIL_CC` | 抄送人，逗号分隔 |
+| `EMAIL_FROM` | 发件人 |
+| `EMAIL_RECIPIENT_NAME` | 收件人称呼 |
+| `EMAIL_SENDER_NAME` | 发件人签名 |
+| `EMAIL_SUBJECT_PREFIX` | 邮件主题前缀 |
+| `EMAIL_BODY_INTRO` | 邮件正文开头 |
+| `EMAIL_SMTP_HOST` | SMTP 服务器 |
+| `EMAIL_SMTP_PORT` | SMTP 端口 |
+| `EMAIL_SMTP_USER` | SMTP 用户名 |
+| `EMAIL_SMTP_PASSWORD` | SMTP 密码 |
 
-# 发送今日报告
-send_bidding_report()
+创建配置文件可复制 `milb_email/.env.example` 为 `milb_email/.env` 后修改。
 
-# 发送指定日期报告
-send_bidding_report(date="2026-03-11")
+## 技术说明
 
-# 自定义关键词
-send_bidding_report(keywords=["模型", "仿真", "AI"])
-```
-
-## 输出
-
-- Excel文件: `商机信息汇总_YYYY-MM-DD.xlsx`
-- 邮件正文包含各渠道高推荐项目列表
+- 使用 himalaya CLI 发送邮件（配置于 `~/.config/himalaya/config.toml`）
+- 如果 himalaya 不可用，自动回退到 SMTP 发送
+- 使用文件锁防止并发执行
