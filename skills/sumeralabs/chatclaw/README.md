@@ -53,7 +53,7 @@ python main.py ck_your_key_here ws://localhost:8000
 | Key | Required | Default | Description |
 |---|---|---|---|
 | `api_key` | Yes | — | ChatClaw API key from app.chatclaw.com |
-| `cloud_url` | No | `wss://api.chatclaw.com` | Relay URL — leave default unless self-hosting |
+| `cloud_url` | No | `wss://api.sumeralabs.com` | Relay URL — leave default unless self-hosting |
 
 ### Environment variables
 
@@ -64,9 +64,9 @@ The skill auto-detects `/data/.openclaw` (Docker/VPS) and `~/.openclaw` (standar
 
 ```
 Dashboard (browser / mobile)
-      ↕  wss://api.chatclaw.com
+      ↕  wss://api.sumeralabs.com
 ChatClaw Cloud Relay
-      ↕  wss://api.chatclaw.com/ws/agent/{api_key}
+      ↕  wss://api.sumeralabs.com/ws/agent/{api_key}
 ChatClaw Skill  ← this package
       ↕  ws://localhost:18789     (Ed25519 auth handshake)
       ↕  http://localhost:18789/v1/chat/completions  (SSE streaming)

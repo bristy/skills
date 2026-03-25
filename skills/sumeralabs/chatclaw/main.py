@@ -62,10 +62,11 @@ async def get_session_tokens_from_json(session_key: str):
         return 0, 0
 
 
-def _patch_openclaw_config() -> None:
+def _patch_openclaw_config() -> bool:
     """
     Ensures the /v1/chat/completions HTTP endpoint is enabled in openclaw.json.
     Idempotent — no-ops if already enabled, handles missing file gracefully.
+    Returns True if the file was actually written (so on_disable can revert it).
     """
     try:
         if CONFIG_FILE.exists():
@@ -84,7 +85,7 @@ def _patch_openclaw_config() -> None:
         )
         if already_enabled:
             logger.info("openclaw.json: chatCompletions already enabled, skipping patch")
-            return
+            return False
 
         cfg.setdefault("gateway", {}) \
            .setdefault("http", {}) \
@@ -96,17 +97,20 @@ def _patch_openclaw_config() -> None:
         tmp.write_text(json.dumps(cfg, indent=2))
         tmp.replace(CONFIG_FILE)
         logger.info("openclaw.json patched: chatCompletions enabled ✓")
+        return True
 
     except PermissionError:
         logger.warning(
             "Could not patch openclaw.json (permission denied). "
             "Manually set gateway.http.endpoints.chatCompletions.enabled = true"
         )
+        return False
     except Exception as e:
         logger.warning(
             f"Could not patch openclaw.json: {e}. "
             "Manually set gateway.http.endpoints.chatCompletions.enabled = true"
         )
+        return False
 
 
 class ChatClawSkill:
@@ -234,12 +238,10 @@ class ChatClawSkill:
 
     async def _drain_gateway(self):
         """Drains the gateway WebSocket queue to prevent memory buildup.
-        Chat is handled via HTTP SSE, so WS events from the gateway are not used."""
+        Chat is handled via HTTP SSE, so WS events from the gateway are not used.
+        Raises on disconnect to trigger the outer reconnect loop in start()."""
         while self._running:
-            try:
-                await self.gateway.receive()
-            except Exception:
-                break
+            await self.gateway.receive()
 
     async def stop(self):
         self._running = False
@@ -252,13 +254,16 @@ class ChatClawSkill:
 
 
 _skill_instance = None
+_patched_chat_completions = False  # True only if on_enable wrote the config — on_disable reverts
 
 
 async def on_enable(config: dict, context=None):
     """Called by OpenClaw when the skill is enabled via the Control UI."""
-    global _skill_instance
+    global _skill_instance, _patched_chat_completions
+    _patched_chat_completions = False
 
-    _patch_openclaw_config()
+    # _patch_openclaw_config returns True if it actually wrote the file
+    _patched_chat_completions = _patch_openclaw_config()
 
     _skill_instance = ChatClawSkill(config, context=context)
     await _skill_instance.start()
@@ -266,7 +271,19 @@ async def on_enable(config: dict, context=None):
 
 async def on_disable():
     """Called by OpenClaw when the skill is disabled via the Control UI."""
-    global _skill_instance
+    global _skill_instance, _patched_chat_completions
+    if _patched_chat_completions:
+        try:
+            with open(CONFIG_FILE) as f:
+                cfg = json.load(f)
+            cfg.get("gateway", {}).get("http", {}).get("endpoints", {}).pop("chatCompletions", None)
+            tmp = CONFIG_FILE.with_suffix(".tmp")
+            tmp.write_text(json.dumps(cfg, indent=2))
+            tmp.replace(CONFIG_FILE)
+            _patched_chat_completions = False
+            logger.info("openclaw.json reverted: chatCompletions removed ✓")
+        except Exception as e:
+            logger.warning(f"Could not revert openclaw.json: {e}")
     if _skill_instance:
         await _skill_instance.stop()
         _skill_instance = None

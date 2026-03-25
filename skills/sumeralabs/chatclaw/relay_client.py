@@ -2,7 +2,7 @@
 Cloud Relay Client — connects to the ChatClaw cloud WebSocket relay.
 
 Handles:
-  - Connecting to wss://api.chatclaw.com/ws/agent/{api_key}
+  - Connecting to wss://api.sumeralabs.com/ws/agent/{api_key}
   - Auto-reconnect with exponential backoff
   - Bidirectional message relay between cloud dashboard and local skill
 """
