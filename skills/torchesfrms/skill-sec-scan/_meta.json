@@ -1,0 +1,11 @@
+{
+  "owner": "torchesfrms",
+  "slug": "skill-sec-scan",
+  "displayName": "Skill Security Scanner",
+  "latest": {
+    "version": "4.4.1",
+    "publishedAt": 1774081483196,
+    "commit": null
+  },
+  "history": []
+}
