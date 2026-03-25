@@ -2,23 +2,11 @@
 name: eastmoney_stock_simulator
 title: 妙想模拟组合管理 skill
 description: 妙想提供的股票模拟组合管理系统，支持持仓查询、买卖操作、撤单、委托查询、历史成交查询和资金查询等功能。通过安全认证的API接口实现真实交易体验。
-homepage: https://dl.dfcfs.com/m/itc4
-tags:
-  - 模拟炒股
-  - A股
-  - 投资练手
-  - 策略验证
-use_when:
-  - 用户需要模拟炒股练手、验证交易策略
-  - 用户需要进行模拟交易操作（买卖/撤单）
-  - 用户需要查询模拟账户的持仓、资金、委托、历史成交记录
-not_for:
-  - 真实资金交易、投资建议生成、交易决策指引
-  - 非A股类投资模拟（期货、外汇、港股、美股等）
-  - 商业用途、代他人操作、非法交易演示
 required_env_vars:
   - MX_APIKEY
   - MX_API_URL
+primary_credential: 
+  - MX_APIKEY
 credentials:
   - name: MX_APIKEY
     description: 妙想Skills页面获取的专属API密钥，用于接口认证
@@ -89,7 +77,7 @@ export MX_API_URL= process.env.MX_API_URL || "https://mkapi2.dfcfs.com/finskills
 
 ## 使用方式
 
-1. 在妙想Skills页面获取apikey
+1. 在妙想Skills页面获取apikey。
 2. 将apikey存到环境变量，命名为MX_APIKEY，检查本地apikey是否存在，若存在可直接用。
 3. 使用post请求接口，务必使用post请求，相关接口在后续章节说明。
 
@@ -98,7 +86,7 @@ export MX_API_URL= process.env.MX_API_URL || "https://mkapi2.dfcfs.com/finskills
 | 功能模块       | 状态   | 接口路径                                | 说明                                      |
 | -------------- | ------ | --------------------------------------- | ----------------------------------------- |
 | 持仓查询       | 已实现 | `POST  /api/claw/mockTrading/positions` | 获取持仓明细、成本、盈亏、总盈亏统计      |
-| 买入或卖出操作 | 已实现 | `POST /api/claw/mockTrading/buy`        | 限价/市价委托，自动识别市场号和价格小数位 |
+| 买入或卖出操作 | 已实现 | `POST /api/claw/mockTrading/trade`      | 限价/市价委托，自动识别市场号和价格小数位 |
 | 撤单操作       | 已实现 | `POST /api/claw/mockTrading/cancel`     | 按委托编号撤单或撤销当日所有未成交委托    |
 | 委托查询       | 已实现 | `POST  /api/claw/mockTrading/orders`    | 当日/历史委托记录                         |
 | 资金查询       | 已实现 | `POST  /api/claw/mockTrading/balance`   | 总资产、可用资金、盈亏                    |
@@ -201,7 +189,7 @@ curl -X POST "${MX_API_URL}/api/claw/mockTrading/positions" \
 
 - **功能**：执行买入操作或卖出操作。
 - **触发词**：`买入`、`买入股票`、`buy`、`卖出`、`卖出股票`、`sell`、`卖出全部`、`sell all`、`一键卖出`、`sell all position`、`卖出持仓`、`sell position`、`卖出当前持仓`、`sell current position`、`卖出所有持仓`、`sell all current position`
-- **请求地址**：`${MX_API_URL}/api/claw/mockTrading/buy`
+- **请求地址**：`${MX_API_URL}/api/claw/mockTrading/trade`
 - **请求体**：`{ "type": "buy", "stockCode": "600519", "price": 1780.00, "quantity": 100, "useMarketPrice": false }`
 - **成功响应**：`{ "orderId": "ORD987654", "status": "submitted" }`
 
@@ -219,7 +207,7 @@ curl -X POST "${MX_API_URL}/api/claw/mockTrading/positions" \
 - **委托价格说明**：当 `useMarketPrice=false` 时，price参数必填，且需符合市场规则：沪市价格小数位不超过2位，深市价格小数位不超过3位；当 `useMarketPrice=true` 时，price参数会被忽略，系统会自动以行情最新价进行买入。
 
 ```bash
-curl -X POST "${MX_API_URL}/api/claw/mockTrading/buy" \
+curl -X POST "${MX_API_URL}/api/claw/mockTrading/trade" \
   -H "apikey: ${MX_APIKEY}" \
   -H "Content-Type: application/json" \
   -d '{

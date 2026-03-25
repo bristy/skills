@@ -2,253 +2,382 @@
 # -*- coding: utf-8 -*-
 """
 mx_stock_simulator - 妙想模拟组合管理 skill
-基于东方财富妙想API，支持模拟交易操作和查询
+支持持仓查询、买卖操作、撤单、委托查询、历史成交查询和资金查询
 """
 
 import os
 import sys
 import json
-import re
 import requests
 from datetime import datetime
 
-def parse_trade_query(query, op_type):
-    """从自然语言查询中解析出股票代码、价格、数量"""
-    # 提取股票代码 (6位数字)
-    code_match = re.search(r'([\d]{6})', query)
-    stock_code = code_match.group(1) if code_match else None
-    
-    # 提取数量 (数字)
-    qty_match = re.search(r'(\d+)\s*(股|手)', query)
-    if qty_match:
-        quantity = int(qty_match.group(1))
-        # 如果是"手"，转换为100股
-        if qty_match.group(2) == '手':
-            quantity *= 100
-    else:
-        quantity = None
-    
-    # 提取价格
-    price_match = re.search(r'(价格|成交价|市价)?\s*(\d+[.]?\d*)', query)
-    price = float(price_match.group(2)) if price_match else None
-    
-    # 检查是否市价委托
-    use_market = any(word in query.lower() for word in ['市价', '最新价', '当前价'])
-    
-    return {
-        "type": op_type,
-        "stockCode": stock_code,
-        "price": price,
-        "quantity": quantity,
-        "useMarketPrice": use_market
-    }
+# 环境变量配置
+MX_APIKEY = os.environ.get('MX_APIKEY')
+MX_API_URL = os.environ.get('MX_API_URL', 'https://mkapi2.dfcfs.com/finskillshub')
 
-def get_env():
-    """获取环境变量"""
-    apikey = os.environ.get('MX_APIKEY')
-    api_url = os.environ.get('MX_API_URL', 'https://mkapi2.dfcfs.com/finskillshub')
-    return apikey, api_url
+# 输出目录配置
+OUTPUT_DIR = '/root/.openclaw/workspace/mx_data/output'
+PREFIX = 'mx_stock_simulator_'
 
 def check_apikey():
-    """检查API密钥是否配置"""
-    apikey, api_url = get_env()
-    if not apikey:
-        print("❌ 错误：未检测到环境变量 MX_APIKEY")
-        print("请先设置 export MX_APIKEY=your_api_key")
-        sys.exit(1)
-    return apikey, api_url
+    """检查API Key是否配置"""
+    if not MX_APIKEY:
+        print("❌ 未找到MX_APIKEY，请设置环境变量：")
+        print("   export MX_APIKEY=your_apikey")
+        return False
+    return True
 
-def save_output(query, content, is_json=False):
-    """保存输出到文件"""
-    output_dir = "/root/.openclaw/workspace/mx_data/output"
-    os.makedirs(output_dir, exist_ok=True)
-    prefix = "mx_stock_simulator_"
+def ensure_output_dir():
+    """确保输出目录存在"""
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+def save_result(query, text, data):
+    """保存结果到文件"""
+    ensure_output_dir()
     safe_query = query.replace(' ', '_')[:50]
-    if is_json:
-        filename = f"{output_dir}/{prefix}{safe_query}_raw.json"
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(content, f, ensure_ascii=False, indent=2)
-    else:
-        filename = f"{output_dir}/{prefix}{safe_query}.txt"
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(content)
-    print(f"\n✅ 文件已保存: {filename}")
+    
+    # 保存文本结果
+    txt_file = os.path.join(OUTPUT_DIR, f"{PREFIX}{safe_query}.txt")
+    with open(txt_file, 'w', encoding='utf-8') as f:
+        f.write(text)
+    
+    # 保存原始JSON
+    json_file = os.path.join(OUTPUT_DIR, f"{PREFIX}{safe_query}.json")
+    with open(json_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    
+    return txt_file, json_file
 
-def format_positions(data):
-    """格式化持仓输出"""
-    output = "📊 当前持仓\n"
-    output += "================================================================================\n"
-    output += f"{'股票代码':<12} {'股票名称':<12} {'持仓':<8} {'成本价':<10} {'现价':<10} {'盈亏(元)':<12} {'盈亏%':<8} {'仓位%':<6}\n"
-    output += "--------------------------------------------------------------------------------\n"
-    total_profit = 0
-    if 'posList' in data and data['posList']:
-        for pos in data['posList']:
-            # 价格还原: price / (10^priceDec)
-            cost = pos['costPrice'] / (10 ** pos['costPriceDec'])
-            current = pos['price'] / (10 ** pos['priceDec'])
-            profit = pos['profit'] / data.get('currencyUnit', 1000)
-            total_profit += profit
-            output += f"{pos['secCode']:<12} {pos['secName']:<12} {pos['count']:<8} {cost:<10.2f} {current:<10.2f} {profit:<12.2f} {pos['profitPct']:<8.2f} {pos.get('posPct', 0):<6.2f}\n"
-    output += "================================================================================\n"
-    unit = data.get('currencyUnit', 1000)
-    total_assets = data.get('totalAssets', 0) / unit
-    avail_balance = data.get('availBalance', 0) / unit
-    total_pos_value = data.get('totalPosValue', 0) / unit
-    total_profit = data.get('totalProfit', 0) / unit
-    output += f"\n💰 账户概况\n"
-    output += f"总资产: {total_assets:.2f} 元\n"
-    output += f"可用资金: {avail_balance:.2f} 元\n"
-    output += f"总持仓市值: {total_pos_value:.2f} 元\n"
-    output += f"总盈亏: {total_profit:.2f} 元\n"
-    output += f"持仓股票数: {data.get('posCount', 0)} 只\n"
-    return output
-
-def format_orders(data):
-    """格式化委托输出"""
-    output = "📋 委托列表\n"
-    output += "================================================================================\n"
-    output += f"{'委托编号':<18} {'股票':<8} {'方向':<4} {'价格':<8} {'数量':<6} {'状态':<8} {'成交数量':<8}\n"
-    output += "--------------------------------------------------------------------------------\n"
-    drt_map = {1: "买入", 2: "卖出"}
-    status_map = {
-        1: "未报", 2: "已报", 3: "部成", 4: "已成", 5: "部成待撤",
-        6: "已报待撤", 7: "部撤", 8: "已撤", 9: "废单", 10: "撤单失败"
+def make_request(endpoint, payload):
+    """发送POST请求到API"""
+    url = f"{MX_API_URL}{endpoint}"
+    headers = {
+        'apikey': MX_APIKEY,
+        'Content-Type': 'application/json'
     }
-    if 'orders' in data and data['orders']:
-        for order in data['orders']:
-            drt = drt_map.get(order['drt'], f"{order['drt']}")
-            status = status_map.get(order['status'], f"{order['status']}")
-            price = order['price'] / (10 ** order['priceDec'])
-            output += f"{order['id']:<18} {order.get('secName', order['secCode']):<8} {drt:<4} {price:<8.2f} {order['count']:<6} {status:<8} {order.get('tradeCount', 0):<8}\n"
-    output += f"================================================================================\n"
-    output += f"共计 {data.get('totalNum', 0)} 条委托\n"
-    return output
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"❌ 请求失败: {str(e)}")
+        return None
 
 def format_balance(data):
-    """格式化资金查询输出"""
-    unit = data.get('currencyUnit', 1000)
-    output = "💰 账户资金\n"
-    output += "================================================================================\n"
-    output += f"初始资金: {data.get('initMoney', 0)/unit:.2f} 元\n" if 'initMoney' in data else ""
-    output += f"总资产: {data.get('totalAssets', 0)/unit:.2f} 元\n"
-    output += f"可用资金: {data.get('availBalance', 0)/unit:.2f} 元\n"
-    output += f"冻结资金: {data.get('frozenMoney', 0)/unit:.2f} 元\n"
-    output += f"总持仓市值: {data.get('totalPosValue', 0)/unit:.2f} 元\n"
-    output += f"总仓位: {data.get('totalPosPct', 0):.2f}%\n"
-    if 'nav' in data:
-        output += f"单位净值: {data.get('nav', 0):.3f}\n"
-    if 'oprDays' in data:
-        output += f"运作天数: {data.get('oprDays', 0)} 天\n"
-    if 'accName' in data:
-        output += f"\n账户名称: {data.get('accName')}\n"
-        output += f"账户ID: {data.get('accID')}\n"
-    return output
+    """格式化资金查询结果"""
+    code = data.get('code')
+    # 兼容多种成功码: 0, "0", 200, "200"
+    if str(code) not in ['0', '200']:
+        return f"❌ 查询失败: {data.get('message', '未知错误')}", data
+    
+    d = data.get('data', data)
+    currency_unit = d.get('currencyUnit', 1000)
+    
+    def to_yuan(val):
+        if val is None:
+            return '-'
+        return f"{val / currency_unit:.2f}"
+    
+    result = "📊 账户资金信息\n"
+    result += "================================================================================\n"
+    result += f"总资产:     {to_yuan(d.get('totalAssets'))} 元\n"
+    result += f"可用资金:   {to_yuan(d.get('availBalance'))} 元\n"
+    result += f"冻结资金:   {to_yuan(d.get('frozenMoney'))} 元\n"
+    result += f"持仓市值:   {to_yuan(d.get('totalPosValue'))} 元\n"
+    result += f"仓位比例:   {d.get('totalPosPct', '-')}%\n"
+    if 'initMoney' in d:
+        result += f"初始资金:   {to_yuan(d.get('initMoney'))} 元\n"
+    if 'oprDays' in d:
+        result += f"运作天数:   {d.get('oprDays')} 天\n"
+    if 'nav' in d:
+        result += f"单位净值:   {d.get('nav'):.4f}\n"
+    result += "================================================================================\n"
+    
+    return result, data
+
+def format_positions(data):
+    """格式化持仓查询结果"""
+    code = data.get('code')
+    if str(code) not in ['0', '200']:
+        return f"❌ 查询失败: {data.get('message', '未知错误')}", data
+    
+    d = data.get('data', data)
+    pos_list = d.get('posList', [])
+    currency_unit = d.get('currencyUnit', 1000)
+    
+    result = "📊 当前持仓\n"
+    result += "====================================================================================================\n"
+    result += f"{'股票代码':<10} {'股票名称':<10} {'持仓(股)':<10} {'可用(股)':<10} {'现价(元)':<10} {'成本(元)':<10} {'市值(元)':<12} {'当日盈亏':<12} {'持仓盈亏'}\n"
+    result += "----------------------------------------------------------------------------------------------------\n"
+    
+    total_profit = 0
+    for pos in pos_list:
+        sec_code = pos.get('secCode', '')
+        sec_name = pos.get('secName', '')
+        count = pos.get('count', 0)
+        avail_count = pos.get('availCount', 0)
+        price_dec = pos.get('priceDec', 2)
+        price = pos.get('price', 0) / (10 ** price_dec)
+        cost_dec = pos.get('costPriceDec', 2)
+        cost = pos.get('costPrice', 0) / (10 ** cost_dec)
+        value = pos.get('value', 0) / currency_unit
+        day_profit = pos.get('dayProfit', 0) / currency_unit
+        profit = pos.get('profit', 0) / currency_unit
+        total_profit += profit
+        
+        day_profit_str = f"{day_profit:+.2f}"
+        profit_str = f"{profit:+.2f}"
+        
+        result += f"{sec_code:<10} {sec_name:<10} {count:<10} {avail_count:<10} {price:<10.2f} {cost:<10.2f} {value:<12.2f} {day_profit_str:<12} {profit_str}\n"
+    
+    if not pos_list:
+        result += "暂无持仓\n"
+    
+    result += "----------------------------------------------------------------------------------------------------\n"
+    result += f"总持仓盈亏: {total_profit:+.2f} 元\n"
+    if d.get('totalAssets'):
+        result += f"总资产: {d.get('totalAssets') / currency_unit:.2f} 元\n"
+    result += "====================================================================================================\n"
+    result += f"共 {len(pos_list)} 只持仓股票\n"
+    
+    return result, data
+
+def format_orders(data):
+    """格式化委托查询结果"""
+    code = data.get('code')
+    if str(code) not in ['0', '200']:
+        return f"❌ 查询失败: {data.get('message', '未知错误')}", data
+    
+    d = data.get('data', data)
+    orders = d.get('orders', [])
+    currency_unit = d.get('currencyUnit', 1000)
+    
+    status_map = {
+        1: "未报",
+        2: "已报",
+        3: "部成",
+        4: "已成",
+        5: "部成待撤",
+        6: "已报待撤",
+        7: "部撤",
+        8: "已撤",
+        9: "废单",
+        10: "撤单失败"
+    }
+    
+    drt_map = {
+        1: "买入",
+        2: "卖出"
+    }
+    
+    result = "📋 委托记录\n"
+    result += "====================================================================================================\n"
+    result += f"{'订单ID':<14} {'方向':<4} {'股票':<6} {'名称':<8} {'价格':<8} {'数量':<8} {'状态':<6} {'委托时间'}\n"
+    result += "----------------------------------------------------------------------------------------------------\n"
+    
+    if not orders:
+        result += "暂无委托记录\n"
+    
+    for order in orders:
+        order_id = order.get('id', '')
+        drt = drt_map.get(order.get('drt', 0), '-')
+        sec_code = order.get('secCode', '')
+        sec_name = order.get('secName', '')
+        price_dec = order.get('priceDec', 2)
+        price = order.get('price', 0) / (10 ** price_dec)
+        count = order.get('count', 0)
+        status = status_map.get(order.get('status', 0), '-')
+        time_ts = order.get('time', 0)
+        time_str = datetime.fromtimestamp(time_ts).strftime('%Y-%m-%d %H:%M:%S') if time_ts else '-'
+        
+        result += f"{order_id:<14} {drt:<4} {sec_code:<6} {sec_name:<8} {price:<8.2f} {count:<8} {status:<6} {time_str}\n"
+    
+    result += "====================================================================================================\n"
+    result += f"共 {len(orders)} 条委托记录\n"
+    
+    return result, data
+
+def format_cancel(data):
+    """格式化撤单结果"""
+    code = data.get('code')
+    if str(code) not in ['0', '200']:
+        return f"❌ 撤单失败: {data.get('message', '未知错误')}", data
+    
+    d = data.get('data', data)
+    rc = d.get('rc', -1)
+    rmsg = d.get('rmsg', '')
+    cancel_count = d.get('cancelCount', 0)
+    fail_count = d.get('failCount', 0)
+    fail_list = d.get('failList', [])
+    
+    result = "✅ 撤单完成\n"
+    result += "================================================================================\n"
+    result += f"{rmsg}\n"
+    result += f"成功撤单: {cancel_count} 笔\n"
+    result += f"撤单失败: {fail_count} 笔\n"
+    
+    if fail_list:
+        result += "失败详情:\n"
+        for fail in fail_list:
+            result += f"  订单 {fail.get('orderID', '')}: {fail.get('rmsg', '')}\n"
+    
+    result += "================================================================================\n"
+    
+    return result, data
+
+def format_trade_result(data):
+    """格式化交易结果"""
+    code = data.get('code')
+    if str(code) not in ['0', '200']:
+        return f"❌ 委托失败: {data.get('message', '未知错误')}", data
+    
+    data = data.get('data', data)
+    order_id = data.get('orderId', '')
+    status = data.get('status', '')
+    
+    result = "✅ 委托成功\n"
+    result += "================================================================================\n"
+    result += f"订单编号: {order_id}\n"
+    result += f"状态: {status}\n"
+    result += "================================================================================\n"
+    
+    return result, data
+
+def parse_query(query):
+    """解析自然语言查询，识别意图"""
+    query = query.lower()
+    
+    # 意图识别
+    if any(word in query for word in ['持仓', '我的持仓', '持仓情况', '查持仓']):
+        return 'positions', None
+    
+    if any(word in query for word in ['资金', '我的资金', '账户余额', '资金情况']):
+        return 'balance', None
+    
+    if any(word in query for word in ['委托', '订单', '成交记录', '历史成交', '交易历史']):
+        return 'orders', None
+    
+    if any(word in query for word in ['撤单', '撤销', '取消', 'cancel']):
+        return 'cancel', None
+    
+    if any(word in query for word in ['买入', 'buy', '买进']):
+        return 'buy', parse_trade_params(query, 'buy')
+    
+    if any(word in query for word in ['卖出', 'sell', '卖掉']):
+        return 'sell', parse_trade_params(query, 'sell')
+    
+    # 默认查询持仓
+    return 'positions', None
+
+def parse_trade_params(query, trade_type):
+    """解析交易参数"""
+    import re
+    
+    # 提取6位数字股票代码
+    codes = re.findall(r'\b(\d{6})\b', query)
+    # 提取数字数量
+    quantities = re.findall(r'(\d+)\s*(股|手)', query)
+    
+    stock_code = codes[0] if codes else None
+    quantity = int(quantities[0][0]) * (100 if quantities and quantities[0][1] == '手' else 1) if quantities else None
+    
+    # 提取价格
+    prices = re.findall(r'(?:价格|成交价|按|@)\s*(\d+\.?\d*)', query)
+    price = float(prices[0]) if prices else None
+    
+    # 判断是否市价委托
+    use_market = any(word in query for word in ['现价', '市价', '最新价', '市场价格'])
+    
+    return {
+        'stock_code': stock_code,
+        'quantity': quantity,
+        'price': price,
+        'use_market_price': use_market
+    }
 
 def main():
     """主函数"""
-    if len(sys.argv) < 2:
-        print("用法: python mx_stock_simulator.py \"自然语言查询\"")
-        print("\n示例:")
-        print("  python mx_stock_simulator.py \"查询我的持仓\"")
-        print("  python mx_stock_simulator.py \"买入 100 股 贵州茅台 600519 价格 1800\"")
-        print("  python mx_stock_simulator.py \"查询资金\"")
+    if not check_apikey():
         sys.exit(1)
-
-    apikey, api_url = check_apikey()
-    query = ' '.join(sys.argv[1:])
-
-    # 根据自然语言判断接口和操作类型
-    query_lower = query.lower()
-    if any(word in query_lower for word in ['持仓', 'position']):
-        url = f"{api_url}/api/claw/mockTrading/positions"
-        payload = {}
-    elif any(word in query_lower for word in ['买入', 'buy']):
-        url = f"{api_url}/api/claw/mockTrading/buy"
-        # 解析参数
-        payload = parse_trade_query(query, "buy")
-    elif any(word in query_lower for word in ['卖出', 'sell']):
-        url = f"{api_url}/api/claw/mockTrading/buy"
-        # 解析参数
-        payload = parse_trade_query(query, "sell")
-    elif any(word in query_lower for word in ['撤单', 'cancel']):
-        url = f"{api_url}/api/claw/mockTrading/cancel"
-        # 检查是否一键撤单
-        if '所有' in query or 'all' in query_lower:
-            payload = {"type": "all"}
-        else:
-            # 提取订单号
-            order_match = re.search(r'([\w\d]+)', query)
-            order_id = order_match.group(1) if order_match else None
-            code_match = re.search(r'([\d]{6})', query)
-            code = code_match.group(1) if code_match else None
-            payload = {"type": "order", "orderId": order_id, "stockCode": code}
-        payload["query"] = query
-    elif any(word in query_lower for word in ['委托', 'order', '成交', 'history']):
-        url = f"{api_url}/api/claw/mockTrading/orders"
-        payload = {}
-    elif any(word in query_lower for word in ['资金', 'balance']):
-        url = f"{api_url}/api/claw/mockTrading/balance"
-        payload = {}
+    
+    # 获取查询文本
+    query = ' '.join(sys.argv[1:]) if len(sys.argv) > 1 else '查询持仓'
+    
+    # 解析意图
+    intent, params = parse_query(query)
+    
+    if intent == 'positions':
+        # 查询持仓
+        data = make_request('/api/claw/mockTrading/positions', {})
+        if data is None:
+            sys.exit(1)
+        result_text, _ = format_positions(data)
+        print(result_text)
+        save_result(query, result_text, data)
+    
+    elif intent == 'balance':
+        # 查询资金
+        data = make_request('/api/claw/mockTrading/balance', {})
+        if data is None:
+            sys.exit(1)
+        result_text, _ = format_balance(data)
+        print(result_text)
+        save_result(query, result_text, data)
+    
+    elif intent == 'orders':
+        # 查询委托
+        data = make_request('/api/claw/mockTrading/orders', {})
+        if data is None:
+            sys.exit(1)
+        result_text, _ = format_orders(data)
+        print(result_text)
+        save_result(query, result_text, data)
+    
+    elif intent == 'cancel':
+        # 撤单 - 默认一键撤单
+        payload = {'type': 'all'}
+        data = make_request('/api/claw/mockTrading/cancel', payload)
+        if data is None:
+            sys.exit(1)
+        result_text, _ = format_cancel(data)
+        print(result_text)
+        save_result(query, result_text, data)
+    
+    elif intent in ['buy', 'sell']:
+        # 买入/卖出 - 使用 /trade 端点
+        if not params or not params.get('stock_code'):
+            print("❌ 请提供股票代码（6位数字）")
+            sys.exit(1)
+        if not params.get('quantity'):
+            print("❌ 请提供委托数量")
+            sys.exit(1)
+        
+        payload = {
+            'type': intent,
+            'stockCode': params['stock_code'],
+            'quantity': params['quantity'],
+            'useMarketPrice': params.get('use_market_price', False)
+        }
+        
+        if not payload['useMarketPrice'] and params.get('price'):
+            payload['price'] = params['price']
+        
+        # 如果是市价，不需要价格
+        if payload['useMarketPrice']:
+            payload['useMarketPrice'] = True
+        
+        data = make_request('/api/claw/mockTrading/trade', payload)
+        if data is None:
+            sys.exit(1)
+        result_text, _ = format_trade_result(data)
+        print(result_text)
+        save_result(query, result_text, data)
+    
     else:
-        # 默认交给API识别
-        url = f"{api_url}/api/claw/mockTrading/buy"
-        payload = {"query": query}
-
-    headers = {
-        'apikey': apikey,
-        'Content-Type': 'application/json'
-    }
-
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-    except Exception as e:
-        print(f"❌ 请求失败: {e}")
+        print(f"❌ 无法识别的操作: {query}")
         sys.exit(1)
-
-    # 保存原始JSON
-    save_output(query, data, is_json=True)
-
-    # 格式化输出
-    # 检查错误码
-    if ('status' in data and data['status'] == 404) or ('code' in data and data['code'] == 404):
-        msg = data.get('message', '未绑定账户')
-        result_str = f"❌ {msg}\n\n"
-        result_str += "请前往 妙想Skills页面 (https://dl.dfcfs.com/m/itc4) 创建模拟账户并绑定你的API密钥后重试。"
-    elif 'code' in data and data['code'] != 200 and data['code'] != '200' and data['code'] != 0:
-        msg = data.get('message', '操作失败')
-        result_str = f"❌ {msg}"
-    elif url.endswith('/positions'):
-        if 'data' in data:
-            result_str = format_positions(data['data'])
-        else:
-            result_str = f"返回数据异常: {json.dumps(data, indent=2, ensure_ascii=False)}"
-    elif url.endswith('/orders'):
-        if 'data' in data:
-            result_str = format_orders(data['data'])
-        else:
-            result_str = f"返回数据异常: {json.dumps(data, indent=2, ensure_ascii=False)}"
-    elif url.endswith('/balance'):
-        if 'data' in data:
-            result_str = format_balance(data['data'])
-        else:
-            result_str = f"返回数据异常: {json.dumps(data, indent=2, ensure_ascii=False)}"
-    else:
-        # 买入/撤单等操作
-        if data.get('code') == 200 or data.get('code') == '200' or data.get('status') == 0:
-            msg = data.get('message', '成功')
-            result_str = f"✅ {msg}\n\n"
-            if 'data' in data and 'orderID' in data['data']:
-                result_str += f"委托编号: {data['data']['orderID']}"
-            elif 'data' in data and 'orderId' in data['data']:
-                result_str += f"委托编号: {data['data']['orderId']}"
-        else:
-            msg = data.get('message', '操作失败')
-            result_str = f"❌ {msg}"
-
-    print(result_str)
-    save_output(query, result_str, is_json=False)
 
 if __name__ == '__main__':
     main()
