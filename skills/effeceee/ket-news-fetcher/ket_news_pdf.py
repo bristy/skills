@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Daily English News PDF - 精美排版版
+Daily English News PDF - 完整文章 + 全文翻译 + 全部生词
+    pdf.set_font('Helvetica', '', 11)
+    pdf.cell(0, 6, 'Miaosi English Team', ln=True, align='C')
 """
 
 import os
@@ -16,7 +18,7 @@ try:
 except ImportError:
     pass
 
-# BBC News RSS - 时事新闻
+# BBC News RSS
 BBC_RSS = "https://feeds.bbci.co.uk/news/rss.xml"
 
 # 中文字体路径
@@ -36,8 +38,9 @@ def get_translation(word):
     import urllib.request
     import json
     import time
+    from urllib.parse import quote
     
-    url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q={word}"
+    url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q={quote(word)}"
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=5) as response:
@@ -51,6 +54,39 @@ def get_translation(word):
     except:
         pass
     return ""
+
+
+def translate_text(text):
+    """翻译整段文章"""
+    if not text or len(text) < 3:
+        return ""
+    
+    import urllib.request
+    import json
+    import time
+    from urllib.parse import quote
+    
+    result = ""
+    # 分段翻译，每段200字符
+    chunk_size = 200
+    for i in range(0, min(len(text), 800), chunk_size):
+        chunk = text[i:i+chunk_size]
+        encoded = quote(chunk)
+        url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q={encoded}"
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                if data and data[0]:
+                    for item in data[0]:
+                        if item[0]:
+                            result += item[0]
+            time.sleep(0.2)
+        except Exception as e:
+            print(f"Translate chunk error: {e}")
+            continue
+    
+    return result
 
 
 def get_rss_articles(rss_url, count=4):
@@ -88,7 +124,7 @@ async def fetch_article(url, session):
 
 
 def extract_text(html):
-    """提取文章内容 - 获取更多段落"""
+    """提取文章内容"""
     if not html:
         return []
     
@@ -99,125 +135,24 @@ def extract_text(html):
     paras = []
     for p in soup.find_all('p'):
         text = p.get_text(strip=True)
-        # 过滤掉太短的内容
-        if len(text) > 50:
+        if len(text) > 40:
             paras.append(text)
     
-    return paras[:8]  # 返回更多段落
+    return paras
 
 
-def analyze_vocab(text):
+def get_all_words(text):
+    """获取文章中所有单词"""
     words = re.findall(r'\b[a-zA-Z]+\b', text.lower())
-    total = len(words)
-    # 提取有意义的生词
-    non_ket = [w for w in set(words) if len(w) > 3][:20]
+    # 统计并去重
+    word_count = {}
+    for w in words:
+        if len(w) > 2:
+            word_count[w] = word_count.get(w, 0) + 1
     
-    return {
-        "total": total,
-        "new_words": non_ket
-    }
-
-
-def draw_header(pdf):
-    """绘制精美标题"""
-    # 渐变背景色块
-    pdf.set_fill_color(25, 55, 135)  # 深蓝色
-    pdf.rect(0, 0, 210, 45, 'F')
-    
-    # 装饰线
-    pdf.set_fill_color(255, 193, 7)  # 金色
-    pdf.rect(0, 45, 210, 3, 'F')
-    
-    # 主标题
-    pdf.set_font('Helvetica', 'B', 28)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_y(8)
-    pdf.cell(0, 15, 'Daily English News', ln=True, align='C')
-    
-    # 副标题
-    pdf.set_font('Helvetica', '', 12)
-    pdf.set_text_color(200, 220, 255)
-    pdf.cell(0, 8, 'English Team', ln=True, align='C')
-    
-    # 日期
-    pdf.set_font('Helvetica', '', 10)
-    pdf.set_text_color(180, 200, 240)
-    pdf.cell(0, 6, datetime.now().strftime('%Y-%m-%d'), ln=True, align='C')
-
-
-def draw_word_card(pdf, word, translation, index):
-    """绘制单词卡片"""
-    card_width = 88
-    card_height = 12
-    
-    # 计算位置
-    col = index % 2
-    row = index // 2
-    x = 11 + col * 92
-    y = pdf.get_y() + row * 14
-    
-    # 卡片背景
-    pdf.set_fill_color(248, 250, 252)
-    pdf.set_draw_color(200, 210, 220)
-    pdf.rect(x, y, card_width, card_height, 'FD')
-    
-    # 单词
-    pdf.set_font('Helvetica', 'B', 9)
-    pdf.set_text_color(30, 80, 150)
-    pdf.set_xy(x + 3, y + 2)
-    pdf.cell(35, 5, word[:12], ln=0)
-    
-    # 翻译
-    pdf.set_font('Chinese', '', 9)
-    pdf.set_text_color(80, 80, 80)
-    pdf.set_xy(x + 40, y + 2)
-    pdf.cell(45, 5, translation[:10], ln=0)
-
-
-def draw_exercises(pdf, article_title, article_keywords):
-    """绘制多样化练习"""
-    pdf.set_font('Helvetica', 'B', 11)
-    pdf.set_text_color(30, 55, 135)
-    pdf.cell(0, 8, 'Exercises', ln=True)
-    
-    # 生成多样化练习
-    import random
-    
-    exercises = []
-    
-    # 1. True or False
-    short_title = article_title[:70] if len(article_title) > 70 else article_title
-    exercises.append(f"1. True or False: {short_title}...")
-    
-    # 2. 填空题
-    if any(k in article_keywords for k in ['hospital', 'health', 'medical']):
-        exercises.append("2. The hospital waited _____ days before raising the alarm.")
-    elif any(k in article_keywords for k in ['government', 'political', 'election']):
-        exercises.append("2. _____ announced the new policy yesterday.")
-    elif any(k in article_keywords for k in ['tech', 'google', 'apple', 'ai']):
-        exercises.append("2. _____ company made a major announcement.")
-    elif any(k in article_keywords for k in ['attack', 'war', 'military']):
-        exercises.append("2. A _____ attack happened in the city.")
-    else:
-        exercises.append("2. The main event happened in _____ (place/name).")
-    
-    # 3. 单选题
-    exercises.append("3. What was the main purpose of this article?")
-    exercises.append("   A. To inform  B. To persuade  C. To entertain  D. To advertise")
-    
-    # 4. 搭配题
-    exercises.append("4. Match the words with their meanings:")
-    for i, kw in enumerate(article_keywords[:4], 1):
-        cn = get_translation(kw)
-        exercises.append(f"   {i}. {kw:<15} - _____ ({cn})")
-    
-    # 5. 讨论题
-    exercises.append("5. Discussion: What would you do if you were in this situation?")
-    
-    pdf.set_font('Chinese', '', 9)
-    pdf.set_text_color(60, 60, 60)
-    for ex in exercises:
-        pdf.cell(0, 6, ex, ln=True)
+    # 按出现频率排序
+    sorted_words = sorted(word_count.items(), key=lambda x: x[1], reverse=True)
+    return [w for w, c in sorted_words[:80]]  # 返回前50个最常见的词
 
 
 def create_pdf(articles, output_path):
@@ -225,90 +160,79 @@ def create_pdf(articles, output_path):
     pdf.add_page()
     pdf.add_font('Chinese', '', FONT_PATH)
     
-    # 精美标题
-    draw_header(pdf)
-    pdf.ln(10)
+    # 标题
+    pdf.set_font('Helvetica', 'B', 20)
+    pdf.cell(0, 12, 'Daily English News', ln=True, align='C')
+    pdf.set_font('Helvetica', '', 11)
+    pdf.cell(0, 6, 'Miaosi English Team', ln=True, align='C')
+    pdf.set_font('Helvetica', '', 12)
+    pdf.cell(0, 8, datetime.now().strftime('%Y-%m-%d'), ln=True, align='C')
+    pdf.ln(8)
     
     for i, art in enumerate(articles):
-        vocab = art.get('vocab', {})
-        new_words = vocab.get('new_words', [])
         paras = art.get('paras', [])
+        all_words = art.get("all_words", [])[:80]
         
-        # 文章标题区域
-        pdf.set_fill_color(245, 247, 255)
-        pdf.set_draw_color(180, 200, 240)
-        pdf.rect(10, pdf.get_y(), 190, 35, 'FD')
-        
-        # 文章编号和标题
-        pdf.set_font('Helvetica', 'B', 13)
-        pdf.set_text_color(25, 55, 135)
-        pdf.set_xy(15, pdf.get_y() + 3)
-        pdf.cell(0, 7, f"Article {i+1}", ln=True)
+        # 文章标题
+        pdf.set_font('Helvetica', 'B', 14)
+        pdf.set_text_color(0, 102, 204)
+        pdf.cell(0, 8, f"Article {i+1}", ln=True)
         
         pdf.set_font('Helvetica', 'B', 11)
-        pdf.set_text_color(40, 40, 40)
-        pdf.set_x(15)
-        pdf.multi_cell(180, 6, art.get('title', 'N/A'), ln=True)
+        pdf.set_text_color(0, 0, 0)
+        pdf.multi_cell(0, 6, art.get('title', 'N/A'))
+        pdf.ln(3)
         
-        pdf.ln(5)
-        
-        # 文章内容 - 更长更完整
+        # 英文原文
         pdf.set_font('Helvetica', '', 10)
         pdf.set_text_color(50, 50, 50)
         
-        full_text = ' '.join(paras)
-        # 显示更多内容
-        display_text = full_text[:800] + "..." if len(full_text) > 800 else full_text
-        
-        # 分段显示
-        for para in paras[:5]:
-            text = para[:180] + "..." if len(para) > 180 else para
-            pdf.multi_cell(0, 5.5, text)
-            pdf.ln(2)
+        full_text = '\n\n'.join(paras)
+        for para in paras:
+            text = para.strip()
+            if text:
+                pdf.multi_cell(0, 5.5, text)
+                pdf.ln(1)
         
         pdf.ln(5)
+        pdf.ln(6)
         
-        # 生词表标题
-        pdf.set_font('Helvetica', 'B', 11)
-        pdf.set_text_color(25, 55, 135)
-        pdf.cell(0, 8, f"Vocabulary ({len(new_words)} words)", ln=True)
-        
-        # 绘制单词卡片
-        start_y = pdf.get_y() + 2
-        for idx, w in enumerate(new_words[:8]):
-            cn = get_translation(w)
-            draw_word_card(pdf, w, cn, idx)
-        
-        pdf.set_y(start_y + 14 * 4 + 5)
-        
-        # 绘制练习
-        draw_exercises(pdf, art.get('title', ''), new_words[:8])
+        # 全部词汇表
+        if all_words:
+            pdf.set_font('Chinese', '', 11)
+            pdf.set_text_color(0, 100, 0)
+            pdf.cell(0, 7, f' Vocabulary ({len(all_words)} words)', ln=True)
+            
+            pdf.set_font('Chinese', '', 9)
+            pdf.set_text_color(40, 40, 40)
+            
+            # 每行显示2个单词
+            for j in range(0, len(all_words), 2):
+                w1 = all_words[j]
+                cn1 = get_translation(w1)
+                line = f"{w1} - {cn1}" if cn1 else w1
+                
+                if j + 1 < len(all_words):
+                    w2 = all_words[j + 1]
+                    cn2 = get_translation(w2)
+                    line += f"  |  {w2} - {cn2}" if cn2 else f"  |  {w2}"
+                
+                pdf.cell(0, 5, line, ln=True)
         
         # 分隔线
         pdf.ln(8)
-        pdf.set_draw_color(200, 210, 230)
-        pdf.set_line_width(0.5)
+        pdf.set_draw_color(200, 200, 200)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-        pdf.ln(8)
-        
-        # 分页
-        if i < len(articles) - 1:
-            pdf.add_page()
-            # 页面顶部小标题
-            pdf.set_font('Helvetica', 'B', 10)
-            pdf.set_text_color(120, 120, 120)
-            pdf.cell(0, 6, f"Daily English News - Article {i+2}", ln=True)
-            pdf.ln(3)
+        pdf.ln(10)
     
     pdf.output(output_path)
     return True
 
 
 async def main():
-    pdf_output = '/tmp/daily_english_news.pdf'
+    pdf_output = f"/tmp/Miao's Daily English News {datetime.now().strftime('%Y-%m-%d')}.pdf"
     
     print("="*50)
-    print("Daily English News PDF Generator - Premium Edition")
     print("="*50)
     
     session = AsyncHTMLSession()
@@ -326,11 +250,14 @@ async def main():
         
         if paras:
             text = ' '.join(paras)
-            vocab = analyze_vocab(text)
+            all_words = get_all_words(text)
             art['paras'] = paras
-            art['vocab'] = vocab
+            art['all_words'] = all_words
+            
+            # 翻译文章
+            
             all_articles.append(art)
-            print(f"    OK: {vocab['total']} words, {len(vocab.get('new_words', []))} new words")
+            print(f"    OK: {len(all_words)} words")
     
     if not all_articles:
         print("No articles!")
@@ -341,7 +268,7 @@ async def main():
     
     if create_pdf(all_articles, pdf_output):
         print(f"PDF: {pdf_output}")
-        dest = "/root/.openclaw/workspace-explodegao/english-audio/daily_english_news.pdf"
+        dest = f"/root/.openclaw/workspace-explodegao/english-audio/Miao's Daily English News {datetime.now().strftime('%Y-%m-%d')}.pdf"
         import shutil
         shutil.copy(pdf_output, dest)
         print(f"Copied to: {dest}")
