@@ -1,0 +1,11 @@
+{
+  "owner": "nanophotohq",
+  "slug": "video-reverse-prompt",
+  "displayName": "Video Reverse Prompt",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1774184586060,
+    "commit": null
+  },
+  "history": []
+}
