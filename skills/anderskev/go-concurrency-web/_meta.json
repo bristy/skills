@@ -1,0 +1,11 @@
+{
+  "owner": "anderskev",
+  "slug": "go-concurrency-web",
+  "displayName": "Go Concurrency Web",
+  "latest": {
+    "version": "2.3.0",
+    "publishedAt": 1774183343047,
+    "commit": null
+  },
+  "history": []
+}
