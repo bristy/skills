@@ -1,11 +1,17 @@
 {
   "owner": "frankieway",
   "slug": "yuqing-label-skill",
-  "displayName": "舆情自动标注 Skill",
+  "displayName": "小爱舆情AI标注（OpenAI兼容）",
   "latest": {
-    "version": "1.0.2",
-    "publishedAt": 1773750070838,
-    "commit": "https://github.com/openclaw/skills/commit/77c166726a920599db6fdc52fa1ceb600e752ce6"
+    "version": "1.2.0",
+    "publishedAt": 1774334228665,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1773750070838,
+      "commit": "https://github.com/openclaw/skills/commit/77c166726a920599db6fdc52fa1ceb600e752ce6"
+    }
+  ]
 }

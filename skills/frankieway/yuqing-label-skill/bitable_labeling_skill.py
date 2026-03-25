@@ -35,15 +35,18 @@ OUTPUT_PROMPTS_ONLY = os.getenv("OUTPUT_PROMPTS_ONLY", "").strip().lower() in ("
 FORCE_RELABEL = os.getenv("FORCE_RELABEL", "").strip().lower() in ("1", "true", "yes")
 
 # 在进程内调用第三方大模型网关（OpenAI 兼容协议），全部由环境变量配置：
-#   OPENAI_BASE_URL     模型网关地址，例如：https://api.openai.com/v1 或自建网关地址
-#   OPENAI_API_KEY      网关访问密钥
-#   OPENAI_MODEL        具体模型名（例如 gpt-4o, gpt-4.1-mini, qwen-plus 等），不在代码中写死
+#   OPENAI_API_KEY      网关访问密钥 (必填)
+#   OPENAI_BASE_URL     模型网关地址 (必填)，例如：https://api.openai.com/v1 或自建网关地址
+#   OPENAI_MODEL        具体模型名 (必填)，例如：gpt-4o, gpt-4o-mini, qwen-plus 等
 #   LLM_CONCURRENCY     并发 worker 数（建议 2~6，避免打爆限流）
 #   LLM_TIMEOUT         单次调用超时时间（秒）
 #   LLM_MAX_RETRIES     超时/5xx/429 时的重试次数
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or ""
-OPENAI_BASE_URL = (os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "").strip()
+# 去掉默认值，三个都必须由用户配置
+if OPENAI_BASE_URL:
+    OPENAI_BASE_URL = OPENAI_BASE_URL.rstrip("/")
 LLM_CONCURRENCY = int(os.getenv("LLM_CONCURRENCY", "4"))
 LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "20"))
 LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "2"))
@@ -598,9 +601,20 @@ def run_once() -> int:
             print(build_emotion_user_prompt(fields))
         return 0
 
+    # 检查必填的OpenAI配置
+    missing = []
+    if not OPENAI_API_KEY:
+        missing.append("OPENAI_API_KEY")
+    if not OPENAI_BASE_URL:
+        missing.append("OPENAI_BASE_URL")
+    if not OPENAI_MODEL:
+        missing.append("OPENAI_MODEL")
+    if missing:
+        raise RuntimeError(f"标注skill需要配置OpenAI，缺失必填环境变量: {', '.join(missing)}。请在run_yuqing_pipeline.sh中添加配置后重试。")
+
     # 获取每条记录的类型/情感/竞品/端/品牌安全/内容安全标签：
-    # 若已配置 OPENAI_API_KEY 则在进程内并发调用第三方模型，否则从 stdin 读取（OpenClaw 传入）
-    use_internal_llm = bool(OPENAI_API_KEY)
+    # 现在三个参数都必须配置，直接启用内部调用
+    use_internal_llm = True
 
     results_raw: List[Tuple[str, str, str, str, str, str]] = [("", "", "", "", "", "") for _ in records]
 

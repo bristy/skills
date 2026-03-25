@@ -32,18 +32,19 @@ def main() -> None:
         print("missing_required=bitable_url,app_id,app_secret", file=sys.stderr)
         sys.exit(1)
 
+    # 现在 OPENAI_API_KEY / OPENAI_BASE_URL / OPENAI_MODEL 都是必填
+    if not all([openai_api_key, openai_base_url, openai_model]):
+        print("missing_required=openai_api_key,openai_base_url,openai_model - 全部必填，不可省略", file=sys.stderr)
+        sys.exit(1)
+
     import bitable_labeling_skill as bl
     bl.BITABLE_URL = bitable_url
     bl.APP_ID = app_id
     bl.APP_SECRET = app_secret
     bl.LIMIT = limit
-    # 用户提供的标注模型（不填则走 OpenClaw 配置的模型 / stdin）
-    if openai_api_key:
-        bl.OPENAI_API_KEY = openai_api_key
-    if openai_base_url:
-        bl.OPENAI_BASE_URL = openai_base_url.rstrip("/")
-    if openai_model:
-        bl.OPENAI_MODEL = openai_model
+    bl.OPENAI_API_KEY = openai_api_key
+    bl.OPENAI_BASE_URL = openai_base_url.rstrip("/")
+    bl.OPENAI_MODEL = openai_model
 
     try:
         updated = bl.run_once()
