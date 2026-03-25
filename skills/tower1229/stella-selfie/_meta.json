@@ -3,11 +3,16 @@
   "slug": "stella-selfie",
   "displayName": "Stella Selfie",
   "latest": {
-    "version": "1.0.10",
-    "publishedAt": 1774011194686,
-    "commit": "https://github.com/openclaw/skills/commit/7b9bbc56d32aaabdb6e38c6d677da02d97a4bac9"
+    "version": "1.0.14",
+    "publishedAt": 1774354214888,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.10",
+      "publishedAt": 1774011194686,
+      "commit": "https://github.com/openclaw/skills/commit/7b9bbc56d32aaabdb6e38c6d677da02d97a4bac9"
+    },
     {
       "version": "1.0.8",
       "publishedAt": 1774005633720,

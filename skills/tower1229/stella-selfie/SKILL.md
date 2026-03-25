@@ -7,11 +7,8 @@ metadata:
     requires:
       env:
         - GEMINI_API_KEY
-        - FAL_KEY
-        - OPENCLAW_GATEWAY_TOKEN
       bins:
         - node
-        - openclaw
     install:
       - kind: node
         package: "@google/genai"
@@ -41,7 +38,7 @@ Generate persona-consistent selfie images using Google Gemini or fal (xAI Grok I
 Best for: outfit showcases, full-body shots, fashion content
 
 ```
-make a pic of this person, but [user's context]. the person is taking a mirror selfie
+A mirror selfie of this person, [user's context], showing full body reflection.
 ```
 
 ### Mode 2: Direct Selfie
@@ -49,7 +46,7 @@ make a pic of this person, but [user's context]. the person is taking a mirror s
 Best for: close-up portraits, location shots, emotional expressions
 
 ```
-a close-up selfie taken by herself at [user's context], direct eye contact with the camera, looking straight into the lens, eyes centered and clearly visible, not a mirror selfie, phone held at arm's length, face fully visible
+A selfie of this person, [user's context], looking into the lens.
 ```
 
 ### Mode Selection Logic
@@ -60,7 +57,6 @@ a close-up selfie taken by herself at [user's context], direct eye contact with 
 | cafe, restaurant, beach, park, city, location  | `direct`         |
 | close-up, portrait, face, eyes, smile          | `direct`         |
 | full-body, mirror, reflection                  | `mirror`         |
-
 Default mode when no keywords match: `mirror`
 
 ## Resolution Keywords
@@ -103,13 +99,13 @@ node {baseDir}/dist/scripts/skill.js \
 Mirror mode:
 
 ```
-make a pic of this person, but wearing a red dress at a rooftop party. the person is taking a mirror selfie
+A mirror selfie of this person wearing a red dress at a rooftop party, showing full body reflection.
 ```
 
 Direct mode:
 
 ```
-a close-up selfie taken by herself at a cozy cafe with warm lighting, direct eye contact with the camera, looking straight into the lens, eyes centered and clearly visible, not a mirror selfie, phone held at arm's length, face fully visible
+A selfie of this person at a cozy cafe with warm lighting, looking into the lens.
 ```
 
 ### Step 3: Confirm Result
@@ -122,17 +118,26 @@ After the script completes, confirm to the user:
 
 ## Environment Variables
 
+`metadata.openclaw.requires` is reserved for strict load-time gates. Stella's default runtime path uses
+`Provider=gemini`, so `GEMINI_API_KEY` is declared as the minimal required credential. The variables below are
+documented runtime inputs; some are conditional and are only needed when enabling specific providers or send paths.
+
 | Variable                 | Required                                                    | Description                 |
 | ------------------------ | ----------------------------------------------------------- | --------------------------- |
 | `GEMINI_API_KEY`         | Required (if Provider=gemini)                               | Google Gemini API key       |
 | `FAL_KEY`                | Required (if Provider=fal)                                  | fal.ai API key              |
 | `OPENCLAW_GATEWAY_TOKEN` | Required (for sending via OpenClaw Gateway / HTTP fallback) | OpenClaw gateway auth token |
+| `OPENCLAW_GATEWAY_URL`   | Optional                                                    | Local OpenClaw gateway URL; must stay on localhost |
+| `Provider`               | Optional                                                    | Image provider: `gemini` or `fal` |
+| `AvatarBlendEnabled`     | Optional                                                    | Enable or disable multi-reference avatar blending |
+| `AvatarMaxRefs`          | Optional                                                    | Maximum number of reference images to blend |
 
 Credential requirements are provider-specific:
 
 - Default `Provider=gemini`: requires `GEMINI_API_KEY`
 - `Provider=fal`: requires `FAL_KEY`
 - Sending path always requires `OPENCLAW_GATEWAY_TOKEN`
+- HTTP fallback only supports `OPENCLAW_GATEWAY_URL` on `localhost` / `127.0.0.1` / `::1`
 
 ## Media File Handling (Gemini)
 
@@ -153,6 +158,27 @@ Configure in your OpenClaw `openclaw.json` under `skills.entries.stella-selfie.e
 | `AvatarMaxRefs`      | `3`      | Maximum number of reference images to blend |
 
 > **Note for `Provider=fal` users**: fal's image editing API only accepts HTTP/HTTPS image URLs. Local file paths (from `Avatar` / `AvatarsDir`) are not supported. Configure `AvatarsURLs` in `IDENTITY.md` with public URLs of your reference images to enable image editing with fal.
+
+## Gateway Safety
+
+- Stella sends via `openclaw message send` first.
+- HTTP fallback is restricted to a local OpenClaw gateway on `localhost` / `127.0.0.1` / `::1`.
+- Do not point `OPENCLAW_GATEWAY_URL` to remote endpoints; remote delivery should be handled by your OpenClaw installation itself, not by this skill override.
+
+## External Endpoints And Data Flow
+
+| Endpoint / path | When used | Data sent |
+| --- | --- | --- |
+| Google Gemini API | `Provider=gemini` | Prompt text and selected local reference images from `Avatar` / `AvatarsDir` |
+| fal API | `Provider=fal` | Prompt text and public reference image URLs from `AvatarsURLs` |
+| Local OpenClaw gateway (`OPENCLAW_GATEWAY_URL`) | Only when `openclaw message send` is unavailable | Target channel, target id, caption text, and generated media path/URL |
+
+## Security And Privacy
+
+- Stella reads `~/.openclaw/workspace/IDENTITY.md` and local avatar files to build reference context.
+- Under `Provider=gemini`, selected local avatar images are uploaded to Gemini as part of normal image generation.
+- Under `Provider=fal`, only public `http/https` avatar URLs are sent; local avatar files are not uploaded to fal directly.
+- Generated Gemini files are written to `~/.openclaw/workspace/stella-selfie/` and deleted after successful send.
 
 ## User Configuration
 
