@@ -1,36 +1,38 @@
-# 用户画像采集字段
+# User Profile Intake Guide
 
-按优先级分层，从核心到可选逐步收集。不要一次问完，像聊天一样自然展开。
+## Goal
 
-## 第一层：必采（决定后续问题方向）
+Produce a user.md under 500 words: 5 anchor fields + a natural-language Context section.
 
-| 字段 | 说明 | 采集方式 |
-|------|------|---------|
-| 称呼 | 用户希望被叫什么 | 直接问，或从对话中提取 |
-| 角色 | 职业/身份 | 直接问："你平时主要做什么？" |
-| 行业 | 所在行业/领域 | 从角色推断或追问 |
+## Anchor Fields (structured — for precise extraction)
 
-## 第二层：重要（影响推荐和交互风格）
+| Field | Purpose | How to gather |
+|-------|---------|---------------|
+| Name | What the user wants to be called | Ask directly, or pick it up from conversation |
+| Role | Job title or identity — drives recommendations and interaction style | "What do you do for a living?" |
+| Stack | Core tech stack (omit for non-technical roles) | "What's in your toolbox day to day?" |
+| Style | Communication preference | "Do you like your lobster concise or thorough?" |
+| Timezone | Timezone | Infer from system info, then confirm |
 
-| 字段 | 说明 | 采集方式 |
-|------|------|---------|
-| 技术栈 | 常用语言/框架/工具 | "你的工具箱里主要装着什么？" |
-| 经验水平 | 工作年限或自我评估 | 从对话语气推断，或轻松地问 |
-| 语言偏好 | 中文/英文/双语 | 从用户对话语言判断，通常无需显式问 |
-| 使用场景 | 用 Agent 做什么 | "你希望龙虾主要帮你做哪类事？" |
+## Context Section (natural language — gathered progressively)
 
-## 第三层：加分（让交互更个性化）
+The following info is **not** captured as standalone fields. Instead, it's **woven into the Context section as natural prose**. Record it when it comes up; don't chase it down:
 
-| 字段 | 说明 | 采集方式 |
-|------|------|---------|
-| 沟通风格偏好 | 简洁/详细、严肃/轻松 | "你喜欢龙虾跟你说话时正经一点还是随意一点？" |
-| 当前目标 | 近期在做什么/想达成什么 | "最近在忙什么？有什么想搞定的事？" |
-| 兴趣领域 | 技术以外的兴趣 | 只在自然聊到时收集，不主动追问 |
-| 痛点 | 日常工作中的卡点 | 只在自然聊到时收集 |
+| Info | When to collect | How |
+|------|----------------|-----|
+| Industry / domain | Comes up naturally when discussing role | Infer from role, or ask casually |
+| Experience level | Comes up naturally when discussing stack | "How long have you been at it?" or infer from tone |
+| Current goals | When the user mentions them | "What are you working on these days?" |
+| Use cases | When discussing why they use an Agent | "What do you mainly want your lobster helping with?" |
+| Habits / preferences | Observed during interaction | Don't ask — just notice and note |
+| Interests | When it comes up naturally | Don't push |
+| Pain points | When the user volunteers them | Don't push |
 
-## 采集技巧
+## Intake Principles
 
-1. **角色优先**：知道角色后，很多字段可以推断——工程师大概率有技术栈，CEO 更关心战略
-2. **确认而非追问**：能推断的就说"我猜你应该用 [X]？"让用户确认或纠正
-3. **两轮足够**：大多数情况下 2-3 轮对话就能收集到足够信息
-4. **第三层随缘**：不要为了填满所有字段而追问，自然聊到就记，没聊到就空着
+1. **Chat, don't interview**: one or two questions at a time — never a checklist
+2. **Role first**: once you know the role, a lot of other info can be inferred — engineers probably have a stack, CEOs care about strategy
+3. **Confirm, don't interrogate**: if you can guess, say "I'm guessing you work with [X]?" and let them correct you
+4. **Two rounds is enough**: 2–3 conversational turns should cover the anchor fields + baseline Context
+5. **Context is opportunistic**: don't press for details just to fill space — if it comes up, write it down; if it doesn't, leave it for next time
+6. **500-word hard cap**: check the total word count after writing — if it's over, trim; better to say less than to pad
