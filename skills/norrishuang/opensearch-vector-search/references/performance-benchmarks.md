@@ -1,117 +1,117 @@
-# OpenSearch 向量搜索性能基准
+# OpenSearch Vector Search Performance Benchmarks
 
-## 核心概念
+## Core Concepts
 
-本文档提供 OpenSearch 向量搜索在不同实例类型、数据集规模和向量维度下的性能基准数据，帮助选择合适的配置方案。包含详细的成本对比分析，帮助在性能和成本之间做出最优决策。
+This document provides performance benchmark data for OpenSearch vector search across different instance types, dataset sizes, and vector dimensions, helping you choose the right configuration. It includes detailed cost comparison analysis to help make optimal decisions between performance and cost.
 
 <!-- FALLBACK: opensearch, priority=1 -->
 <!-- FALLBACK: aws-pricing, priority=2, condition="cost-related" -->
 
-## 关键性能指标说明
+## Key Performance Metrics
 
-- **QPS (Queries Per Second)**: 每秒查询数，越高越好
-- **Latency (p95/p99)**: 延迟百分位数，越低越好
-- **Recall@10/100**: 召回率，越高越好（通常 > 0.9 为优秀）
-- **ef_search**: HNSW 搜索参数，影响召回率和性能平衡
-- **Load Time**: 索引构建时间（秒）
+- **QPS (Queries Per Second)**: Queries per second, higher is better
+- **Latency (p95/p99)**: Latency percentiles, lower is better
+- **Recall@10/100**: Recall rate, higher is better (typically > 0.9 is excellent)
+- **ef_search**: HNSW search parameter, affects the balance between recall and performance
+- **Load Time**: Index build time (seconds)
 
-## 数据集规模与实例选型
+## Dataset Size and Instance Selection
 
-### 小规模数据集 (1M 向量)
+### Small-Scale Dataset (1M Vectors)
 
-#### 1M 向量 1024 维度
+#### 1M Vectors, 1024 Dimensions
 
-**推荐配置**: 2 × r7g.xlarge (2 shards, 1 replica)
+**Recommended Configuration**: 2 × r7g.xlarge (2 shards, 1 replica)
 
-| ef_search | QPS | Latency (p95) | Recall@100 | 说明 |
-|-----------|-----|---------------|------------|------|
-| 40 | 1327.56 | 8.4ms | 0.8388 | 低延迟场景 |
-| 100 | 1145.40 | 9.2ms | 0.9143 | 平衡配置 |
-| 200 | 931.13 | 10.5ms | 0.9502 | 高召回场景 |
+| ef_search | QPS | Latency (p95) | Recall@100 | Notes |
+|-----------|-----|---------------|------------|-------|
+| 40 | 1327.56 | 8.4ms | 0.8388 | Low-latency scenario |
+| 100 | 1145.40 | 9.2ms | 0.9143 | Balanced configuration |
+| 200 | 931.13 | 10.5ms | 0.9502 | High-recall scenario |
 
-**关键发现**:
-- 使用 fp16 可提升约 5% 性能
-- 2 shards + 1 replica 提供良好的可用性
-- Load Time: ~1062 秒
+**Key Findings**:
+- Using fp16 can improve performance by approximately 5%
+- 2 shards + 1 replica provides good availability
+- Load Time: ~1062 seconds
 
-#### 1M 向量 1536 维度
+#### 1M Vectors, 1536 Dimensions
 
-**推荐配置**: 3 × r7g.2xlarge (3 shards, 2 replica)
+**Recommended Configuration**: 3 × r7g.2xlarge (3 shards, 2 replica)
 
-| ef_search | QPS | Latency (p95) | Recall@100 | 说明 |
-|-----------|-----|---------------|------------|------|
-| 100 | 2356.32 | 11.9ms | 0.9746 | 推荐配置 |
-| 200 | 2044.13 | 12.9ms | 0.9915 | 高召回率 |
+| ef_search | QPS | Latency (p95) | Recall@100 | Notes |
+|-----------|-----|---------------|------------|-------|
+| 100 | 2356.32 | 11.9ms | 0.9746 | Recommended configuration |
+| 200 | 2044.13 | 12.9ms | 0.9915 | High recall |
 
-**Load Time**: ~852 秒
+**Load Time**: ~852 seconds
 
-### 中等规模数据集 (10M 向量)
+### Medium-Scale Dataset (10M Vectors)
 
-#### 10M 向量 768 维度
+#### 10M Vectors, 768 Dimensions
 
-**推荐配置**: 3 × r8g.2xlarge (3 shards, 0 replica)
+**Recommended Configuration**: 3 × r8g.2xlarge (3 shards, 0 replica)
 
-| ef_search | QPS | Latency (p95) | Recall@100 | 说明 |
-|-----------|-----|---------------|------------|------|
-| 40 | 2078.03 | 6.8ms | 0.8962 | 低延迟 |
-| 100 | 1741.79 | 7.3ms | 0.9389 | 平衡配置 |
-| 200 | 1333.02 | 8.1ms | 0.9699 | 高召回 |
+| ef_search | QPS | Latency (p95) | Recall@100 | Notes |
+|-----------|-----|---------------|------------|-------|
+| 40 | 2078.03 | 6.8ms | 0.8962 | Low latency |
+| 100 | 1741.79 | 7.3ms | 0.9389 | Balanced configuration |
+| 200 | 1333.02 | 8.1ms | 0.9699 | High recall |
 
-**关键发现**:
-- 6 shards 配置可提升并发性能
-- ef_construction=400, m=20 可优化索引质量
-- GPU 加速可提升索引构建速度约 45%
+**Key Findings**:
+- 6 shards configuration can improve concurrent performance
+- ef_construction=400, m=20 can optimize index quality
+- GPU acceleration can improve index build speed by approximately 45%
 
-#### 10M 向量 1024 维度
+#### 10M Vectors, 1024 Dimensions
 
-**推荐配置**: 3 × r7g.2xlarge (3 shards, 0 replica)
+**Recommended Configuration**: 3 × r7g.2xlarge (3 shards, 0 replica)
 
-| ef_search | QPS | Latency (p95) | Recall@100 | 说明 |
-|-----------|-----|---------------|------------|------|
-| 40 | 2788.63 | 7.9ms | 0.8082 | 低延迟 |
-| 100 | 2435.95 | 9.0ms | 0.8755 | 平衡配置 |
-| 200 | 1983.60 | 9.7ms | 0.9133 | 高召回 |
+| ef_search | QPS | Latency (p95) | Recall@100 | Notes |
+|-----------|-----|---------------|------------|-------|
+| 40 | 2788.63 | 7.9ms | 0.8082 | Low latency |
+| 100 | 2435.95 | 9.0ms | 0.8755 | Balanced configuration |
+| 200 | 1983.60 | 9.7ms | 0.9133 | High recall |
 
-**Load Time**: ~6078 秒
+**Load Time**: ~6078 seconds
 
-**高性能配置**: 2 × r7g.16xlarge (16 shards)
+**High-Performance Configuration**: 2 × r7g.16xlarge (16 shards)
 - ef_search=100: QPS 1856, Latency 9.8ms, Recall@100 0.9245
-- Load Time: ~54979 秒
+- Load Time: ~54979 seconds
 
-### 大规模数据集 (100M 向量)
+### Large-Scale Dataset (100M Vectors)
 
-#### 100M 向量 768 维度
+#### 100M Vectors, 768 Dimensions
 
-**内存模式配置**: r8g.16xlarge.search × 2 (17 shards, 1 replica)
+**In-Memory Mode Configuration**: r8g.16xlarge.search × 2 (17 shards, 1 replica)
 
-| ef_search | QPS | Latency (p95) | Recall@100 | 内存占用 |
-|-----------|-----|---------------|------------|----------|
+| ef_search | QPS | Latency (p95) | Recall@100 | Memory Usage |
+|-----------|-----|---------------|------------|--------------|
 | 100 | 2982.79 | 9.6ms | 0.9343 | 315GB × 2 (86.2%) |
-| 200 | 2246.56 | 10.3ms | 0.9454 | 高内存占用 |
-| 400 | 1512.79 | 12.9ms | 0.9513 | 最高召回 |
+| 200 | 2246.56 | 10.3ms | 0.9454 | High memory usage |
+| 400 | 1512.79 | 12.9ms | 0.9513 | Highest recall |
 
-**磁盘模式配置**: r8g.xlarge × 5 (10 shards, 1 replica, ondisk 32x)
+**On-Disk Mode Configuration**: r8g.xlarge × 5 (10 shards, 1 replica, ondisk 32x)
 
-| ef_search | QPS | Latency (p95) | IOPS | Throughput | 内存占用 |
-|-----------|-----|---------------|------|------------|----------|
+| ef_search | QPS | Latency (p95) | IOPS | Throughput | Memory Usage |
+|-----------|-----|---------------|------|------------|--------------|
 | 100 | 32.83 | 132.9ms | 4500 | 250MB/s | 9.7GB/node (83.6%) |
-| 200 | 32.59 | 170.2ms | 4500 | 250MB/s | 低内存 |
+| 200 | 32.59 | 170.2ms | 4500 | 250MB/s | Low memory |
 
-**高 IOPS 配置**: IOPS 9000, Throughput 500MB/s
+**High IOPS Configuration**: IOPS 9000, Throughput 500MB/s
 - ef_search=100: QPS 73.48, Latency 114.9ms
-- 性能提升约 2.2 倍
+- Performance improvement of approximately 2.2×
 
-**关键发现**:
-- 磁盘模式 QPS 显著降低（约 1/100）
-- 高 IOPS 可部分缓解磁盘模式性能损失
-- 内存模式适合低延迟需求
-- 磁盘模式适合成本敏感场景
+**Key Findings**:
+- On-disk mode significantly reduces QPS (approximately 1/100)
+- High IOPS can partially mitigate on-disk mode performance loss
+- In-memory mode is suitable for low-latency requirements
+- On-disk mode is suitable for cost-sensitive scenarios
 
-## 量化压缩 (Binary Quantization)
+## Quantization Compression (Binary Quantization)
 
-### BQ 性能对比 (1M 向量, 1 × r8g.4xlarge)
+### BQ Performance Comparison (1M Vectors, 1 × r8g.4xlarge)
 
-#### 标准模式 (无压缩)
+#### Standard Mode (No Compression)
 
 | Shards | ef_search | QPS | Latency (p95) | Recall@100 |
 |--------|-----------|-----|---------------|------------|
@@ -120,79 +120,79 @@
 
 #### BQ 1-bit (oversample-factor 20)
 
-| Shards | ef_search | QPS | Latency (p95) | Recall@100 | 性能变化 |
-|--------|-----------|-----|---------------|------------|----------|
+| Shards | ef_search | QPS | Latency (p95) | Recall@100 | Performance Change |
+|--------|-----------|-----|---------------|------------|---------------------|
 | 1 | 100 | 3097.73 | 7.9ms | 0.7659 | -37% QPS, -21% Recall |
-| 8 | 100 | 570.04 | 11.4ms | 0.9243 | 多分片补偿 |
+| 8 | 100 | 570.04 | 11.4ms | 0.9243 | Multi-shard compensation |
 
 #### BQ 4-bit (oversample-factor 20)
 
-| Shards | ef_search | QPS | Latency (p95) | Recall@100 | 性能变化 |
-|--------|-----------|-----|---------------|------------|----------|
-| 8 | 100 | 541.84 | 11.8ms | 0.9598 | 高召回率 |
-| 8 | 200 | 461.32 | 13.1ms | 0.9838 | 接近无损 |
+| Shards | ef_search | QPS | Latency (p95) | Recall@100 | Performance Change |
+|--------|-----------|-----|---------------|------------|---------------------|
+| 8 | 100 | 541.84 | 11.8ms | 0.9598 | High recall |
+| 8 | 200 | 461.32 | 13.1ms | 0.9838 | Near lossless |
 
-**关键发现**:
-- BQ 1-bit: 内存节省 32×，但召回率下降明显
-- BQ 4-bit: 内存节省 8×，召回率接近无损
-- oversample-factor 从 20 降到 10 可提升 QPS 约 54%
-- 多分片配置可补偿量化带来的性能损失
+**Key Findings**:
+- BQ 1-bit: 32× memory savings, but noticeable recall degradation
+- BQ 4-bit: 8× memory savings, near-lossless recall
+- Reducing oversample-factor from 20 to 10 can improve QPS by approximately 54%
+- Multi-shard configuration can compensate for performance loss from quantization
 
-## 磁盘模式 (On-Disk) 性价比分析
+## On-Disk Mode Cost-Effectiveness Analysis
 
-### 10M 向量 1024 维度对比
+### 10M Vectors, 1024 Dimensions Comparison
 
-#### 内存模式 (om2.2xlarge.search × 1)
+#### In-Memory Mode (om2.2xlarge.search × 1)
 
-| 压缩 | ef_search | QPS | Latency (p95) | Recall@100 | 内存 |
-|------|-----------|-----|---------------|------------|------|
-| 8x | 100 | 2012.46 | 7.1ms | 0.9214 | 标准 |
+| Compression | ef_search | QPS | Latency (p95) | Recall@100 | Memory |
+|-------------|-----------|-----|---------------|------------|--------|
+| 8x | 100 | 2012.46 | 7.1ms | 0.9214 | Standard |
 | 32x | 100 | 1497.58 | 6.1ms | 0.9033 | 2.7MB |
 
-#### 磁盘模式 (om2.2xlarge.search × 1, 4 shards)
+#### On-Disk Mode (om2.2xlarge.search × 1, 4 shards)
 
-| 压缩 | ef_search | QPS | Latency (p95) | Recall@100 | 成本 |
-|------|-----------|-----|---------------|------------|------|
-| 8x | 100 | 43.58 | 148.4ms | 0.9214 | $760.51/月 |
-| 32x | 100 | 41.61 | 101.8ms | 0.9033 | 更低成本 |
+| Compression | ef_search | QPS | Latency (p95) | Recall@100 | Cost |
+|-------------|-----------|-----|---------------|------------|------|
+| 8x | 100 | 43.58 | 148.4ms | 0.9214 | $760.51/month |
+| 32x | 100 | 41.61 | 101.8ms | 0.9033 | Lower cost |
 
-**关键发现**:
-- 磁盘模式 QPS 降低约 98%
-- 延迟增加约 20 倍
-- 适合批处理或成本敏感场景
-- 不稳定：QPS 波动 40-1500，受 EBS IOPS 影响
+**Key Findings**:
+- On-disk mode reduces QPS by approximately 98%
+- Latency increases by approximately 20×
+- Suitable for batch processing or cost-sensitive scenarios
+- Unstable: QPS fluctuates between 40-1500, affected by EBS IOPS
 
-### 1M 向量 1024 维度对比
+### 1M Vectors, 1024 Dimensions Comparison
 
-#### 内存优化实例 (om2.2xlarge.search × 1)
+#### Memory-Optimized Instances (om2.2xlarge.search × 1)
 
-| 压缩 | ef_search | QPS | Latency (p95) | Recall@100 | 内存 |
-|------|-----------|-----|---------------|------------|------|
+| Compression | ef_search | QPS | Latency (p95) | Recall@100 | Memory |
+|-------------|-----------|-----|---------------|------------|--------|
 | 32x | 100 | 1710.08 | 7.0ms | 0.8958 | 273KB |
 | 8x | 100 | 1384.60 | 7.3ms | 0.9305 | 648KB |
 
-#### 通用实例 (r8g.xlarge × 1, $617.22/月)
+#### General-Purpose Instances (r8g.xlarge × 1, $617.22/month)
 
-| 压缩 | ef_search | QPS | Latency (p95) | Recall@100 |
-|------|-----------|-----|---------------|------------|
+| Compression | ef_search | QPS | Latency (p95) | Recall@100 |
+|-------------|-----------|-----|---------------|------------|
 | 8x | 100 | 730.89 | 7.1ms | 0.9317 |
 | 8x | 200 | 564.56 | 8.3ms | 0.9634 |
 
-**成本优化建议**:
-- 小数据集使用通用实例更经济
-- 8x 压缩提供最佳性价比
-- 32x 压缩适合极端内存受限场景
+**Cost Optimization Recommendations**:
+- General-purpose instances are more economical for small datasets
+- 8x compression provides the best cost-effectiveness
+- 32x compression is suitable for extreme memory-constrained scenarios
 
-## GPU 加速效果
+## GPU Acceleration Results
 
-### 100M 向量 768 维度 (3 × r8g.2xlarge)
+### 100M Vectors, 768 Dimensions (3 × r8g.2xlarge)
 
-| 配置 | 索引时间 | 加速比 |
-|------|----------|--------|
-| 无 GPU | 56271 秒 | 基准 |
-| 启用 GPU | 31037 秒 | 1.81× |
+| Configuration | Index Time | Speedup |
+|---------------|------------|---------|
+| No GPU | 56271 seconds | Baseline |
+| GPU Enabled | 31037 seconds | 1.81× |
 
-**查询性能** (6 shards, 0 replica, ondisk):
+**Query Performance** (6 shards, 0 replica, ondisk):
 
 | ef_search | QPS | Latency (p95) | Recall@100 |
 |-----------|-----|---------------|------------|
@@ -200,315 +200,315 @@
 | 200 | 1460.13 | 8.0ms | 0.9243 |
 | 400 | 1217.60 | 8.6ms | 0.9291 |
 
-**关键发现**:
-- GPU 加速索引构建约 45-81%
-- 查询性能不受 GPU 影响
-- 适合频繁重建索引的场景
+**Key Findings**:
+- GPU accelerates index building by approximately 45-81%
+- Query performance is not affected by GPU
+- Suitable for scenarios requiring frequent index rebuilds
 
-## 实例选型建议
+## Instance Selection Recommendations
 
-### 按数据规模选择（含成本对比）
+### Selection by Data Scale (with Cost Comparison)
 
-| 数据规模 | 维度 | 推荐实例 | Shards | Replica | 预期 QPS | 预期延迟 | 月度成本 (USD) |
-|----------|------|----------|--------|---------|----------|----------|----------------|
+| Data Scale | Dimensions | Recommended Instance | Shards | Replica | Expected QPS | Expected Latency | Monthly Cost (USD) |
+|------------|------------|---------------------|--------|---------|--------------|------------------|--------------------|
 | 1M | 1024 | 2 × r7g.xlarge | 2 | 1 | 1000+ | < 10ms | ~$308 |
-| 1M | 1024 (压缩) | 1 × r8g.xlarge | 1 | 0 | 700+ | < 10ms | ~$154 (节省 50%) |
+| 1M | 1024 (compressed) | 1 × r8g.xlarge | 1 | 0 | 700+ | < 10ms | ~$154 (50% savings) |
 | 1M | 1536 | 3 × r7g.2xlarge | 3 | 2 | 2000+ | < 12ms | ~$924 |
 | 10M | 768 | 3 × r8g.2xlarge | 3-6 | 0-1 | 1500+ | < 8ms | ~$616 |
 | 10M | 1024 | 3 × r7g.2xlarge | 3 | 0 | 2000+ | < 10ms | ~$924 |
-| 10M | 1024 (压缩) | 2 × r8g.2xlarge | 4 | 0 | 1200+ | < 12ms | ~$616 (节省 33%) |
-| 100M | 768 (内存) | 2 × r8g.16xlarge | 17 | 1 | 2500+ | < 10ms | ~$4,934 |
-| 100M | 768 (磁盘) | 5 × r8g.xlarge | 10 | 1 | 30-70 | < 200ms | ~$970 (节省 80%) |
+| 10M | 1024 (compressed) | 2 × r8g.2xlarge | 4 | 0 | 1200+ | < 12ms | ~$616 (33% savings) |
+| 100M | 768 (in-memory) | 2 × r8g.16xlarge | 17 | 1 | 2500+ | < 10ms | ~$4,934 |
+| 100M | 768 (on-disk) | 5 × r8g.xlarge | 10 | 1 | 30-70 | < 200ms | ~$970 (80% savings) |
 
-**成本说明**:
-- 成本基于 AWS us-east-1 区域按需定价
-- 磁盘模式成本包含 EBS 存储费用
-- 使用 Reserved Instances 可额外节省 30-60%
-- 压缩模式使用 8x 量化压缩
+**Cost Notes**:
+- Costs are based on AWS us-east-1 region on-demand pricing
+- On-disk mode costs include EBS storage fees
+- Using Reserved Instances can save an additional 30-60%
+- Compressed mode uses 8x quantization compression
 
-### 按性能需求选择（含成本权衡）
+### Selection by Performance Requirements (with Cost Tradeoffs)
 
-**低延迟场景** (< 10ms):
-- 使用内存模式
+**Low-Latency Scenario** (< 10ms):
+- Use in-memory mode
 - ef_search = 40-100
-- 选择高频 CPU 实例 (r7g/r8g)
-- 避免磁盘模式
-- **成本**: 高（基准）
-- **适用**: 实时推荐、搜索服务
+- Choose high-frequency CPU instances (r7g/r8g)
+- Avoid on-disk mode
+- **Cost**: High (baseline)
+- **Use Case**: Real-time recommendations, search services
 
-**高吞吐场景** (> 2000 QPS):
-- 增加 shards 数量
-- 使用大实例 (4xlarge+)
-- 考虑多副本分散负载
-- **成本**: 很高（基准 × 2-3）
-- **适用**: 高流量应用
+**High-Throughput Scenario** (> 2000 QPS):
+- Increase the number of shards
+- Use large instances (4xlarge+)
+- Consider multiple replicas to distribute load
+- **Cost**: Very high (baseline × 2-3)
+- **Use Case**: High-traffic applications
 
-**成本优化场景**:
-- 使用磁盘模式 + 量化压缩
-- 接受更高延迟 (100-200ms)
-- 适合批处理或离线场景
-- **成本**: 低（节省 50-80%）
-- **适用**: 批处理、数据分析、MVP 阶段
+**Cost-Optimized Scenario**:
+- Use on-disk mode + quantization compression
+- Accept higher latency (100-200ms)
+- Suitable for batch processing or offline scenarios
+- **Cost**: Low (50-80% savings)
+- **Use Case**: Batch processing, data analytics, MVP stage
 
-**高召回场景** (Recall > 0.95):
+**High-Recall Scenario** (Recall > 0.95):
 - ef_search = 200-400
 - ef_construction = 400+
-- 避免过度量化压缩
-- **成本**: 中高（基准 × 1.2-1.5）
-- **适用**: 精准匹配、关键业务
+- Avoid excessive quantization compression
+- **Cost**: Medium-high (baseline × 1.2-1.5)
+- **Use Case**: Precision matching, mission-critical workloads
 
-**平衡场景**（推荐）:
-- 使用 8x 量化压缩
+**Balanced Scenario** (Recommended):
+- Use 8x quantization compression
 - ef_search = 100-200
-- 内存模式 + 合理分片
-- **成本**: 中（节省 30-50%）
-- **适用**: 大多数生产环境
+- In-memory mode + reasonable sharding
+- **Cost**: Medium (30-50% savings)
+- **Use Case**: Most production environments
 
-## 参数调优建议
+## Parameter Tuning Recommendations
 
-### HNSW 参数
+### HNSW Parameters
 
 **ef_construction**:
-- 默认: 128
-- 高质量索引: 200-400
-- 权衡: 更高值增加索引时间但提升召回率
+- Default: 128
+- High-quality index: 200-400
+- Tradeoff: Higher values increase indexing time but improve recall
 
-**m (连接数)**:
-- 默认: 16
-- 高维数据: 20-24
-- 权衡: 更高值增加内存但提升召回率
+**m (connections)**:
+- Default: 16
+- High-dimensional data: 20-24
+- Tradeoff: Higher values increase memory but improve recall
 
 **ef_search**:
-- 低延迟: 40-100
-- 平衡: 100-200
-- 高召回: 200-400
+- Low latency: 40-100
+- Balanced: 100-200
+- High recall: 200-400
 
-### 量化压缩参数
+### Quantization Compression Parameters
 
 **oversample-factor**:
 - BQ 1-bit: 10-20
 - BQ 4-bit: 20
-- 权衡: 更高值提升召回但降低性能
+- Tradeoff: Higher values improve recall but reduce performance
 
-**压缩比选择**:
-- 32x (1-bit): 极端内存受限，可接受召回损失
-- 8x (4-bit): 推荐，召回率接近无损
-- 无压缩: 内存充足，追求最高性能
+**Compression Ratio Selection**:
+- 32x (1-bit): Extreme memory constraints, acceptable recall loss
+- 8x (4-bit): Recommended, near-lossless recall
+- No compression: Sufficient memory, pursuing maximum performance
 
-### 分片策略
+### Sharding Strategy
 
-**Shards 数量**:
-- 小数据集 (< 10M): 2-4 shards
-- 中等数据集 (10M-50M): 6-9 shards
-- 大数据集 (> 50M): 10-17 shards
-- 经验公式: shards ≈ CPU 核心数 × 1.5
+**Number of Shards**:
+- Small dataset (< 10M): 2-4 shards
+- Medium dataset (10M-50M): 6-9 shards
+- Large dataset (> 50M): 10-17 shards
+- Rule of thumb: shards ≈ CPU cores × 1.5
 
-**Replica 数量**:
-- 开发环境: 0 replica
-- 生产环境: 1-2 replica
-- 高可用: 2 replica (3 AZ)
+**Number of Replicas**:
+- Development environment: 0 replicas
+- Production environment: 1-2 replicas
+- High availability: 2 replicas (3 AZs)
 
-## 常见问题
+## Common Issues
 
-### 问题 1: QPS 不稳定，波动很大
+### Issue 1: Unstable QPS with Large Fluctuations
 
-**症状**: QPS 从几十到上千波动，延迟也大幅波动
+**Symptoms**: QPS fluctuates from tens to thousands, latency also fluctuates significantly
 
-**原因**:
-- 磁盘模式下 EBS IOPS 限制
-- 内存不足导致频繁换页
-- JVM GC 压力过大
+**Causes**:
+- EBS IOPS throttling in on-disk mode
+- Insufficient memory causing frequent page swaps
+- Excessive JVM GC pressure
 
-**解决方案**:
-1. 检查 EBS IOPS 和吞吐量配置
-2. 增加 IOPS 到 9000+，吞吐量到 500MB/s+
-3. 监控内存使用，考虑升级实例
-4. 调整 JVM heap 大小
+**Solutions**:
+1. Check EBS IOPS and throughput configuration
+2. Increase IOPS to 9000+, throughput to 500MB/s+
+3. Monitor memory usage, consider upgrading instances
+4. Adjust JVM heap size
 
-### 问题 2: 召回率低于预期
+### Issue 2: Recall Lower Than Expected
 
-**症状**: Recall@100 < 0.9
+**Symptoms**: Recall@100 < 0.9
 
-**原因**:
-- ef_search 设置过低
-- 量化压缩损失过大
-- 索引质量不足
+**Causes**:
+- ef_search set too low
+- Excessive quantization compression loss
+- Insufficient index quality
 
-**解决方案**:
-1. 提高 ef_search 到 200+
-2. 使用 4-bit 替代 1-bit 量化
-3. 提高 ef_construction 到 400+
-4. 增加 oversample-factor
+**Solutions**:
+1. Increase ef_search to 200+
+2. Use 4-bit instead of 1-bit quantization
+3. Increase ef_construction to 400+
+4. Increase oversample-factor
 
-### 问题 3: 内存占用过高
+### Issue 3: Excessive Memory Usage
 
-**症状**: 内存使用 > 85%，频繁 OOM
+**Symptoms**: Memory usage > 85%, frequent OOM
 
-**原因**:
-- 数据集过大
-- 未使用压缩
-- 副本过多
+**Causes**:
+- Dataset too large
+- Compression not enabled
+- Too many replicas
 
-**解决方案**:
-1. 启用量化压缩 (8x 或 32x)
-2. 使用磁盘模式
-3. 减少副本数量
-4. 升级到内存优化实例
+**Solutions**:
+1. Enable quantization compression (8x or 32x)
+2. Use on-disk mode
+3. Reduce the number of replicas
+4. Upgrade to memory-optimized instances
 
-### 问题 4: 索引构建时间过长
+### Issue 4: Index Build Time Too Long
 
-**症状**: Load Time > 10 小时
+**Symptoms**: Load Time > 10 hours
 
-**原因**:
-- 数据集过大
-- ef_construction 设置过高
-- 单线程写入
+**Causes**:
+- Dataset too large
+- ef_construction set too high
+- Single-threaded writes
 
-**解决方案**:
-1. 启用 GPU 加速（提升 45-81%）
-2. 降低 ef_construction 到 128-200
-3. 增加写入线程数
-4. 使用更多 shards 并行构建
+**Solutions**:
+1. Enable GPU acceleration (45-81% improvement)
+2. Reduce ef_construction to 128-200
+3. Increase the number of write threads
+4. Use more shards for parallel building
 
-## 性能测试工具
+## Performance Testing Tools
 
-**推荐工具**:
-- opensearch-benchmark: 官方性能测试工具
-- vector-search-benchmark: 向量搜索专用基准测试
+**Recommended Tools**:
+- opensearch-benchmark: Official performance testing tool
+- vector-search-benchmark: Vector search-specific benchmarking tool
 
-**关键指标监控**:
+**Key Metrics to Monitor**:
 - CloudWatch: CPU, Memory, IOPS, Network
 - OpenSearch Metrics: JVM heap, GC, Query latency
 - Custom Metrics: QPS, Recall, Index size
 
-## 成本对比分析
+## Cost Comparison Analysis
 
-### 不同配置方案的成本效益对比
+### Cost-Effectiveness Comparison of Different Configurations
 
-#### 小规模场景（1M 向量，768 维度）
+#### Small-Scale Scenario (1M Vectors, 768 Dimensions)
 
-| 配置方案 | 实例配置 | 月度成本 | QPS | 延迟 | 成本/1000 QPS |
-|----------|----------|----------|-----|------|---------------|
-| 标准内存 | 2 × r8g.xlarge | $308 | 1,327 | 8.4ms | $232 |
-| 8x 压缩 | 1 × r8g.xlarge | $154 | 730 | 7.1ms | $211 |
-| 32x 压缩 | 1 × r8g.large | $77 | 400 | 8.5ms | $193 |
-| 磁盘模式 | 1 × r8g.large | $95 | 25 | 150ms | $3,800 |
+| Configuration | Instance Setup | Monthly Cost | QPS | Latency | Cost/1000 QPS |
+|---------------|----------------|-------------|-----|---------|---------------|
+| Standard In-Memory | 2 × r8g.xlarge | $308 | 1,327 | 8.4ms | $232 |
+| 8x Compression | 1 × r8g.xlarge | $154 | 730 | 7.1ms | $211 |
+| 32x Compression | 1 × r8g.large | $77 | 400 | 8.5ms | $193 |
+| On-Disk Mode | 1 × r8g.large | $95 | 25 | 150ms | $3,800 |
 
-**最佳选择**: 8x 压缩（性价比最优）
+**Best Choice**: 8x compression (best cost-effectiveness)
 
-#### 中等规模场景（10M 向量，1024 维度）
+#### Medium-Scale Scenario (10M Vectors, 1024 Dimensions)
 
-| 配置方案 | 实例配置 | 月度成本 | QPS | 延迟 | 成本/1000 QPS |
-|----------|----------|----------|-----|------|---------------|
-| 标准内存 | 3 × r7g.2xlarge | $924 | 2,435 | 9.0ms | $379 |
-| 8x 压缩 | 2 × r8g.2xlarge | $616 | 1,200 | 11ms | $513 |
-| 磁盘模式 | 1 × om2.2xlarge | $761 | 43 | 148ms | $17,698 |
+| Configuration | Instance Setup | Monthly Cost | QPS | Latency | Cost/1000 QPS |
+|---------------|----------------|-------------|-----|---------|---------------|
+| Standard In-Memory | 3 × r7g.2xlarge | $924 | 2,435 | 9.0ms | $379 |
+| 8x Compression | 2 × r8g.2xlarge | $616 | 1,200 | 11ms | $513 |
+| On-Disk Mode | 1 × om2.2xlarge | $761 | 43 | 148ms | $17,698 |
 
-**最佳选择**: 
-- 高性能需求: 标准内存
-- 成本敏感: 8x 压缩（节省 33%）
+**Best Choice**: 
+- High-performance needs: Standard in-memory
+- Cost-sensitive: 8x compression (33% savings)
 
-#### 大规模场景（100M 向量，768 维度）
+#### Large-Scale Scenario (100M Vectors, 768 Dimensions)
 
-| 配置方案 | 实例配置 | 月度成本 | QPS | 延迟 | 成本/1000 QPS |
-|----------|----------|----------|-----|------|---------------|
-| 内存模式 | 2 × r8g.16xlarge | $4,934 | 2,982 | 9.6ms | $1,655 |
-| 磁盘模式 (标准) | 5 × r8g.xlarge | $770 | 32 | 132ms | $24,063 |
-| 磁盘模式 (高 IOPS) | 5 × r8g.xlarge | $970 | 73 | 114ms | $13,288 |
+| Configuration | Instance Setup | Monthly Cost | QPS | Latency | Cost/1000 QPS |
+|---------------|----------------|-------------|-----|---------|---------------|
+| In-Memory Mode | 2 × r8g.16xlarge | $4,934 | 2,982 | 9.6ms | $1,655 |
+| On-Disk Mode (Standard) | 5 × r8g.xlarge | $770 | 32 | 132ms | $24,063 |
+| On-Disk Mode (High IOPS) | 5 × r8g.xlarge | $970 | 73 | 114ms | $13,288 |
 
-**最佳选择**:
-- 实时服务: 内存模式
-- 批处理: 磁盘模式（节省 80%）
+**Best Choice**:
+- Real-time services: In-memory mode
+- Batch processing: On-disk mode (80% savings)
 
-### 压缩级别成本效益分析
+### Compression Level Cost-Effectiveness Analysis
 
-#### 1M 向量，1024 维度，单实例对比
+#### 1M Vectors, 1024 Dimensions, Single Instance Comparison
 
-| 压缩级别 | 实例类型 | 月度成本 | 内存占用 | QPS | 召回率 | 性价比评分 |
-|----------|----------|----------|----------|-----|--------|------------|
-| 无压缩 | r8g.4xlarge | $617 | 8.7 GB | 4,889 | 0.970 | 7.9 |
+| Compression Level | Instance Type | Monthly Cost | Memory Usage | QPS | Recall | Cost-Effectiveness Score |
+|-------------------|---------------|-------------|--------------|-----|--------|--------------------------|
+| No Compression | r8g.4xlarge | $617 | 8.7 GB | 4,889 | 0.970 | 7.9 |
 | 8x (4-bit) | r8g.xlarge | $154 | 1.1 GB | 730 | 0.960 | **9.5** ⭐ |
 | 32x (1-bit) | r8g.large | $77 | 273 KB | 400 | 0.766 | 5.2 |
 
-**性价比评分** = (QPS × 召回率) / 成本 × 100
+**Cost-Effectiveness Score** = (QPS × Recall) / Cost × 100
 
-**结论**: 8x 压缩提供最佳性价比
+**Conclusion**: 8x compression provides the best cost-effectiveness
 
-### 副本策略成本影响
+### Replica Strategy Cost Impact
 
-| 副本数 | 成本倍数 | 可用性 | 读取性能 | 推荐场景 |
-|--------|----------|--------|----------|----------|
-| 0 | 1× | 低 | 基准 | 开发/测试 |
-| 1 | 2× | 高 | +50% | 生产环境（推荐） |
-| 2 | 3× | 很高 | +100% | 关键服务 |
+| Replicas | Cost Multiplier | Availability | Read Performance | Recommended Scenario |
+|----------|-----------------|--------------|------------------|---------------------|
+| 0 | 1× | Low | Baseline | Development/Testing |
+| 1 | 2× | High | +50% | Production (recommended) |
+| 2 | 3× | Very high | +100% | Mission-critical services |
 
-**成本优化建议**:
-- 开发环境: 0 副本（节省 50%）
-- 生产环境: 1 副本（平衡成本和可用性）
-- 关键服务: 2 副本（最高可用性）
+**Cost Optimization Recommendations**:
+- Development environment: 0 replicas (50% savings)
+- Production environment: 1 replica (balance cost and availability)
+- Mission-critical services: 2 replicas (highest availability)
 
-### Reserved Instances 成本节省
+### Reserved Instances Cost Savings
 
-#### 1 年预留实例折扣
+#### 1-Year Reserved Instance Discounts
 
-| 实例类型 | 按需价格 | 1 年预留 | 节省 | 3 年预留 | 节省 |
-|----------|----------|----------|------|----------|------|
-| r8g.xlarge | $154/月 | $108/月 | 30% | $77/月 | 50% |
-| r8g.2xlarge | $308/月 | $216/月 | 30% | $154/月 | 50% |
-| r8g.4xlarge | $617/月 | $432/月 | 30% | $308/月 | 50% |
-| r8g.16xlarge | $2,467/月 | $1,727/月 | 30% | $1,234/月 | 50% |
+| Instance Type | On-Demand Price | 1-Year Reserved | Savings | 3-Year Reserved | Savings |
+|---------------|-----------------|-----------------|---------|-----------------|---------|
+| r8g.xlarge | $154/month | $108/month | 30% | $77/month | 50% |
+| r8g.2xlarge | $308/month | $216/month | 30% | $154/month | 50% |
+| r8g.4xlarge | $617/month | $432/month | 30% | $308/month | 50% |
+| r8g.16xlarge | $2,467/month | $1,727/month | 30% | $1,234/month | 50% |
 
-**投资回收期**:
-- 1 年预留: 立即生效
-- 3 年预留: 适合长期稳定运行的服务
+**Break-Even Period**:
+- 1-year reserved: Takes effect immediately
+- 3-year reserved: Suitable for long-term stable services
 
-### 总体成本优化策略
+### Overall Cost Optimization Strategy
 
-#### 成本优化优先级
+#### Cost Optimization Priority
 
-1. **使用 8x 量化压缩** → 节省 50-75%
-   - 召回率几乎无损
-   - 立即生效
-   - 无需架构变更
+1. **Use 8x Quantization Compression** → 50-75% savings
+   - Near-lossless recall
+   - Takes effect immediately
+   - No architecture changes required
 
-2. **优化副本配置** → 节省 33-50%
-   - 开发环境使用 0 副本
-   - 生产环境使用 1 副本
-   - 避免过度冗余
+2. **Optimize Replica Configuration** → 33-50% savings
+   - Use 0 replicas for development environments
+   - Use 1 replica for production environments
+   - Avoid excessive redundancy
 
-3. **使用 Reserved Instances** → 节省 30-50%
-   - 1 年预留适合大多数场景
-   - 3 年预留适合核心服务
-   - 需要长期承诺
+3. **Use Reserved Instances** → 30-50% savings
+   - 1-year reserved suitable for most scenarios
+   - 3-year reserved suitable for core services
+   - Requires long-term commitment
 
-4. **考虑磁盘模式** → 节省 50-80%
-   - 仅适合批处理场景
-   - 需要接受高延迟
-   - 需要高 IOPS EBS
+4. **Consider On-Disk Mode** → 50-80% savings
+   - Only suitable for batch processing scenarios
+   - Must accept higher latency
+   - Requires high IOPS EBS
 
-5. **右调实例大小** → 节省 20-40%
-   - 监控资源使用率
-   - CPU/内存目标 60-80%
-   - 定期评估和调整
+5. **Right-Size Instances** → 20-40% savings
+   - Monitor resource utilization
+   - Target 60-80% CPU/memory
+   - Evaluate and adjust periodically
 
-#### 成本优化决策树
+#### Cost Optimization Decision Tree
 
 ```
-是否可接受 5% 召回率损失？
-├─ 是 → 使用 8x 压缩（推荐）
-│   └─ 是否为生产环境？
-│       ├─ 是 → 1 副本 + 1 年 RI → 总节省 65%
-│       └─ 否 → 0 副本 → 总节省 75%
-└─ 否 → 是否可接受 100ms+ 延迟？
-    ├─ 是 → 磁盘模式 + 32x 压缩 → 总节省 80%
-    └─ 否 → 标准配置 + 1 年 RI → 总节省 30%
+Can you accept 5% recall loss?
+├─ Yes → Use 8x compression (recommended)
+│   └─ Is this a production environment?
+│       ├─ Yes → 1 replica + 1-year RI → Total savings 65%
+│       └─ No → 0 replicas → Total savings 75%
+└─ No → Can you accept 100ms+ latency?
+    ├─ Yes → On-disk mode + 32x compression → Total savings 80%
+    └─ No → Standard configuration + 1-year RI → Total savings 30%
 ```
 
-## 参考资源
+## Reference Resources
 
-- OpenSearch k-NN 官方文档
-- HNSW 算法论文
-- Binary Quantization 技术文档
-- AWS EC2 实例类型对比
-- [AWS Pricing Calculator](https://calculator.aws/) - 成本估算工具
-- [OpenSearch 成本优化博客](https://aws.amazon.com/blogs/big-data/) - 最新优化技术
+- OpenSearch k-NN Official Documentation
+- HNSW Algorithm Paper
+- Binary Quantization Technical Documentation
+- AWS EC2 Instance Type Comparison
+- [AWS Pricing Calculator](https://calculator.aws/) - Cost estimation tool
+- [OpenSearch Cost Optimization Blog](https://aws.amazon.com/blogs/big-data/) - Latest optimization techniques

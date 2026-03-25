@@ -1,24 +1,24 @@
-# 查询优化技术
+# Query Optimization Techniques
 
-## 核心概念
+## Core Concepts
 
-OpenSearch 查询性能优化涉及查询结构设计、缓存利用、聚合优化和分页策略。理解 query context 和 filter context 的区别是优化的关键。
+OpenSearch query performance optimization involves query structure design, cache utilization, aggregation optimization, and pagination strategies. Understanding the difference between query context and filter context is key to optimization.
 
-## 常见问题
+## Common Issues
 
-### 问题 1: Query Context vs Filter Context
+### Issue 1: Query Context vs Filter Context
 
-**症状**:
-- 查询速度慢
-- 缓存未生效
-- 不必要的相关性计算
+**Symptoms**:
+- Slow query speed
+- Cache not taking effect
+- Unnecessary relevance score calculations
 
-**原因**:
-Query context 会计算相关性分数，Filter context 只做布尔匹配且可缓存。
+**Cause**:
+Query context calculates relevance scores, while filter context only performs boolean matching and can be cached.
 
-**解决方案**:
+**Solution**:
 
-使用 filter context 进行精确匹配：
+Use filter context for exact matching:
 ```json
 {
   "query": {
@@ -50,9 +50,9 @@ Query context 会计算相关性分数，Filter context 只做布尔匹配且可
 }
 ```
 
-**对比**:
+**Comparison**:
 ```json
-// 慢 - 使用 must（计算分数）
+// Slow - using must (calculates scores)
 {
   "query": {
     "bool": {
@@ -64,7 +64,7 @@ Query context 会计算相关性分数，Filter context 只做布尔匹配且可
   }
 }
 
-// 快 - 使用 filter（不计算分数，可缓存）
+// Fast - using filter (no score calculation, cacheable)
 {
   "query": {
     "bool": {
@@ -77,28 +77,28 @@ Query context 会计算相关性分数，Filter context 只做布尔匹配且可
 }
 ```
 
-**最佳实践**:
-- 精确匹配使用 `filter`（term, range, exists）
-- 全文搜索使用 `must`（match, multi_match）
-- 排除条件使用 `must_not`
-- Filter 查询会被自动缓存
-- 将 filter 放在 bool 查询的 filter 子句中
+**Best Practices**:
+- Use `filter` for exact matching (term, range, exists)
+- Use `must` for full-text search (match, multi_match)
+- Use `must_not` for exclusion conditions
+- Filter queries are automatically cached
+- Place filters in the filter clause of a bool query
 
-### 问题 2: 深分页性能问题
+### Issue 2: Deep Pagination Performance Problems
 
-**症状**:
-- 翻页到后面页码时查询变慢
-- 内存占用高
-- 查询超时
+**Symptoms**:
+- Queries slow down when navigating to later pages
+- High memory usage
+- Query timeouts
 
-**原因**:
-使用 from/size 分页时，需要在每个分片上排序并跳过前面的结果。
+**Cause**:
+When using from/size pagination, results must be sorted and preceding results skipped on every shard.
 
-**解决方案**:
+**Solution**:
 
-1. 使用 search_after 代替 from/size：
+1. Use search_after instead of from/size:
 ```json
-// 第一次查询
+// First query
 {
   "size": 10,
   "query": {
@@ -110,7 +110,7 @@ Query context 会计算相关性分数，Filter context 只做布尔匹配且可
   ]
 }
 
-// 后续查询
+// Subsequent queries
 {
   "size": 10,
   "query": {
@@ -124,9 +124,9 @@ Query context 会计算相关性分数，Filter context 只做布尔匹配且可
 }
 ```
 
-2. 使用 scroll API（适合导出大量数据）：
+2. Use the scroll API (suitable for exporting large volumes of data):
 ```json
-// 初始化 scroll
+// Initialize scroll
 POST /my_index/_search?scroll=1m
 {
   "size": 1000,
@@ -135,7 +135,7 @@ POST /my_index/_search?scroll=1m
   }
 }
 
-// 获取下一批
+// Get next batch
 POST /_search/scroll
 {
   "scroll": "1m",
@@ -143,7 +143,7 @@ POST /_search/scroll
 }
 ```
 
-3. 限制 max_result_window：
+3. Limit max_result_window:
 ```json
 {
   "settings": {
@@ -152,26 +152,26 @@ POST /_search/scroll
 }
 ```
 
-**最佳实践**:
-- 避免使用 from > 10000
-- 实时分页使用 search_after
-- 批量导出使用 scroll API
-- 提供"下一页"而不是"跳转到第 N 页"
-- 使用唯一字段（如 _id）作为排序的最后一个字段
+**Best Practices**:
+- Avoid using from > 10000
+- Use search_after for real-time pagination
+- Use the scroll API for bulk exports
+- Provide "next page" instead of "jump to page N"
+- Use a unique field (e.g., _id) as the last sort field
 
-### 问题 3: 聚合查询优化
+### Issue 3: Aggregation Query Optimization
 
-**症状**:
-- 聚合查询慢
-- 内存占用高
-- 结果不准确（近似值）
+**Symptoms**:
+- Slow aggregation queries
+- High memory usage
+- Inaccurate results (approximate values)
 
-**原因**:
-聚合需要在内存中处理大量数据。
+**Cause**:
+Aggregations need to process large amounts of data in memory.
 
-**解决方案**:
+**Solution**:
 
-1. 使用 filter 减少聚合数据量：
+1. Use filters to reduce the volume of data being aggregated:
 ```json
 {
   "size": 0,
@@ -199,7 +199,7 @@ POST /_search/scroll
 }
 ```
 
-2. 使用 composite aggregation 进行分页：
+2. Use composite aggregation for pagination:
 ```json
 {
   "size": 0,
@@ -217,7 +217,7 @@ POST /_search/scroll
 }
 ```
 
-3. 调整精度参数：
+3. Adjust precision parameters:
 ```json
 {
   "aggs": {
@@ -225,7 +225,7 @@ POST /_search/scroll
       "terms": {
         "field": "category",
         "size": 10,
-        "shard_size": 50,  // 增加分片级别的桶数量
+        "shard_size": 50,  // Increase the number of buckets at the shard level
         "show_term_doc_count_error": true
       }
     }
@@ -233,27 +233,27 @@ POST /_search/scroll
 }
 ```
 
-**最佳实践**:
-- 设置 `size: 0` 不返回文档，只返回聚合结果
-- 使用 filter 先过滤再聚合
-- 对高基数字段使用 composite aggregation
-- 调整 `shard_size` 提高精度
-- 使用 `execution_hint: map` 优化内存使用
-- 避免嵌套过深的聚合（< 3 层）
+**Best Practices**:
+- Set `size: 0` to return only aggregation results without documents
+- Use filters to narrow data before aggregating
+- Use composite aggregation for high-cardinality fields
+- Adjust `shard_size` to improve accuracy
+- Use `execution_hint: map` to optimize memory usage
+- Avoid deeply nested aggregations (< 3 levels)
 
-### 问题 4: 缓存策略
+### Issue 4: Caching Strategies
 
-**症状**:
-- 相同查询重复执行很慢
-- 缓存命中率低
-- 内存占用不合理
+**Symptoms**:
+- Identical queries are repeatedly slow
+- Low cache hit rate
+- Unreasonable memory usage
 
-**原因**:
-未充分利用 OpenSearch 的多级缓存机制。
+**Cause**:
+OpenSearch's multi-level caching mechanism is not being fully utilized.
 
-**解决方案**:
+**Solution**:
 
-1. 启用 request cache（聚合查询）：
+1. Enable request cache (for aggregation queries):
 ```json
 {
   "size": 0,
@@ -272,20 +272,20 @@ POST /_search/scroll
 }
 ```
 
-2. 使用 query cache（filter 查询）：
+2. Use query cache (for filter queries):
 ```json
 {
   "query": {
     "bool": {
       "filter": [
-        {"term": {"status": "published"}}  // 自动缓存
+        {"term": {"status": "published"}}  // Automatically cached
       ]
     }
   }
 }
 ```
 
-3. 配置缓存大小：
+3. Configure cache size:
 ```json
 {
   "settings": {
@@ -295,31 +295,31 @@ POST /_search/scroll
 }
 ```
 
-4. 监控缓存效果：
+4. Monitor cache effectiveness:
 ```bash
 GET /_stats/request_cache,query_cache
 ```
 
-**最佳实践**:
-- Filter 查询自动使用 query cache
-- 聚合查询使用 request cache（size=0）
-- 使用 `now` 的查询不会被缓存，使用 `now/d` 向下取整
-- 定期监控缓存命中率和驱逐率
-- 合理设置缓存大小（默认堆内存的 10%）
+**Best Practices**:
+- Filter queries automatically use the query cache
+- Aggregation queries use the request cache (size=0)
+- Queries using `now` are not cached; use `now/d` to round down
+- Regularly monitor cache hit rates and eviction rates
+- Set cache size appropriately (default is 10% of heap memory)
 
-### 问题 5: 多字段搜索优化
+### Issue 5: Multi-Field Search Optimization
 
-**症状**:
-- 多字段搜索慢
-- 相关性排序不理想
-- 查询复杂难以维护
+**Symptoms**:
+- Slow multi-field searches
+- Suboptimal relevance ranking
+- Complex and hard-to-maintain queries
 
-**原因**:
-需要在多个字段上执行搜索并合并结果。
+**Cause**:
+Searching across multiple fields and merging results is required.
 
-**解决方案**:
+**Solution**:
 
-1. 使用 multi_match：
+1. Use multi_match:
 ```json
 {
   "query": {
@@ -333,7 +333,7 @@ GET /_stats/request_cache,query_cache
 }
 ```
 
-2. 使用 bool 查询组合：
+2. Use bool query combinations:
 ```json
 {
   "query": {
@@ -359,7 +359,7 @@ GET /_stats/request_cache,query_cache
 }
 ```
 
-3. 使用 copy_to 字段：
+3. Use copy_to fields:
 ```json
 {
   "mappings": {
@@ -379,7 +379,7 @@ GET /_stats/request_cache,query_cache
   }
 }
 
-// 查询
+// Query
 {
   "query": {
     "match": {
@@ -389,17 +389,17 @@ GET /_stats/request_cache,query_cache
 }
 ```
 
-**最佳实践**:
-- 使用 `^` 设置字段权重（boost）
-- `best_fields`: 最佳字段匹配（默认）
-- `most_fields`: 多字段匹配
-- `cross_fields`: 跨字段匹配（适合姓名搜索）
-- 使用 `tie_breaker` 考虑其他字段的分数
-- 对于固定的多字段搜索，使用 copy_to 简化查询
+**Best Practices**:
+- Use `^` to set field weights (boost)
+- `best_fields`: Best field matching (default)
+- `most_fields`: Multi-field matching
+- `cross_fields`: Cross-field matching (suitable for name searches)
+- Use `tie_breaker` to factor in scores from other fields
+- For fixed multi-field searches, use copy_to to simplify queries
 
-## 配置示例
+## Configuration Examples
 
-### 高性能查询模板
+### High-Performance Query Template
 
 ```json
 {
@@ -450,7 +450,7 @@ GET /_stats/request_cache,query_cache
 }
 ```
 
-### 聚合查询模板
+### Aggregation Query Template
 
 ```json
 {
@@ -499,11 +499,11 @@ GET /_stats/request_cache,query_cache
 }
 ```
 
-## 性能监控
+## Performance Monitoring
 
-### 慢查询日志
+### Slow Query Logs
 
-配置慢查询阈值：
+Configure slow query thresholds:
 ```json
 {
   "settings": {
@@ -515,14 +515,14 @@ GET /_stats/request_cache,query_cache
 }
 ```
 
-查看慢查询日志：
+View slow query logs:
 ```bash
 tail -f /var/log/opensearch/my-cluster_index_search_slowlog.log
 ```
 
-### 查询性能分析
+### Query Performance Analysis
 
-使用 profile API：
+Use the profile API:
 ```json
 {
   "profile": true,
@@ -534,15 +534,15 @@ tail -f /var/log/opensearch/my-cluster_index_search_slowlog.log
 }
 ```
 
-### 关键指标
+### Key Metrics
 
-- 查询延迟: < 100ms（简单查询），< 500ms（复杂查询）
-- 缓存命中率: > 80%
-- 慢查询数量: < 1%
-- 聚合查询: < 1s
+- Query latency: < 100ms (simple queries), < 500ms (complex queries)
+- Cache hit rate: > 80%
+- Slow query count: < 1%
+- Aggregation queries: < 1s
 
-## 参考资源
+## Reference Resources
 
-- [OpenSearch 查询 DSL](https://opensearch.org/docs/latest/query-dsl/)
-- [性能调优指南](https://opensearch.org/docs/latest/tuning-your-cluster/)
-- [缓存机制详解](https://opensearch.org/docs/latest/api-reference/index-apis/clear-cache/)
+- [OpenSearch Query DSL](https://opensearch.org/docs/latest/query-dsl/)
+- [Performance Tuning Guide](https://opensearch.org/docs/latest/tuning-your-cluster/)
+- [Cache Mechanism Details](https://opensearch.org/docs/latest/api-reference/index-apis/clear-cache/)

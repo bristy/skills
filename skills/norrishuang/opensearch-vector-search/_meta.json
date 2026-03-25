@@ -1,11 +1,17 @@
 {
   "owner": "norrishuang",
   "slug": "opensearch-vector-search",
-  "displayName": "OpenSearch Vector Search Expert",
+  "displayName": "Opensearch Vector Search",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773836608778,
-    "commit": "https://github.com/openclaw/skills/commit/13922104ded8b56f5586399d2e40015b3b8915bc"
+    "version": "1.3.2",
+    "publishedAt": 1773993651070,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773836608778,
+      "commit": "https://github.com/openclaw/skills/commit/13922104ded8b56f5586399d2e40015b3b8915bc"
+    }
+  ]
 }

@@ -1,123 +1,123 @@
-# 集群配置和调优
+# Cluster Configuration and Tuning
 
-## 核心概念
+## Core Concepts
 
-OpenSearch 集群性能取决于硬件资源配置、JVM 设置、节点角色分配和操作系统优化。合理的集群架构和资源分配是保证高可用和高性能的基础。
+OpenSearch cluster performance depends on hardware resource configuration, JVM settings, node role assignment, and operating system optimization. Proper cluster architecture and resource allocation are the foundation for ensuring high availability and high performance.
 
-## 常见问题
+## Common Issues
 
-### 问题 1: JVM 堆内存配置
+### Issue 1: JVM Heap Memory Configuration
 
-**症状**:
-- 频繁 GC（垃圾回收）
+**Symptoms**:
+- Frequent GC (garbage collection)
 - OutOfMemoryError
-- 查询和索引性能下降
-- 节点不稳定
+- Degraded query and indexing performance
+- Node instability
 
-**原因**:
-JVM 堆内存配置不当会导致频繁 GC 或内存不足。
+**Cause**:
+Improper JVM heap memory configuration leads to frequent GC or out-of-memory conditions.
 
-**解决方案**:
+**Solution**:
 
-1. 设置堆内存大小（jvm.options）：
+1. Set heap memory size (jvm.options):
 ```bash
-# 设置为物理内存的 50%，但不超过 32GB
+# Set to 50% of physical memory, but no more than 32GB
 -Xms16g
 -Xmx16g
 ```
 
-2. 配置 GC 参数：
+2. Configure GC parameters:
 ```bash
-# 使用 G1GC（推荐）
+# Use G1GC (recommended)
 -XX:+UseG1GC
 -XX:G1ReservePercent=25
 -XX:InitiatingHeapOccupancyPercent=30
 ```
 
-3. 监控 GC 日志：
+3. Monitor GC logs:
 ```bash
 -Xlog:gc*,gc+age=trace,safepoint:file=/var/log/opensearch/gc.log:utctime,pid,tags:filecount=32,filesize=64m
 ```
 
-**最佳实践**:
-- 堆内存设置为物理内存的 50%
-- 不超过 32GB（压缩指针限制）
-- Xms 和 Xmx 设置相同值（避免动态调整）
-- 预留 50% 内存给操作系统缓存
-- 使用 G1GC 垃圾回收器
-- 监控 GC 频率和停顿时间
+**Best Practices**:
+- Set heap memory to 50% of physical memory
+- Do not exceed 32GB (compressed oops limit)
+- Set Xms and Xmx to the same value (avoid dynamic resizing)
+- Reserve 50% of memory for the OS page cache
+- Use the G1GC garbage collector
+- Monitor GC frequency and pause times
 
-### 问题 2: 节点角色分配
+### Issue 2: Node Role Assignment
 
-**症状**:
-- 集群负载不均衡
-- 某些节点过载
-- 查询和索引相互影响
+**Symptoms**:
+- Unbalanced cluster load
+- Some nodes overloaded
+- Queries and indexing interfering with each other
 
-**原因**:
-所有节点承担所有角色会导致资源竞争。
+**Cause**:
+Having all nodes serve all roles leads to resource contention.
 
-**解决方案**:
+**Solution**:
 
-1. 专用主节点（Master Node）：
+1. Dedicated master node:
 ```yaml
 # opensearch.yml
 node.roles: [cluster_manager]
 node.name: master-node-1
 ```
 
-2. 专用数据节点（Data Node）：
+2. Dedicated data node:
 ```yaml
 # opensearch.yml
 node.roles: [data, ingest]
 node.name: data-node-1
 ```
 
-3. 专用协调节点（Coordinating Node）：
+3. Dedicated coordinating node:
 ```yaml
 # opensearch.yml
 node.roles: []
 node.name: coordinating-node-1
 ```
 
-4. 推荐集群架构：
+4. Recommended cluster architectures:
 ```
-小型集群（< 10 节点）:
-- 3 个主节点（master）
-- N 个数据节点（data + ingest）
+Small cluster (< 10 nodes):
+- 3 master nodes
+- N data nodes (data + ingest)
 
-中型集群（10-50 节点）:
-- 3 个专用主节点
-- N 个数据节点
-- 2-3 个协调节点
+Medium cluster (10-50 nodes):
+- 3 dedicated master nodes
+- N data nodes
+- 2-3 coordinating nodes
 
-大型集群（> 50 节点）:
-- 3 个专用主节点
-- N 个热数据节点（hot）
-- M 个温数据节点（warm）
-- 3-5 个协调节点
+Large cluster (> 50 nodes):
+- 3 dedicated master nodes
+- N hot data nodes
+- M warm data nodes
+- 3-5 coordinating nodes
 ```
 
-**最佳实践**:
-- 主节点数量为奇数（3, 5, 7）
-- 主节点不承担数据和查询任务
-- 数据节点专注于存储和查询
-- 协调节点处理客户端请求和聚合
-- 使用节点标签实现数据分层（hot/warm/cold）
+**Best Practices**:
+- Use an odd number of master nodes (3, 5, 7)
+- Master nodes should not handle data or query tasks
+- Data nodes should focus on storage and queries
+- Coordinating nodes handle client requests and aggregations
+- Use node labels to implement data tiering (hot/warm/cold)
 
-### 问题 3: 分片分配和平衡
+### Issue 3: Shard Allocation and Balancing
 
-**症状**:
-- 节点磁盘使用不均衡
-- 某些节点负载过高
-- 分片分配失败
+**Symptoms**:
+- Uneven disk usage across nodes
+- Some nodes under excessive load
+- Shard allocation failures
 
-**原因**:
-分片分配策略不当或磁盘水位线触发。
+**Cause**:
+Improper shard allocation strategies or disk watermark thresholds being triggered.
 
-**解决方案**:
+**Solution**:
 
-1. 配置磁盘水位线：
+1. Configure disk watermarks:
 ```yaml
 # opensearch.yml
 cluster.routing.allocation.disk.threshold_enabled: true
@@ -126,7 +126,7 @@ cluster.routing.allocation.disk.watermark.high: 90%
 cluster.routing.allocation.disk.watermark.flood_stage: 95%
 ```
 
-2. 手动分配分片：
+2. Manually allocate shards:
 ```bash
 POST /_cluster/reroute
 {
@@ -143,14 +143,14 @@ POST /_cluster/reroute
 }
 ```
 
-3. 配置分片分配策略：
+3. Configure shard allocation strategy:
 ```yaml
 # opensearch.yml
 cluster.routing.allocation.awareness.attributes: zone
 cluster.routing.allocation.awareness.force.zone.values: zone1,zone2
 ```
 
-4. 平衡分片：
+4. Rebalance shards:
 ```bash
 PUT /_cluster/settings
 {
@@ -160,31 +160,31 @@ PUT /_cluster/settings
 }
 ```
 
-**最佳实践**:
-- 设置合理的磁盘水位线（85%/90%/95%）
-- 使用分片分配感知（zone awareness）
-- 避免单个节点分片过多（< 1000 个）
-- 定期监控分片分布
-- 使用 allocation filtering 控制分片位置
+**Best Practices**:
+- Set reasonable disk watermarks (85%/90%/95%)
+- Use shard allocation awareness (zone awareness)
+- Avoid too many shards on a single node (< 1000)
+- Regularly monitor shard distribution
+- Use allocation filtering to control shard placement
 
-### 问题 4: 线程池配置
+### Issue 4: Thread Pool Configuration
 
-**症状**:
-- 请求被拒绝（rejected）
-- 线程池队列满
-- 查询或索引延迟高
+**Symptoms**:
+- Requests being rejected
+- Thread pool queues full
+- High query or indexing latency
 
-**原因**:
-线程池大小不足以处理并发请求。
+**Cause**:
+Thread pool sizes insufficient to handle concurrent requests.
 
-**解决方案**:
+**Solution**:
 
-1. 查看线程池状态：
+1. Check thread pool status:
 ```bash
 GET /_cat/thread_pool?v&h=node_name,name,active,queue,rejected
 ```
 
-2. 调整线程池大小：
+2. Adjust thread pool sizes:
 ```yaml
 # opensearch.yml
 thread_pool:
@@ -196,7 +196,7 @@ thread_pool:
     queue_size: 1000
 ```
 
-3. 动态调整（临时）：
+3. Dynamic adjustment (temporary):
 ```bash
 PUT /_cluster/settings
 {
@@ -206,55 +206,55 @@ PUT /_cluster/settings
 }
 ```
 
-**线程池类型**:
-- `search`: 搜索请求
-- `write`: 索引、更新、删除请求
-- `get`: Get 请求
-- `analyze`: 分析请求
-- `snapshot`: 快照操作
+**Thread Pool Types**:
+- `search`: Search requests
+- `write`: Index, update, and delete requests
+- `get`: Get requests
+- `analyze`: Analyze requests
+- `snapshot`: Snapshot operations
 
-**最佳实践**:
-- search 线程池: CPU 核心数 * 1.5
-- write 线程池: CPU 核心数
-- 队列大小: 1000-2000
-- 监控 rejected 指标
-- 避免无限队列（可能导致 OOM）
+**Best Practices**:
+- search thread pool: CPU cores × 1.5
+- write thread pool: CPU cores
+- Queue size: 1000-2000
+- Monitor the rejected metric
+- Avoid unlimited queues (may cause OOM)
 
-### 问题 5: 网络和传输配置
+### Issue 5: Network and Transport Configuration
 
-**症状**:
-- 节点间通信慢
-- 集群状态更新延迟
-- 网络超时
+**Symptoms**:
+- Slow inter-node communication
+- Delayed cluster state updates
+- Network timeouts
 
-**原因**:
-网络配置不当或带宽不足。
+**Cause**:
+Improper network configuration or insufficient bandwidth.
 
-**解决方案**:
+**Solution**:
 
-1. 配置网络设置：
+1. Configure network settings:
 ```yaml
 # opensearch.yml
 network.host: 0.0.0.0
 http.port: 9200
 transport.port: 9300
 
-# 压缩传输数据
+# Compress transport data
 transport.compress: true
 
-# 超时设置
+# Timeout settings
 cluster.publish.timeout: 30s
 discovery.request_peers_timeout: 10s
 ```
 
-2. 配置 TCP 参数：
+2. Configure TCP parameters:
 ```yaml
 # opensearch.yml
 transport.tcp.keep_alive: true
 transport.tcp.reuse_address: true
 ```
 
-3. 操作系统优化：
+3. Operating system optimization:
 ```bash
 # /etc/sysctl.conf
 net.core.somaxconn = 65535
@@ -262,47 +262,47 @@ net.ipv4.tcp_max_syn_backlog = 8192
 net.ipv4.tcp_tw_reuse = 1
 ```
 
-**最佳实践**:
-- 使用专用网络进行节点间通信
-- 启用传输压缩（transport.compress）
-- 配置合理的超时时间
-- 监控网络延迟和带宽使用
-- 使用高速网络（10Gbps+）
+**Best Practices**:
+- Use a dedicated network for inter-node communication
+- Enable transport compression (transport.compress)
+- Configure reasonable timeout values
+- Monitor network latency and bandwidth usage
+- Use high-speed networking (10Gbps+)
 
-## 配置示例
+## Configuration Examples
 
-### 生产环境配置（opensearch.yml）
+### Production Environment Configuration (opensearch.yml)
 
 ```yaml
-# 集群配置
+# Cluster configuration
 cluster.name: production-cluster
 node.name: data-node-1
 node.roles: [data, ingest]
 
-# 网络配置
+# Network configuration
 network.host: 0.0.0.0
 http.port: 9200
 transport.port: 9300
 transport.compress: true
 
-# 发现配置
+# Discovery configuration
 discovery.seed_hosts: ["master-1:9300", "master-2:9300", "master-3:9300"]
 cluster.initial_cluster_manager_nodes: ["master-1", "master-2", "master-3"]
 
-# 路径配置
+# Path configuration
 path.data: /var/lib/opensearch
 path.logs: /var/log/opensearch
 
-# 内存配置
+# Memory configuration
 bootstrap.memory_lock: true
 
-# 分片分配
+# Shard allocation
 cluster.routing.allocation.disk.threshold_enabled: true
 cluster.routing.allocation.disk.watermark.low: 85%
 cluster.routing.allocation.disk.watermark.high: 90%
 cluster.routing.allocation.disk.watermark.flood_stage: 95%
 
-# 线程池
+# Thread pools
 thread_pool:
   search:
     size: 30
@@ -311,36 +311,36 @@ thread_pool:
     size: 30
     queue_size: 1000
 
-# 安全配置
+# Security configuration
 plugins.security.ssl.http.enabled: true
 plugins.security.ssl.transport.enabled: true
 ```
 
-### JVM 配置（jvm.options）
+### JVM Configuration (jvm.options)
 
 ```bash
-# 堆内存（设置为物理内存的 50%，不超过 32GB）
+# Heap memory (set to 50% of physical memory, no more than 32GB)
 -Xms16g
 -Xmx16g
 
-# GC 配置
+# GC configuration
 -XX:+UseG1GC
 -XX:G1ReservePercent=25
 -XX:InitiatingHeapOccupancyPercent=30
 
-# GC 日志
+# GC logging
 -Xlog:gc*,gc+age=trace,safepoint:file=/var/log/opensearch/gc.log:utctime,pid,tags:filecount=32,filesize=64m
 
-# 堆转储（OOM 时）
+# Heap dump (on OOM)
 -XX:+HeapDumpOnOutOfMemoryError
 -XX:HeapDumpPath=/var/log/opensearch/heapdump.hprof
 
-# 性能优化
+# Performance optimization
 -XX:+AlwaysPreTouch
 -Djava.io.tmpdir=/tmp
 ```
 
-### 操作系统配置
+### Operating System Configuration
 
 ```bash
 # /etc/security/limits.conf
@@ -356,100 +356,100 @@ net.core.somaxconn=65535
 net.ipv4.tcp_max_syn_backlog=8192
 ```
 
-## 性能监控
+## Performance Monitoring
 
-### 关键指标
+### Key Metrics
 
-1. **集群健康**:
+1. **Cluster Health**:
 ```bash
 GET /_cluster/health
 ```
 
-2. **节点统计**:
+2. **Node Statistics**:
 ```bash
 GET /_nodes/stats
 ```
 
-3. **线程池状态**:
+3. **Thread Pool Status**:
 ```bash
 GET /_cat/thread_pool?v
 ```
 
-4. **分片分配**:
+4. **Shard Allocation**:
 ```bash
 GET /_cat/shards?v
 ```
 
-5. **JVM 内存**:
+5. **JVM Memory**:
 ```bash
 GET /_nodes/stats/jvm
 ```
 
-### 告警阈值
+### Alert Thresholds
 
-- 集群状态: 非 green
-- JVM 堆使用率: > 85%
-- GC 时间占比: > 10%
-- 磁盘使用率: > 85%
-- 线程池拒绝率: > 1%
-- 查询延迟: > 500ms
-- 索引延迟: > 1s
+- Cluster status: not green
+- JVM heap usage: > 85%
+- GC time ratio: > 10%
+- Disk usage: > 85%
+- Thread pool rejection rate: > 1%
+- Query latency: > 500ms
+- Indexing latency: > 1s
 
-## 容量规划
+## Capacity Planning
 
-### 硬件推荐
+### Hardware Recommendations
 
-**数据节点**:
-- CPU: 16-32 核
-- 内存: 64-128 GB
-- 磁盘: SSD，1-4 TB
-- 网络: 10 Gbps
+**Data Nodes**:
+- CPU: 16-32 cores
+- Memory: 64-128 GB
+- Disk: SSD, 1-4 TB
+- Network: 10 Gbps
 
-**主节点**:
-- CPU: 4-8 核
-- 内存: 8-16 GB
-- 磁盘: SSD，100-200 GB
-- 网络: 1-10 Gbps
+**Master Nodes**:
+- CPU: 4-8 cores
+- Memory: 8-16 GB
+- Disk: SSD, 100-200 GB
+- Network: 1-10 Gbps
 
-**协调节点**:
-- CPU: 8-16 核
-- 内存: 32-64 GB
-- 磁盘: SSD，100-200 GB
-- 网络: 10 Gbps
+**Coordinating Nodes**:
+- CPU: 8-16 cores
+- Memory: 32-64 GB
+- Disk: SSD, 100-200 GB
+- Network: 10 Gbps
 
-### 容量计算
+### Capacity Calculation
 
 ```
-数据节点数 = (总数据量 * (1 + 副本数)) / (单节点磁盘容量 * 0.7)
-主节点数 = 3（固定）
-协调节点数 = max(2, 数据节点数 / 10)
+Number of data nodes = (total data size × (1 + replica count)) / (per-node disk capacity × 0.7)
+Number of master nodes = 3 (fixed)
+Number of coordinating nodes = max(2, number of data nodes / 10)
 ```
 
-## 故障排查
+## Troubleshooting
 
-### 常见问题
+### Common Issues
 
-1. **集群状态 yellow**:
-   - 检查副本分片是否未分配
-   - 检查节点数量是否足够
+1. **Cluster status yellow**:
+   - Check if replica shards are unassigned
+   - Check if there are enough nodes
 
-2. **集群状态 red**:
-   - 检查主分片是否丢失
-   - 检查节点是否离线
-   - 查看分片分配失败原因
+2. **Cluster status red**:
+   - Check if primary shards are missing
+   - Check if nodes are offline
+   - Review shard allocation failure reasons
 
-3. **节点频繁重启**:
-   - 检查 JVM OOM
-   - 检查磁盘空间
-   - 查看系统日志
+3. **Nodes frequently restarting**:
+   - Check for JVM OOM
+   - Check disk space
+   - Review system logs
 
-4. **查询慢**:
-   - 检查慢查询日志
-   - 分析查询结构
-   - 检查缓存命中率
+4. **Slow queries**:
+   - Check slow query logs
+   - Analyze query structure
+   - Check cache hit rates
 
-## 参考资源
+## Reference Resources
 
-- [OpenSearch 集群配置](https://opensearch.org/docs/latest/install-and-configure/configuring-opensearch/)
-- [性能调优指南](https://opensearch.org/docs/latest/tuning-your-cluster/)
-- [容量规划](https://opensearch.org/docs/latest/tuning-your-cluster/availability-and-recovery/cluster-manager/)
+- [OpenSearch Cluster Configuration](https://opensearch.org/docs/latest/install-and-configure/configuring-opensearch/)
+- [Performance Tuning Guide](https://opensearch.org/docs/latest/tuning-your-cluster/)
+- [Capacity Planning](https://opensearch.org/docs/latest/tuning-your-cluster/availability-and-recovery/cluster-manager/)

@@ -1,30 +1,30 @@
-# 索引策略和最佳实践
+# Indexing Strategies and Best Practices
 
-## 核心概念
+## Core Concepts
 
-OpenSearch 索引设计直接影响查询性能、存储效率和集群稳定性。合理的 mapping 配置、分片策略和索引生命周期管理是构建高性能搜索系统的基础。
+OpenSearch index design directly impacts query performance, storage efficiency, and cluster stability. Proper mapping configuration, sharding strategy, and index lifecycle management form the foundation of building a high-performance search system.
 
-## 常见问题
+## Common Issues
 
-### 问题 1: 如何选择合适的分片数量
+### Issue 1: How to Choose the Right Number of Shards
 
-**症状**:
-- 查询性能不佳
-- 集群负载不均衡
-- 索引创建后无法修改分片数
+**Symptoms**:
+- Poor query performance
+- Unbalanced cluster load
+- Cannot modify shard count after index creation
 
-**原因**:
-分片数量影响并行度、资源分配和集群扩展性。
+**Cause**:
+The number of shards affects parallelism, resource allocation, and cluster scalability.
 
-**解决方案**:
+**Solution**:
 
-计算分片数量的经验公式：
+Rule-of-thumb formula for calculating shard count:
 ```
-分片数 = 数据总量(GB) / 目标分片大小(GB)
-推荐分片大小: 10-50 GB
+Number of shards = Total data size (GB) / Target shard size (GB)
+Recommended shard size: 10-50 GB
 ```
 
-创建索引时设置分片：
+Set shards when creating an index:
 ```json
 {
   "settings": {
@@ -34,27 +34,27 @@ OpenSearch 索引设计直接影响查询性能、存储效率和集群稳定性
 }
 ```
 
-**最佳实践**:
-- 小索引（< 50GB）: 1-3 个分片
-- 中等索引（50-500GB）: 3-10 个分片
-- 大索引（> 500GB）: 10+ 个分片
-- 每个分片大小控制在 10-50GB
-- 分片数应为数据节点数的倍数（便于均衡分布）
-- 避免过度分片（over-sharding）导致资源浪费
+**Best Practices**:
+- Small indexes (< 50GB): 1-3 shards
+- Medium indexes (50-500GB): 3-10 shards
+- Large indexes (> 500GB): 10+ shards
+- Keep each shard size between 10-50GB
+- Shard count should be a multiple of the number of data nodes (for even distribution)
+- Avoid over-sharding which wastes resources
 
-### 问题 2: Mapping 字段类型选择
+### Issue 2: Choosing Mapping Field Types
 
-**症状**:
-- 查询结果不准确
-- 存储空间浪费
-- 无法进行某些类型的查询
+**Symptoms**:
+- Inaccurate query results
+- Wasted storage space
+- Unable to perform certain types of queries
 
-**原因**:
-字段类型决定了数据如何存储和索引。
+**Cause**:
+Field types determine how data is stored and indexed.
 
-**解决方案**:
+**Solution**:
 
-常用字段类型配置：
+Common field type configurations:
 ```json
 {
   "mappings": {
@@ -97,37 +97,37 @@ OpenSearch 索引设计直接影响查询性能、存储效率和集群稳定性
 }
 ```
 
-**字段类型选择指南**:
-- `text`: 全文搜索字段（会分词）
-- `keyword`: 精确匹配、聚合、排序（不分词）
-- `integer/long`: 整数
-- `float/double`: 浮点数
-- `date`: 日期时间
-- `boolean`: 布尔值
-- `object`: 嵌套对象
-- `nested`: 独立索引的嵌套对象（用于复杂查询）
+**Field Type Selection Guide**:
+- `text`: Full-text search fields (tokenized)
+- `keyword`: Exact match, aggregation, sorting (not tokenized)
+- `integer/long`: Integers
+- `float/double`: Floating-point numbers
+- `date`: Date and time
+- `boolean`: Boolean values
+- `object`: Nested objects
+- `nested`: Independently indexed nested objects (for complex queries)
 
-**最佳实践**:
-- 需要全文搜索的字段使用 `text`
-- 需要精确匹配、聚合、排序的字段使用 `keyword`
-- 使用 multi-field 同时支持全文搜索和精确匹配
-- 不需要搜索的字段设置 `enabled: false` 节省空间
-- 日期字段指定明确的格式
-- 避免使用 `_all` 字段（已废弃）
+**Best Practices**:
+- Use `text` for fields that require full-text search
+- Use `keyword` for fields that require exact matching, aggregation, or sorting
+- Use multi-field to support both full-text search and exact matching simultaneously
+- Set `enabled: false` for fields that don't need to be searched to save space
+- Specify explicit formats for date fields
+- Avoid using the `_all` field (deprecated)
 
-### 问题 3: 动态 Mapping vs 显式 Mapping
+### Issue 3: Dynamic Mapping vs Explicit Mapping
 
-**症状**:
-- 字段类型不符合预期
-- 索引膨胀（字段爆炸）
-- 无法控制字段行为
+**Symptoms**:
+- Field types don't match expectations
+- Index bloat (field explosion)
+- Unable to control field behavior
 
-**原因**:
-动态 mapping 会自动推断字段类型，可能不符合实际需求。
+**Cause**:
+Dynamic mapping automatically infers field types, which may not match actual requirements.
 
-**解决方案**:
+**Solution**:
 
-1. 禁用动态 mapping（推荐生产环境）：
+1. Disable dynamic mapping (recommended for production):
 ```json
 {
   "mappings": {
@@ -141,7 +141,7 @@ OpenSearch 索引设计直接影响查询性能、存储效率和集群稳定性
 }
 ```
 
-2. 使用动态模板：
+2. Use dynamic templates:
 ```json
 {
   "mappings": {
@@ -167,27 +167,27 @@ OpenSearch 索引设计直接影响查询性能、存储效率和集群稳定性
 }
 ```
 
-**最佳实践**:
-- 生产环境使用 `dynamic: "strict"` 防止字段爆炸
-- 开发环境可使用 `dynamic: true` 快速迭代
-- 使用动态模板统一处理未知字段
-- 定期审查 mapping，移除不需要的字段
+**Best Practices**:
+- Use `dynamic: "strict"` in production to prevent field explosion
+- Use `dynamic: true` in development for rapid iteration
+- Use dynamic templates to uniformly handle unknown fields
+- Regularly review mappings and remove unnecessary fields
 
-### 问题 4: 索引别名和零停机重建
+### Issue 4: Index Aliases and Zero-Downtime Reindexing
 
-**症状**:
-- 需要修改 mapping 但无法在线修改
-- 重建索引导致服务中断
-- 无法平滑切换索引
+**Symptoms**:
+- Need to modify mapping but cannot do so online
+- Reindexing causes service interruption
+- Unable to smoothly switch indexes
 
-**原因**:
-OpenSearch 不支持修改已有字段的类型，需要重建索引。
+**Cause**:
+OpenSearch does not support modifying the type of existing fields; reindexing is required.
 
-**解决方案**:
+**Solution**:
 
-使用索引别名实现零停机重建：
+Use index aliases for zero-downtime reindexing:
 
-1. 创建新索引：
+1. Create a new index:
 ```bash
 PUT /my_index_v2
 {
@@ -201,7 +201,7 @@ PUT /my_index_v2
 }
 ```
 
-2. 重新索引数据：
+2. Reindex the data:
 ```bash
 POST /_reindex
 {
@@ -214,7 +214,7 @@ POST /_reindex
 }
 ```
 
-3. 切换别名：
+3. Switch the alias:
 ```bash
 POST /_aliases
 {
@@ -235,31 +235,31 @@ POST /_aliases
 }
 ```
 
-4. 删除旧索引：
+4. Delete the old index:
 ```bash
 DELETE /my_index_v1
 ```
 
-**最佳实践**:
-- 始终使用别名而不是直接使用索引名
-- 索引命名使用版本号（如 my_index_v1）
-- 重建索引时使用 `_reindex` API
-- 验证新索引数据完整性后再切换别名
-- 保留旧索引一段时间以便回滚
+**Best Practices**:
+- Always use aliases instead of directly using index names
+- Use version numbers in index naming (e.g., my_index_v1)
+- Use the `_reindex` API when rebuilding indexes
+- Verify data integrity in the new index before switching the alias
+- Keep the old index for a period of time to allow rollback
 
-### 问题 5: 索引模板管理
+### Issue 5: Index Template Management
 
-**症状**:
-- 多个索引配置不一致
-- 时间序列索引创建繁琐
-- 难以统一管理索引设置
+**Symptoms**:
+- Inconsistent configuration across multiple indexes
+- Tedious creation of time-series indexes
+- Difficult to manage index settings uniformly
 
-**原因**:
-手动创建每个索引容易出错且效率低。
+**Cause**:
+Manually creating each index is error-prone and inefficient.
 
-**解决方案**:
+**Solution**:
 
-创建索引模板：
+Create an index template:
 ```json
 {
   "index_patterns": ["logs-*"],
@@ -290,24 +290,24 @@ DELETE /my_index_v1
 }
 ```
 
-应用模板：
+Apply the template:
 ```bash
 PUT /_index_template/logs_template
 {
-  // 模板配置
+  // Template configuration
 }
 ```
 
-**最佳实践**:
-- 为相似的索引创建模板
-- 使用通配符匹配索引名称
-- 设置合理的优先级（priority）
-- 时间序列数据使用索引模板 + 滚动策略
-- 定期审查和更新模板
+**Best Practices**:
+- Create templates for similar indexes
+- Use wildcards to match index names
+- Set a reasonable priority
+- Use index templates + rollover strategy for time-series data
+- Regularly review and update templates
 
-## 配置示例
+## Configuration Examples
 
-### 生产环境索引配置
+### Production Environment Index Configuration
 
 ```json
 {
@@ -374,7 +374,7 @@ PUT /_index_template/logs_template
 }
 ```
 
-### 时间序列索引模板
+### Time-Series Index Template
 
 ```json
 {
@@ -414,9 +414,9 @@ PUT /_index_template/logs_template
 }
 ```
 
-## 索引生命周期管理
+## Index Lifecycle Management
 
-### ISM 策略示例
+### ISM Policy Example
 
 ```json
 {
@@ -479,16 +479,16 @@ PUT /_index_template/logs_template
 }
 ```
 
-## 性能优化建议
+## Performance Optimization Tips
 
-1. **批量索引**: 使用 bulk API，批量大小 5-15MB
-2. **禁用 refresh**: 批量导入时设置 `refresh_interval: -1`
-3. **增加副本**: 导入完成后再增加副本数
-4. **使用压缩**: 设置 `codec: best_compression` 节省空间
-5. **限制字段数**: 设置 `mapping.total_fields.limit` 防止字段爆炸
+1. **Bulk Indexing**: Use the bulk API with batch sizes of 5-15MB
+2. **Disable Refresh**: Set `refresh_interval: -1` during bulk imports
+3. **Add Replicas Later**: Increase replica count after import is complete
+4. **Use Compression**: Set `codec: best_compression` to save space
+5. **Limit Field Count**: Set `mapping.total_fields.limit` to prevent field explosion
 
-## 参考资源
+## Reference Resources
 
-- [OpenSearch Mapping 文档](https://opensearch.org/docs/latest/field-types/)
-- [索引设置参考](https://opensearch.org/docs/latest/api-reference/index-apis/create-index/)
-- [索引生命周期管理](https://opensearch.org/docs/latest/im-plugin/)
+- [OpenSearch Mapping Documentation](https://opensearch.org/docs/latest/field-types/)
+- [Index Settings Reference](https://opensearch.org/docs/latest/api-reference/index-apis/create-index/)
+- [Index Lifecycle Management](https://opensearch.org/docs/latest/im-plugin/)

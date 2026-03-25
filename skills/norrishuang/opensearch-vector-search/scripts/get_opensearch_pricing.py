@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 """
 Fetch Amazon OpenSearch Service on-demand pricing from AWS Pricing API.
+
+SECURITY NOTE:
+  - This script makes READ-ONLY HTTPS requests to the AWS Pricing API (pricing.us-east-1.amazonaws.com)
+  - It does NOT modify any AWS resources
+  - It only fetches publicly available pricing data
+  - Requires: boto3, valid AWS credentials (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY or IAM role)
+  - No local filesystem writes, no localhost connections
+
 Usage:
   python3 get_opensearch_pricing.py --region us-east-1 [--instance-type r7g.xlarge] [--format table|json]
 """

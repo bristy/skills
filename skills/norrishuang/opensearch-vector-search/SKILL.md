@@ -1,122 +1,237 @@
 ---
 name: opensearch-vector-search
+version: 1.3.0
+repository: https://github.com/norrishuang/opensearch-vector-search-skill
 description: |
-  Amazon OpenSearch 向量搜索专家知识库。提供向量搜索配置、集群调优、量化压缩、成本优化、实例选型和定价估算的完整指导。
+  Amazon OpenSearch vector search expert knowledge base. Comprehensive guidance on vector search configuration, cluster tuning, quantization, cost optimization, instance sizing, and pricing estimation.
 
-  **当以下情况时使用此 Skill**：
-  (1) 用户询问 OpenSearch 向量搜索（k-NN）配置、HNSW 参数调优、磁盘模式
-  (2) 用户需要向量搜索集群选型、容量规划、实例配置推荐
-  (3) 用户询问量化压缩技术（Binary/Byte/FP16/Product Quantization）
-  (4) 用户需要估算 OpenSearch 向量搜索成本、定价查询
-  (5) 用户询问 OpenSearch 索引策略、分片规划、查询优化
-  (6) 用户提到"向量数据库"、"向量搜索"、"k-NN"、"knn_vector"、"embedding search"、"HNSW"
-  (7) 用户提到数据量（如"1亿向量"、"100M vectors"）并需要集群配置建议
-  (8) 用户询问 OpenSearch 集群 JVM、内存、线程池配置
-  (9) 涉及 Amazon OpenSearch Service 定价、成本计算、实例对比
+  **Use this Skill when**:
+  (1) User asks about OpenSearch vector search (k-NN) configuration, HNSW parameter tuning, disk mode
+  (2) User needs vector search cluster sizing, capacity planning, instance recommendations
+  (3) User asks about quantization techniques (Binary/Byte/FP16/Product Quantization)
+  (4) User needs to estimate OpenSearch vector search costs or query pricing
+  (5) User asks about OpenSearch indexing strategies, shard planning, query optimization
+  (6) User mentions "vector database", "vector search", "k-NN", "knn_vector", "embedding search", "HNSW"
+  (7) User mentions data scale (e.g. "100M vectors", "1 billion vectors") and needs cluster configuration advice
+  (8) User asks about OpenSearch cluster JVM, memory, or thread pool configuration
+  (9) Involves Amazon OpenSearch Service pricing, cost calculation, or instance comparison
+  (10) User provides an OpenSearch cluster URL/credentials and wants vector configuration analysis or health check
+requirements:
+  env:
+    - name: AWS_ACCESS_KEY_ID
+      description: AWS credentials for pricing API (boto3). Only needed when running the pricing script.
+      optional: true
+    - name: AWS_SECRET_ACCESS_KEY
+      description: AWS secret key. Only needed when running the pricing script.
+      optional: true
+  tools:
+    - python3
+    - boto3
+    - opensearch-py
 ---
 
 # OpenSearch Vector Search Expert
 
-## 知识库结构
+> **GitHub**: [norrishuang/opensearch-vector-search-skill](https://github.com/norrishuang/opensearch-vector-search-skill)
+> — Issues, PRs, and new reference contributions are welcome!
 
-根据问题类型，读取对应的 reference 文件：
+## Safety Notes
 
-| 问题类型 | Reference 文件 | 关键词 |
-|---------|---------------|--------|
-| 向量搜索、k-NN、HNSW、磁盘模式 | `references/vector-search.md` | vector, knn, hnsw, warmup, disk mode, on_disk |
-| 量化压缩技术 | `references/quantization-techniques.md` | quantization, compression, binary, byte, fp16, product quantization |
-| 成本优化、实例选型、内存计算 | `references/cost-optimization.md` | cost, pricing, instance, memory calculation, cluster sizing, budget |
-| 集群调优、JVM、线程池 | `references/cluster-tuning.md` | JVM, heap, thread pool, node role, shard allocation |
-| 性能基准、数据集选型 | `references/performance-benchmarks.md` | benchmark, QPS, latency, recall, dataset size |
-| 索引策略、mapping | `references/indexing-strategies.md` | index, mapping, shard, replica, lifecycle |
-| 查询优化 | `references/query-optimization.md` | query, filter, aggregation, cache, pagination |
+- **Pricing script** (`scripts/get_opensearch_pricing.py`): Makes outbound HTTPS requests to the AWS Pricing API (`pricing.us-east-1.amazonaws.com`). Requires `boto3` and valid AWS credentials. The script is **read-only** (fetches public pricing data) and does not modify any AWS resources. Only run it when the user explicitly requests cost estimation.
+- **Reference examples**: Code snippets in `references/` contain example API calls to `localhost:9200` (standard OpenSearch endpoint). These are **documentation examples only** — do NOT execute them automatically. Present them to the user as configuration references.
+- **Cluster analyzer** (`scripts/analyze_cluster.py`): Connects to a user-provided OpenSearch cluster and performs **read-only** analysis. It NEVER creates, modifies, or deletes any indices or data. Only run it when the user explicitly provides cluster credentials (URL + username/password).
 
-## 核心工作流
+## Knowledge Base Structure
 
-### 1. 回答向量搜索配置问题
+Read the corresponding reference file based on the question type:
 
-1. 读取 `references/vector-search.md`
-2. 根据用户场景（延迟要求、数据规模、QPS）推荐内存模式或磁盘模式
-3. 给出具体的 mapping JSON 配置
-4. 推荐引擎 FAISS + cosine 相似度 + 7/8 系列实例
+| Question Type | Reference File | Keywords |
+|--------------|----------------|----------|
+| Vector search, k-NN, HNSW, disk mode | `references/vector-search.md` | vector, knn, hnsw, warmup, disk mode, on_disk |
+| Quantization techniques | `references/quantization-techniques.md` | quantization, compression, binary, byte, fp16, product quantization |
+| Cost optimization, instance sizing, memory calc | `references/cost-optimization.md` | cost, pricing, instance, memory calculation, cluster sizing, budget |
+| Cluster tuning, JVM, thread pools | `references/cluster-tuning.md` | JVM, heap, thread pool, node role, shard allocation |
+| Performance benchmarks, dataset sizing | `references/performance-benchmarks.md` | benchmark, QPS, latency, recall, dataset size |
+| Indexing strategies, mapping | `references/indexing-strategies.md` | index, mapping, shard, replica, lifecycle |
+| Query optimization | `references/query-optimization.md` | query, filter, aggregation, cache, pagination |
+| Optimized instances (OR1/OR2/OM2/OI2) | `references/optimized-instances.md` | optimized, OR1, OR2, OM2, OI2, S3 durability, indexing throughput |
+| Live cluster analysis | `scripts/analyze_cluster.py` | analyze cluster, connect, diagnose, review config, health check |
 
-### 2. 容量规划与选型（最常见场景）
+## Core Workflows
 
-用户提供向量数量和维度后：
+### 1. Answering Vector Search Configuration Questions
 
-1. 读取 `references/cost-optimization.md` 获取内存计算公式和案例
-2. 使用 HNSW 标准内存公式计算（来源: AWS 官方博客）：
+1. Read `references/vector-search.md`
+2. Recommend in-memory mode or disk mode based on user scenario (latency requirements, data scale, QPS)
+3. Provide specific mapping JSON configuration
+4. Recommend FAISS engine + cosine similarity + 7/8 series instances
+
+### 2. Capacity Planning & Instance Sizing (Most Common Scenario)
+
+After user provides vector count and dimensions:
+
+1. Read `references/cost-optimization.md` for memory calculation formulas and examples
+2. Calculate using the standard HNSW memory formula (source: AWS official blog):
    ```
-   无量化（float32）:
-     内存 = 1.1 × (4 × d + 8 × m) × num_vectors × (replicas + 1) 字节
+   Unquantized (float32):
+     Memory = 1.1 × (4 × d + 8 × m) × num_vectors × (replicas + 1) bytes
    
-   量化场景（FAISS 引擎，内存中存储压缩向量）:
-     FP16 (2x):    内存 = 1.1 × (2 × d + 8 × m) × num_vectors × (replicas + 1)
-     Byte (4x):    内存 = 1.1 × (1 × d + 8 × m) × num_vectors × (replicas + 1)
-     Binary 4-bit: 内存 = 1.1 × (d/2 + 8 × m) × num_vectors × (replicas + 1)
-     Binary 2-bit: 内存 = 1.1 × (d/4 + 8 × m) × num_vectors × (replicas + 1)
-     Binary 1-bit: 内存 = 1.1 × (d/8 + 8 × m) × num_vectors × (replicas + 1)
+   Quantized (FAISS engine, compressed vectors in memory):
+     FP16 (2x):    Memory = 1.1 × (2 × d + 8 × m) × num_vectors × (replicas + 1)
+     Byte (4x):    Memory = 1.1 × (1 × d + 8 × m) × num_vectors × (replicas + 1)
+     Binary 4-bit: Memory = 1.1 × (d/2 + 8 × m) × num_vectors × (replicas + 1)
+     Binary 2-bit: Memory = 1.1 × (d/4 + 8 × m) × num_vectors × (replicas + 1)
+     Binary 1-bit: Memory = 1.1 × (d/8 + 8 × m) × num_vectors × (replicas + 1)
    
-   其中: d=向量维度, m=HNSW 连接数(默认16), num_vectors=向量总数
+   Where: d=vector dimensions, m=HNSW connections (default 16), num_vectors=total vector count
    ```
-3. 应用 OpenSearch 节点内存分配规则：
+3. Apply OpenSearch node memory allocation rules:
    ```
-   JVM Heap = min(节点内存 × 50%, 32GB)
-   剩余内存 = 节点内存 - JVM Heap
-   KNN 可用内存 = 剩余内存 × 75%  (knn.memory.circuit_breaker.limit=70% 最佳实践下约 35% 节点内存)
+   JVM Heap = min(node_memory × 50%, 32GB)
+   Remaining memory = node_memory - JVM Heap
+   KNN available memory = remaining × 75%  (with knn.memory.circuit_breaker.limit=70%, ~35% of node memory)
    ```
-4. 选择实例类型，确保集群总 KNN 可用内存 > 向量索引内存需求
-6. 运行定价脚本获取实时价格（见下方）
+4. Select instance type, ensuring total cluster KNN available memory > vector index memory requirement
+5. Run pricing script for real-time pricing (see below)
 
-### 3. 成本估算（含实时定价）
+### 3. Cost Estimation (with Real-Time Pricing)
 
-当用户需要成本估算时：
+When user needs cost estimation:
 
-1. 完成上述容量规划
-2. 运行定价脚本获取实时价格：
+1. Complete capacity planning above
+2. Run pricing script for real-time prices:
    ```bash
    python3 scripts/get_opensearch_pricing.py --region <region> --instance-type <type>
    ```
-3. 计算月度成本：
+3. Calculate monthly cost:
    ```
-   实例成本 = 单价 × 节点数 × (1 + 副本数)
-   EBS 成本 = 容量(GB) × $0.08 + 额外 IOPS 费用
-   总成本 = 实例成本 + EBS 成本
+   Instance cost = unit_price × node_count × (1 + replica_count)
+   EBS cost = capacity(GB) × $0.08 + additional IOPS charges
+   Total cost = Instance cost + EBS cost
    ```
-4. 对比不同量化方案的成本差异
+4. Compare cost differences across quantization options
 
-### 定价脚本用法
+### 4. Live Cluster Analysis (When User Provides Cluster Credentials)
+
+When the user provides an OpenSearch cluster URL and credentials, use the cluster analyzer to
+connect and review their vector search configuration. This is **read-only** — never modify the cluster.
+
+**Prerequisites**: User must explicitly provide:
+- Cluster URL (e.g., `https://my-cluster.us-east-1.es.amazonaws.com`)
+- Username and password (basic auth), OR `--no-auth` for clusters without authentication
+
+**Workflow**:
+
+1. **Ask for credentials** if not provided: URL, username, password
+2. **Run cluster overview** to get health, nodes, and k-NN index list:
+   ```bash
+   python3 scripts/analyze_cluster.py --url <url> -u <user> -p <pass> --action cluster-overview -f pretty
+   ```
+3. **Analyze specific index** if user specifies one, or pick the most important k-NN index:
+   ```bash
+   python3 scripts/analyze_cluster.py --url <url> -u <user> -p <pass> --action index-detail --index <index_name> -f pretty
+   ```
+4. **Analyze shard distribution** for the target index:
+   ```bash
+   python3 scripts/analyze_cluster.py --url <url> -u <user> -p <pass> --action shard-analysis --index <index_name> -f pretty
+   ```
+5. **Run all analyses at once** (for a comprehensive report):
+   ```bash
+   python3 scripts/analyze_cluster.py --url <url> -u <user> -p <pass> --action all --index <index_name> -f pretty
+   ```
+6. **Interpret the JSON output** and present findings to the user:
+   - Cluster health status and node resource utilization
+   - Vector field configurations (engine, dimensions, HNSW params, quantization)
+   - Memory estimates vs actual cluster capacity
+   - Auto-generated recommendations (from the script)
+7. **Provide actionable advice** based on findings:
+   - Suggest better engine/quantization if needed (provide example mapping JSON)
+   - Suggest instance resizing if memory is over/under-provisioned
+   - Suggest shard rebalancing if distribution is uneven
+   - **NEVER execute write operations** — only provide example configurations for the user to apply
+
+**Cluster Analyzer Script Reference**:
+```
+Usage:
+  python3 scripts/analyze_cluster.py --url <url> -u <user> -p <pass> [options]
+
+Actions:
+  --action cluster-overview   Cluster health, nodes, k-NN stats, and all k-NN index summary (default)
+  --action index-detail       Deep dive into a specific index's vector config + memory estimates
+  --action shard-analysis     Shard distribution and sizing for a specific index
+  --action all                Run all analyses
+
+Options:
+  --index <name>     Target a specific index (required for index-detail and shard-analysis)
+  --no-auth          Connect without authentication
+  --verify-ssl       Verify SSL certificates (default: skip)
+  --format pretty    Human-readable JSON output
+
+Output: JSON with these top-level keys:
+  - cluster_overview: health, version, nodes (memory/CPU/JVM), knn_stats
+  - knn_indices: list of all k-NN enabled indices with vector field summaries
+  - index_detail/index_details: vector field configs, memory estimates, search stats
+  - shard_analysis/shard_analyses: shard distribution across nodes
+  - recommendations: auto-generated optimization suggestions with severity levels
+```
+
+**Safety constraints for live cluster analysis**:
+- The script is strictly **read-only** (uses only GET/CAT APIs)
+- **NEVER** create, update, or delete indices on the user's cluster
+- **NEVER** change cluster settings or mappings
+- Only provide example JSON configurations for the user to review and apply themselves
+- If the user asks to apply changes, provide the exact API calls/JSON but let the user execute them
+
+### Pricing Script Usage
 
 ```bash
-# 查询指定区域所有实例价格
+# Query all instance prices for a region
 python3 scripts/get_opensearch_pricing.py --region us-east-1
 
-# 查询特定实例类型（不需要 .search 后缀）
+# Query specific instance type (no .search suffix needed)
 python3 scripts/get_opensearch_pricing.py --region us-east-1 --instance-type r7g.xlarge
 
-# JSON 格式输出（便于计算）
+# JSON format output (for calculations)
 python3 scripts/get_opensearch_pricing.py --region us-east-1 --instance-type r7g.xlarge --format json
 ```
 
-输出字段：instance_type, vcpu, memory_gib, price_per_hour_usd, price_per_month_usd, network
+Output fields: instance_type, vcpu, memory_gib, price_per_hour_usd, price_per_month_usd, network
 
-## 推荐默认配置
+## Recommended Defaults
 
-回答时始终推荐以下默认值（除非用户有特殊需求）：
+Always recommend these defaults unless user has specific requirements:
 
-- **引擎**: FAISS
-- **相似度**: cosine
-- **实例系列**: r7g/r8g（内存优化）或 or2/om2（OpenSearch 优化）
-- **HNSW 参数**: ef_construction=512, m=16
-- **量化首选**: Byte (4x) 用于生产，Binary (32x) 用于极致成本优化
-- **磁盘模式阈值**: 数据量 > 50M 向量且可接受 100-200ms 延迟时考虑
+- **Engine**: FAISS
+- **Similarity**: cosine
+- **Instance family** (Gen 7+ only, never recommend older generations):
+  - **Vector search (k-NN)**: r7g/r8g/r8gd (memory-optimized, lowest search latency; r8g Graviton4 ~30% faster than r7g)
+  - **Indexing-heavy + vector**: OR2 (optimized, S3 durability, good memory-to-price ratio)
+  - **Indexing-heavy (no vector)**: OM2 (highest indexing throughput, 15% faster than OR1)
+  - **Large dataset with NVMe**: OI2 (storage-optimized, no EBS needed)
+  - Do NOT recommend: r6g, r5, m5, c5, i3, or any older instance families
+- **HNSW parameters**: ef_construction=512, m=16
+- **Quantization preference**: Byte (4x) for production, Binary (32x) for aggressive cost optimization
+- **Disk mode threshold**: Consider when data > 50M vectors and 100-200ms latency is acceptable
 
-## 回答模板
+### Instance Selection Decision Tree
 
-回答成本/选型问题时按以下结构组织：
+```
+Is this primarily a vector search (k-NN) workload?
+├─ YES → r7g/r8g/r8gd (best search latency, standard EBS; prefer r8g for Graviton4)
+│        └─ Need S3 durability? → OR2 (accept 10s refresh interval tradeoff)
+├─ Mixed (logs + vectors) → OR2 for log nodes, r7g/r8g for vector nodes
+└─ NO (logs/observability/analytics)
+   ├─ Write-heavy → OM2 (highest ingest throughput)
+   ├─ Balanced → OR2 (good all-around with S3 durability)
+   └─ Need NVMe IOPS → OI2
+```
 
-1. **需求确认**：向量数量、维度、QPS、延迟要求
-2. **内存计算**：原始大小 → 量化后大小 → 所需 KNN 内存
-3. **集群配置**：实例类型 × 数量、分片、副本
-4. **成本估算**：实例费 + EBS 费 = 月度总成本
-5. **优化建议**：量化方案对比、Reserved Instance 折扣
+## Response Template
+
+Organize cost/sizing answers in this structure:
+
+1. **Requirements confirmation**: Vector count, dimensions, QPS, latency requirements
+2. **Memory calculation**: Raw size → quantized size → required KNN memory
+3. **Cluster configuration**: Instance type × count, shards, replicas
+4. **Cost estimation**: Instance cost + EBS cost = monthly total
+5. **Optimization suggestions**: Quantization comparison, Reserved Instance discounts
