@@ -1,4 +1,4 @@
-# gcalcli-calendar
+# quick-gcalcli
 
 An OpenClaw skill for managing Google Calendar via [gcalcli](https://github.com/insanum/gcalcli).
 
@@ -16,32 +16,22 @@ Teaches the agent to read, search, create, and delete Google Calendar events usi
 - `gcalcli` — install via `pip install gcalcli` or `brew install gcalcli`
 - Google Calendar OAuth2 credentials (set up via `gcalcli init` or `gcalcli list` on first run)
 
-## Step by step agent Setup
+## Quick Setup
 
-STEP 1. Ask the user for `client-id` and `client-secret`. Once received, send them this command to run in their terminal:
+STEP 1. After you get your Google OAuth credentials (`client-id` and `client-secret`), run the command below to complete quick OAuth, or run `gcalcli init` to setup manually.
 
 ```bash
 gcalcli --client-id=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com --client-secret=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxxxxxx list
 ```
 
-**Note to user:** The agent cannot directly authenticate with Google's OAuth system, so you must run this command manually. When prompted, open the URL in your browser, grant Google Calendar access, and the command will complete the authentication.
-
-**Note to agent**: Starting from STEP 2, the agent should perform tasks automatically without asking for user confirmation for each individual step, unless a critical error occurs or essential information is missing.
-
-STEP 2. Ask the user to confirm they have successfully run the command and completed OAuth authentication.
-
-STEP 3. Ask the user to provide the list of calendars from the command output in command `gcalcli list`. Pick the default Gmail/calendar. If there are multiple, choose the one marked `owner`; if there is only one, use it.
-
-STEP 4. Get timezone from USER.md. If missing, ask the user.
-
-STEP 5. Open gcalcli config `gcalcli config edit` then add to the bottom of the config file:
+STEP 2. Set up the default calendar and timezone by opening the gcalcli config file (`gcalcli config edit`) and adding these two variables at the bottom:
 
 ```ini
 default_calendar = "abcxyz123@gmail.com"
 localization_time_zone = "abc/xyz"
 ```
 
-STEP 6. Quick validation:
+STEP 3. Quick validation:
 
 ```bash
 gcalcli --nocolor agenda today
