@@ -3,15 +3,7 @@ name: china-tts
 description: 国内可用的文本转语音技能，基于硅基流动（SiliconFlow）API。Use when the user wants to convert text to speech in China without VPN. Supports CosyVoice2-0.5B (multilingual, emotion control, dialect support) and MOSS-TTSD-v0.5 (dual-speaker podcast style). 8 built-in voices, custom voice cloning, speed/gain control. No VPN needed — domestic access, pay via Alipay/WeChat. Requires a SiliconFlow API key.
 version: 1.0.0
 license: MIT-0
-metadata:
-  openclaw:
-    emoji: "🔊"
-    requires:
-      bins:
-        - curl
-    requires_env:
-      - name: SILICONFLOW_API_KEY
-        description: 硅基流动 API Key，在 cloud.siliconflow.cn 注册后创建，新用户有免费额度，支持支付宝/微信充值
+metadata: {"openclaw": {"emoji": "🔊", "requires": {"bins": ["curl"], "env": ["SILICONFLOW_API_KEY"]}, "primaryEnv": "SILICONFLOW_API_KEY"}}
 ---
 
 # 国内文本转语音 China TTS
