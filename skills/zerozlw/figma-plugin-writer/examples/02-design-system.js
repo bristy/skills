@@ -1,6 +1,6 @@
 // 02-design-system.js
-// 示例：创建一套基础 Design System 组件库
-// 用法：将此代码复制到你的 code.js 中，然后运行插件
+// Example: Create a basic Design System component library
+// Usage: Copy this code into your code.js, then run the plugin
 
 var C = {
   n900:  { r: 0.10, g: 0.10, b: 0.11 },

@@ -1,11 +1,17 @@
 {
   "owner": "zerozlw",
   "slug": "figma-plugin-writer",
-  "displayName": "Openclaw Figma Plugin Writer",
+  "displayName": "Figma Plugin Writer",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1774001676603,
-    "commit": "https://github.com/openclaw/skills/commit/c15a268cea5a6539ad3ca9b00ca9098397ad9a82"
+    "version": "1.0.0",
+    "publishedAt": 1774252548596,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1774001676603,
+      "commit": "https://github.com/openclaw/skills/commit/c15a268cea5a6539ad3ca9b00ca9098397ad9a82"
+    }
+  ]
 }

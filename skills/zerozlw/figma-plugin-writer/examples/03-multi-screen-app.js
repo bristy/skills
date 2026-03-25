@@ -1,6 +1,6 @@
 // 03-multi-screen-app.js
-// 示例：创建一个多屏幕 iOS App 原型
-// 用法：将此代码复制到你的 code.js 中，然后运行插件
+// Example: Create a multi-screen iOS App prototype
+// Usage: Copy this code into your code.js, then run the plugin
 
 var SW = 375; // iPhone width
 var SH = 812; // iPhone height
@@ -82,7 +82,7 @@ async function main() {
     for (var i = 0; i < old.length; i++) old[i].remove();
 
     var tabs = ["Home", "Explore", "Add", "Alerts", "Profile"];
-    var gap = 60; // gap between screens
+    var gap = 60;
 
     // --- Screen 1: Home ---
     var s1 = frame("Home", SW, SH, C.bg);

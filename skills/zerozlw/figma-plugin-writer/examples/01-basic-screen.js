@@ -1,23 +1,23 @@
 // 01-basic-screen.js
-// 示例：创建一个基础的 iOS 风格屏幕
-// 用法：将此代码复制到你的 code.js 中，然后运行插件
+// Example: Create a basic iOS-style screen
+// Usage: Copy this code into your code.js, then run the plugin
 
 async function main() {
   try {
-    // 加载字体
+    // Load fonts
     await figma.loadFontAsync({ family: "Inter", style: "Regular" });
     await figma.loadFontAsync({ family: "Inter", style: "Bold" });
 
-    // 获取最后一个页面
+    // Get the last page
     var pages = figma.root.children;
     var target = pages[pages.length - 1];
     await figma.setCurrentPageAsync(target);
 
-    // 清空旧内容
+    // Clear old content
     var old = target.children.slice();
     for (var i = 0; i < old.length; i++) old[i].remove();
 
-    // 创建屏幕背景
+    // Create screen background
     var screen = figma.createFrame();
     screen.name = "Home Screen";
     screen.resize(375, 812);
@@ -26,7 +26,7 @@ async function main() {
     screen.y = 0;
     target.appendChild(screen);
 
-    // 状态栏时间
+    // Status bar time
     var time = figma.createText();
     time.characters = "9:41";
     time.fontSize = 15;
@@ -36,7 +36,7 @@ async function main() {
     time.y = 12;
     screen.appendChild(time);
 
-    // 标题
+    // Title
     var title = figma.createText();
     title.characters = "Hello, World";
     title.fontSize = 34;
@@ -46,7 +46,7 @@ async function main() {
     title.y = 60;
     screen.appendChild(title);
 
-    // 卡片
+    // Card
     var card = figma.createFrame();
     card.name = "Card";
     card.resize(335, 120);
@@ -65,7 +65,7 @@ async function main() {
     card.y = 120;
     screen.appendChild(card);
 
-    // 卡片标题
+    // Card title
     var cardTitle = figma.createText();
     cardTitle.characters = "Welcome";
     cardTitle.fontSize = 20;
@@ -75,7 +75,7 @@ async function main() {
     cardTitle.y = 20;
     card.appendChild(cardTitle);
 
-    // 卡片描述
+    // Card description
     var cardDesc = figma.createText();
     cardDesc.characters = "This is your first Figma plugin design.";
     cardDesc.fontSize = 14;
@@ -85,7 +85,7 @@ async function main() {
     cardDesc.y = 50;
     card.appendChild(cardDesc);
 
-    // 按钮
+    // Button
     var btn = figma.createFrame();
     btn.name = "Button";
     btn.resize(335, 50);
@@ -105,7 +105,7 @@ async function main() {
     btnText.textAlignVertical = "CENTER";
     btn.appendChild(btnText);
 
-    // 完成
+    // Done
     figma.viewport.scrollAndZoomIntoView([screen]);
     figma.notify("Screen created!", { timeout: 3000 });
 

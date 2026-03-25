@@ -1,34 +1,29 @@
-# SKILL.md — Figma Plugin Writer
+---
+name: figma-plugin-writer
+description: Write Figma plugin code to automate UI design in Figma files. Activate when user wants to create UI mockups, design systems, app screens, or visual prototypes directly in Figma via plugin code. NOT for: Figma API REST calls, file management, or commenting.
+---
 
-## 概述
+# Figma Plugin Writer
 
-通过编写 Figma 插件代码，实现对 Figma 文件的自动化设计。每次更新 `code.js` 后通知用户触发插件执行。
+Write plugin code (`code.js`) to automate design in Figma files. After updating the code, notify the user to run the plugin.
 
-## 使用前配置
+## Prerequisites
 
-用户需要告诉 agent 以下信息（在对话中或通过 TOOLS.md）：
+The user must provide:
+1. **Plugin directory** — folder containing `code.js` and `manifest.json`
+2. **Code file** — typically `code.js`
+3. **Target Figma file** — optional, for context
 
-1. **插件目录路径** — Figma 插件所在文件夹（含 code.js 和 manifest.json）
-2. **代码文件** — 通常是 `code.js`
-3. **目标 Figma 文件** — 可选，用于上下文说明
+## Workflow
 
-示例配置（放入 agent 的 TOOLS.md）：
-```markdown
-## Figma Plugin Writer
-**插件目录：** ~/Desktop/my-figma-plugin/
-**代码文件：** code.js
-```
+1. Receive design requirements from the user
+2. Write plugin code to `code.js`
+3. Notify user: `Plugins → Development → <plugin-name>`
+4. Iterate based on feedback
 
-## 工作流程
+## API Reference
 
-1. **接收需求** — 用户描述要设计的内容
-2. **编写插件代码** — 更新 `code.js`，包含要绘制的设计元素
-3. **通知用户** — 告诉用户"代码已更新，请运行插件：Plugins → Development → 插件名"
-4. **等待反馈** — 用户运行后反馈效果，根据反馈迭代
-
-## Figma Plugin API 参考
-
-### 字体加载（必须在创建文字前执行）
+### Font Loading (required before creating text)
 
 ```js
 await figma.loadFontAsync({ family: "Inter", style: "Regular" });
@@ -37,7 +32,7 @@ await figma.loadFontAsync({ family: "Inter", style: "Semi Bold" });
 await figma.loadFontAsync({ family: "Inter", style: "Bold" });
 ```
 
-### 创建 Frame（画框/容器）
+### Frame (Container)
 
 ```js
 var frame = figma.createFrame();
@@ -49,7 +44,7 @@ frame.x = 0;
 frame.y = 0;
 ```
 
-### 创建文字
+### Text
 
 ```js
 var text = figma.createText();
@@ -59,7 +54,7 @@ text.fontName = { family: "Inter", style: "Regular" };
 text.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }];
 ```
 
-### 创建矩形
+### Rectangle
 
 ```js
 var rect = figma.createRectangle();
@@ -68,14 +63,14 @@ rect.fills = [{ type: "SOLID", color: { r: 0.9, g: 0.2, b: 0.2 } }];
 rect.cornerRadius = 8;
 ```
 
-### 节点嵌套
+### Nesting Nodes
 
 ```js
-frame.appendChild(text);       // text 变成 frame 的子节点
-parentPage.appendChild(frame); // frame 放到页面上
+frame.appendChild(text);
+parentPage.appendChild(frame);
 ```
 
-### 阴影效果
+### Drop Shadow
 
 ```js
 frame.effects = [{
@@ -89,24 +84,24 @@ frame.effects = [{
 }];
 ```
 
-### 描边
+### Stroke
 
 ```js
 frame.strokes = [{ type: "SOLID", color: { r: 0.8, g: 0.8, b: 0.8 } }];
 frame.strokeWeight = 1;
 ```
 
-### 文字对齐
+### Text Alignment
 
 ```js
 text.textAlignHorizontal = "CENTER"; // LEFT | CENTER | RIGHT | JUSTIFIED
 text.textAlignVertical = "CENTER";   // TOP | CENTER | BOTTOM
 ```
 
-### 自动布局（Frame 内）
+### Auto Layout (inside Frame)
 
 ```js
-frame.layoutMode = "VERTICAL"; // 或 "HORIZONTAL"
+frame.layoutMode = "VERTICAL"; // or "HORIZONTAL"
 frame.primaryAxisAlignItems = "CENTER";   // MIN | CENTER | MAX | SPACE_BETWEEN
 frame.counterAxisAlignItems = "CENTER";
 frame.paddingTop = 16;
@@ -116,16 +111,15 @@ frame.paddingRight = 16;
 frame.itemSpacing = 8;
 ```
 
-### 切换页面
+### Page Navigation
 
 ```js
-// dynamic-page 模式下必须用异步方法
 var pages = figma.root.children;
 var targetPage = pages[pages.length - 1];
 await figma.setCurrentPageAsync(targetPage);
 ```
 
-### 清空页面内容
+### Clear Page Content
 
 ```js
 var old = targetPage.children.slice();
@@ -134,20 +128,20 @@ for (var i = 0; i < old.length; i++) {
 }
 ```
 
-### 视口操作
+### Viewport
 
 ```js
 figma.viewport.scrollAndZoomIntoView([frame]);
 ```
 
-### 通知
+### Notifications
 
 ```js
 figma.notify("Done!", { timeout: 3000 });
 figma.notify("ERROR: " + e.message, { timeout: 10000 });
 ```
 
-### 获取页面信息
+### Page Info
 
 ```js
 var pages = figma.root.children;
@@ -155,25 +149,25 @@ var count = pages.length;
 var pageName = pages[0].name;
 ```
 
-## 代码模板
+## Code Template
 
 ```js
 async function main() {
   try {
-    // 1. 加载字体
+    // 1. Load fonts
     await figma.loadFontAsync({ family: "Inter", style: "Regular" });
     await figma.loadFontAsync({ family: "Inter", style: "Bold" });
 
-    // 2. 获取目标页面
+    // 2. Get target page
     var pages = figma.root.children;
     var target = pages[pages.length - 1];
     await figma.setCurrentPageAsync(target);
 
-    // 3. 清空旧内容
+    // 3. Clear old content
     var old = target.children.slice();
     for (var i = 0; i < old.length; i++) old[i].remove();
 
-    // 4. 创建设计...
+    // 4. Create design...
     var frame = figma.createFrame();
     frame.name = "Screen";
     frame.resize(375, 812);
@@ -182,7 +176,7 @@ async function main() {
     frame.y = 0;
     target.appendChild(frame);
 
-    // 5. 完成
+    // 5. Done
     figma.viewport.scrollAndZoomIntoView([frame]);
     figma.notify("Design complete!", { timeout: 3000 });
 
@@ -194,33 +188,36 @@ async function main() {
 main();
 ```
 
-## 重要踩坑记录
+## Pitfalls & Gotchas
 
-### documentAccess: "dynamic-page" 模式
-manifest.json 中如果有 `"documentAccess": "dynamic-page"`：
+### documentAccess: "dynamic-page" Mode
+
+If `manifest.json` has `"documentAccess": "dynamic-page"`:
 - ❌ `figma.currentPage = page` → ✅ `await figma.setCurrentPageAsync(page)`
 - ❌ `figma.getNodeById()` → ✅ `await figma.getNodeByIdAsync()`
-- ❌ `figma.closePlugin()` → ✅ `figma.closePluginAsync()`
+- ❌ `figma.closePlugin()` → ✅ `await figma.closePluginAsync()`
 
-### 容错策略
-- 所有代码必须包在 `try-catch` 中
-- 错误时用 `figma.notify("ERROR: " + e.message, { timeout: 10000 })` 显示
-- 不要在文字中使用 emoji（字体可能不支持该 glyph）
-- 不要自动调用 `figma.closePlugin()`（让用户手动关闭）
+### Error Handling
 
-### 免费用户限制
-- 最多 3 个 Pages，不要创建新 Page
-- 在现有 Page 内操作（清空后重建）
+- Always wrap code in `try-catch`
+- Show errors via `figma.notify("ERROR: " + e.message, { timeout: 10000 })`
+- Do not use emoji in text content (font may not support the glyph)
+- Do not call `figma.closePlugin()` automatically (let user close manually)
 
-### 字体说明
-- 默认使用 Inter（Figma 内置字体）
-- 支持的样式："Regular"、"Medium"、"Semi Bold"、"Bold"
-- 如需其他字体，用户需先在 Figma 中安装
-- 颜色用 `{ r, g, b }` 格式，值域 0-1
+### Free Tier Limits
 
-## 迭代模式
+- Max 3 Pages — do not create new Pages
+- Work within existing Pages (clear and rebuild)
 
-每次设计迭代时：
-1. 清空目标 Page 内的旧元素：`page.children.slice().forEach(c => c.remove())`
-2. 重新创建新设计
-3. 通知用户重新运行插件
+### Fonts
+
+- Default: Inter (built into Figma)
+- Supported styles: "Regular", "Medium", "Semi Bold", "Bold"
+- Colors use `{ r, g, b }` format with 0-1 range
+
+## Iteration Pattern
+
+On each design iteration:
+1. Clear old elements: `page.children.slice().forEach(c => c.remove())`
+2. Recreate design with changes
+3. Notify user to re-run the plugin
