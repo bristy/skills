@@ -1,0 +1,11 @@
+{
+  "owner": "tangyang",
+  "slug": "test-test",
+  "displayName": "just for test",
+  "latest": {
+    "version": "1.0.16",
+    "publishedAt": 1774341820993,
+    "commit": null
+  },
+  "history": []
+}
