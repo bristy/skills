@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "customgpt",
+  "displayName": "Customgpt",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774191761562,
+    "commit": null
+  },
+  "history": []
+}
