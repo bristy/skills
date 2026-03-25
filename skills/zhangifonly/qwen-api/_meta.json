@@ -1,0 +1,11 @@
+{
+  "owner": "zhangifonly",
+  "slug": "qwen-api",
+  "displayName": "Qwen Api",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774181652805,
+    "commit": null
+  },
+  "history": []
+}
