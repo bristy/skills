@@ -3,9 +3,15 @@
   "slug": "bidu-search",
   "displayName": "Baidu Web Search",
   "latest": {
-    "version": "0.1.0",
-    "publishedAt": 1773739346468,
-    "commit": "https://github.com/openclaw/skills/commit/04f954912f80c34a0536d38af200628444c34369"
+    "version": "2.1.2",
+    "publishedAt": 1773805049726,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.0",
+      "publishedAt": 1773739346468,
+      "commit": "https://github.com/openclaw/skills/commit/04f954912f80c34a0536d38af200628444c34369"
+    }
+  ]
 }

@@ -6,8 +6,16 @@ Search the web using Baidu Search API.
 """
 
 import requests
+import os
 import json
 from typing import List, Dict, Optional
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+env_path = Path(__file__).parent.parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
 
 
 class BaiduSearch:
@@ -18,7 +26,7 @@ class BaiduSearch:
         Initialize Baidu Search client.
         
         Args:
-            api_key: Baidu Search API key. If None, will try to load from environment.
+            api_key: Baidu Search API key. If None, will try to load from .env or environment.
         """
         self.api_key = api_key or os.getenv('BAIDU_API_KEY')
         self.base_url = 'https://aip.baidubce.com/rest/2.0/search'

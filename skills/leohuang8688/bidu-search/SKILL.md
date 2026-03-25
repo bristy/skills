@@ -61,8 +61,19 @@ cd ~/.openclaw/workspace/skills
 
 ### Configuration
 
+**Option 1: Using .env file (Recommended)**
+
 ```bash
-# Set Baidu API key
+# Copy the example .env file
+cp .env.example .env
+
+# Edit .env and add your API key
+nano .env  # or use your favorite editor
+```
+
+**Option 2: Using environment variable**
+
+```bash
 export BAIDU_API_KEY="your_baidu_api_key"
 ```
 

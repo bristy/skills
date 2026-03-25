@@ -101,6 +101,7 @@ baidu-web-search/
 ├── src/
 │   └── baidu_search.py
 ├── requirements.txt
+├── .env.example
 ├── SKILL.md
 └── README.md
 ```
