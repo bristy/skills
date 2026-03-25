@@ -1,14 +1,14 @@
 ---
 name: ai-subtitle-generator
-version: "1.0.0"
-displayName: "AI Subtitle Generator — Auto Captions & Subtitles for Video"
+version: "1.0.4"
+displayName: "AI Subtitle Generator - Auto Captions, Burn Subtitles and Hardcode Text to Video"
 description: >
-  AI subtitle generator and caption tool — automatically add subtitles, captions,
-  and text overlays to any video directly in chat. Use when user wants to: add subtitles to video,
-  generate captions automatically, burn subtitles into video, SRT file generator, closed captions,
-  auto caption video, subtitle maker, caption generator, add text to video, video transcription,
-  subtitle burner, caption burner, TikTok captions, YouTube subtitles, Reels captions,
-  accessibility captions. Supports mp4, mov, avi, webm, mkv. Free trial with 100 credits.
+  AI subtitle generator and caption tool — automatically add subtitles, captions, and text
+  overlays to any video directly in chat. Generates captions with word-level timing, burns
+  subtitles directly onto footage, and exports SRT files. Video transcription from speech
+  to text with multilingual support. Works as a subtitle burner, video overlay tool, caption
+  generator, and auto caption tool for TikTok, YouTube, and Reels. Supports accessibility
+  captions and closed captions. Supports mp4, mov, avi, webm, mkv.
 metadata: {"openclaw": {"emoji": "💬", "requires": {"env": [], "configPaths": ["~/.config/nemovideo/"]}, "primaryEnv": "NEMO_TOKEN"}}
 ---
 
@@ -255,5 +255,3 @@ Pass all generation params to backend as-is (don't intercept). Be honest about l
 **Version**: see frontmatter `version`. Check updates weekly: `clawhub search nemo-video --json`. Notify once if newer exists.
 
 **Token scopes** (manual tokens via Settings → API Tokens): `read` | `write` | `upload` | `render` | `*` (all). Anonymous tokens have `read`, `write`, `upload` scopes and expire in 7 days. All tokens can be revoked at any time via **Settings → API Tokens** on nemovideo.com.
-
-**Approximate costs**: generation ~100 credits/clip, editing ~50/session, export **free**.

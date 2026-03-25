@@ -1,11 +1,17 @@
 {
   "owner": "imo14reifey",
   "slug": "ai-subtitle-generator",
-  "displayName": "Ai Subtitle Generator",
+  "displayName": "AI Subtitle Generator - Auto Captions, Burn Subtitles and Hardcode Text to Video",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1774110940745,
-    "commit": "https://github.com/openclaw/skills/commit/69e24f253cd86c0be43b168fbe58939b35d92dd7"
+    "version": "1.0.4",
+    "publishedAt": 1774234230018,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1774110940745,
+      "commit": "https://github.com/openclaw/skills/commit/69e24f253cd86c0be43b168fbe58939b35d92dd7"
+    }
+  ]
 }
