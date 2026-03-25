@@ -1,0 +1,11 @@
+{
+  "owner": "codekungfu",
+  "slug": "gadget",
+  "displayName": "Gadget",
+  "latest": {
+    "version": "0.1.0",
+    "publishedAt": 1774224061543,
+    "commit": null
+  },
+  "history": []
+}
