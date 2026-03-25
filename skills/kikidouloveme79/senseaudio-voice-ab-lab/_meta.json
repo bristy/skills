@@ -3,9 +3,15 @@
   "slug": "senseaudio-voice-ab-lab",
   "displayName": "senseaudio-voice-ab-lab",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1773734603240,
-    "commit": "https://github.com/openclaw/skills/commit/a982a14a9a1d2a4d48f006e60f90be88d7f40eae"
+    "version": "1.0.1",
+    "publishedAt": 1774168600703,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1773734603240,
+      "commit": "https://github.com/openclaw/skills/commit/a982a14a9a1d2a4d48f006e60f90be88d7f40eae"
+    }
+  ]
 }

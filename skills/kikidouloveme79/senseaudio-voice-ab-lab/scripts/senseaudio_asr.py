@@ -28,6 +28,8 @@ def _bootstrap_shared_senseaudio_env() -> None:
 
 _bootstrap_shared_senseaudio_env()
 
+from senseaudio_api_guard import ensure_runtime_api_key
+
 
 OPENAPI_URL = "https://api.senseaudio.cn/v1/audio/transcriptions"
 PLATFORM_URL = "https://platform.senseaudio.cn/api/audio/transcriptions"
@@ -240,8 +242,7 @@ def main() -> int:
         endpoint = PLATFORM_URL
         model = ""
     else:
-        if not api_key:
-            raise SystemExit(f"Missing API key in ${args.api_key_env}.")
+        api_key = ensure_runtime_api_key(api_key, args.api_key_env, purpose="asr")
         validate_input(path, OPENAPI_MAX_BYTES)
         response = transcribe_openapi(path, api_key, args.model, args.response_format, args.language, args.stream)
         endpoint = OPENAPI_URL

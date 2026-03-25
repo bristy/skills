@@ -22,6 +22,8 @@ def _bootstrap_shared_senseaudio_env() -> None:
 
 _bootstrap_shared_senseaudio_env()
 
+from audioclaw_paths import get_workspace_root
+
 
 def run_step(args: list[str], env: dict) -> None:
     completed = subprocess.run(args, env=env, check=False, capture_output=True, text=True)
@@ -148,7 +150,7 @@ def main() -> int:
                 "--out-json",
                 str(feishu_send_json),
                 "--workspace-root",
-                args.workspace_root or str(Path.home() / ".picoclaw" / "workspace"),
+                args.workspace_root or str(get_workspace_root()),
                 *(["--chat-id", args.chat_id] if args.chat_id else []),
                 *(["--session-file", args.session_file] if args.session_file else []),
                 *(["--send-labels"] if args.send_labels else []),

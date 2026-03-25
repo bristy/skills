@@ -1,9 +1,9 @@
 ---
 name: senseaudio-voice-ab-lab
-description: Use when a team wants to generate multiple ad, spoken-copy, sales, or promo voice variants from one typed or spoken creative brief, transcribe voice memos with SenseAudio ASR, and synthesize the variants with the same SenseAudio voice_id for A/B testing, regional wording experiments, or rapid commercial validation.
+description: Use when a team wants to generate multiple ad, spoken-copy, sales, or promo voice variants from one typed or spoken creative brief, transcribe voice memos with AudioClaw ASR, and synthesize the variants with the same AudioClaw voice_id for A/B testing, regional wording experiments, or rapid commercial validation.
 ---
 
-# SenseAudio Voice AB Lab
+# AudioClaw Voice AB Lab
 
 ## What this skill is for
 
@@ -73,13 +73,13 @@ Important:
 3. If the input is already typed and structured enough, run `scripts/run_typed_brief_pipeline.py` directly, or call `scripts/build_voice_ab_variants.py` yourself.
 4. Run `scripts/build_voice_ab_variants.py` to generate variants.
 5. Pick one fixed `voice_id`.
-   - If you have already created a cloned voice on the SenseAudio platform, use that cloned `voice_id`.
+   - If you have already created a cloned voice on the AudioClaw platform, use that cloned `voice_id`.
    - A prepared cloned voice id commonly looks like `vc-...`, and can be passed directly with `--clone-voice-id`.
    - If not, use one validated system voice.
 6. If you want faster perceived processing for spoken briefs, enable stream ASR in `scripts/senseaudio_asr.py` or `scripts/run_spoken_brief_pipeline.py`.
-7. Run `scripts/batch_tts_variants.py` to synthesize every variant with the same voice. This skill already uses SenseAudio streaming TTS under the hood and now records stream chunk metadata.
+7. Run `scripts/batch_tts_variants.py` to synthesize every variant with the same voice. This skill already uses AudioClaw streaming TTS under the hood and now records stream chunk metadata.
    - If the chosen voice is a clone id like `vc-...`, the batch TTS step now auto-routes to `SenseAudio-TTS-1.5`.
-8. If the user wants to hear the results directly in Feishu or PicoClaw, run `scripts/send_ab_variants_to_feishu.py` after synthesis, or use `scripts/run_spoken_brief_pipeline.py --send-feishu-audio` / `scripts/run_typed_brief_pipeline.py --send-feishu-audio`.
+8. If the user wants to hear the results directly in Feishu or AudioClaw, run `scripts/send_ab_variants_to_feishu.py` after synthesis, or use `scripts/run_spoken_brief_pipeline.py --send-feishu-audio` / `scripts/run_typed_brief_pipeline.py --send-feishu-audio`.
    - This step reuses the previously built Feishu voice-reply path instead of sending plain files.
    - It transcodes the generated `.mp3` variants into `.ogg/.opus` and sends them one by one as real `audio` messages.
 9. Review:
@@ -89,7 +89,7 @@ Important:
    - variant metadata for A/B tracking
    - optional Feishu send results
 
-## OpenClaw Or PicoClaw Trigger Pattern
+## AudioClaw Trigger Pattern
 
 Use this skill as an explicit task mode, not as a hidden background guess.
 
@@ -153,15 +153,26 @@ If the user does not provide a cloned voice, ask for either:
   - similar script length
 - Treat `regional_style` as a wording choice, not an official dialect model.
 - Official clone support is a two-step chain:
-  - create the clone on the SenseAudio platform first
+  - create the clone on the AudioClaw platform first
   - then pass the prepared clone `voice_id` into this skill for generation
+
+## API key lookup
+
+For the generation side of this skill:
+
+- TTS-oriented scripts now default to `SENSEAUDIO_API_KEY`
+
+Practical rule:
+- `scripts/run_spoken_brief_pipeline.py`, `scripts/run_typed_brief_pipeline.py`, and `scripts/batch_tts_variants.py` now default to `SENSEAUDIO_API_KEY`
+- If the host app injects `SENSEAUDIO_API_KEY` as a login token such as `v2.public...`, the shared bootstrap replaces it with the real `sk-...` value from `~/.audioclaw/workspace/state/senseaudio_credentials.json` before the synthesis step starts
+- The ASR scripts keep their own existing defaults and are intentionally not changed here
 
 ## Resources
 
 - `scripts/build_voice_ab_variants.py`
   - Builds an A/B manifest from one campaign brief
 - `scripts/senseaudio_asr.py`
-  - Calls SenseAudio ASR using either the official open API host or the official platform endpoint
+  - Calls AudioClaw ASR using either the official open API host or the official platform endpoint
   - Defaults to the official `sense-asr-deepthink` model for spoken briefs
 - `scripts/extract_spoken_brief.py`
   - Extracts a structured campaign brief from an ASR transcript

@@ -1,8 +1,8 @@
-## SenseAudio ASR brief intake
+## AudioClaw ASR brief intake
 
 Use this when a marketer, sales lead, or content producer records a spoken brief instead of typing one.
 
-Official findings confirmed from SenseAudio sources:
+Official findings confirmed from AudioClaw-aligned sources:
 
 - The public site exposes a speech recognition workspace at `/workspace/speech-recognition`.
 - The official HTTP API endpoint is `POST https://api.senseaudio.cn/v1/audio/transcriptions`.

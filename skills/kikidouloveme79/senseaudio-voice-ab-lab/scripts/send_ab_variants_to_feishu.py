@@ -10,9 +10,19 @@ import time
 from pathlib import Path
 from typing import Any
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+for parent in SCRIPT_DIR.parents:
+    candidate = parent / "_shared" / "audioclaw_paths.py"
+    if candidate.exists():
+        candidate_dir = str(candidate.parent)
+        if candidate_dir not in sys.path:
+            sys.path.insert(0, candidate_dir)
+        break
 
-DEFAULT_CONFIG_PATH = Path.home() / ".picoclaw" / "config.json"
-DEFAULT_WORKSPACE = Path.home() / ".picoclaw" / "workspace"
+from audioclaw_paths import get_config_path, get_workspace_root
+
+DEFAULT_CONFIG_PATH = get_config_path()
+DEFAULT_WORKSPACE = get_workspace_root()
 
 
 def load_json(path: Path) -> dict:
