@@ -81,7 +81,6 @@ Use this skill when:
 - Cookie 保存在本地，注意保密
 - 定期更新登录状态
 - 不要分享账号配置文件
-- 封面图片只支持本地文件路径，不支持URL
 
 ## Troubleshooting
 
