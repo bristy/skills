@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const tools = JSON.parse(fs.readFileSync(path.join(__dirname, 'tools.json'), 'utf8'));
+const templates = JSON.parse(fs.readFileSync(path.join(__dirname, 'templates.json'), 'utf8'));
 const BASE_URL = process.env.RYNJER_BASE_URL || 'https://rynjer.com';
 const ACCESS_TOKEN = process.env.RYNJER_ACCESS_TOKEN || '';
 const USE_LIVE = process.env.RYNJER_USE_LIVE === '1';
@@ -10,9 +11,17 @@ const USE_LIVE = process.env.RYNJER_USE_LIVE === '1';
 function routeModel({ use_case, quality_mode, model_override }) {
   if (model_override) return model_override;
   if (quality_mode === 'fast') return 'google/nano-banana';
-  if (quality_mode === 'high') return use_case === 'product' ? 'qwen/text-to-image' : 'nano-banana-pro';
-  if (use_case === 'product') return 'qwen/text-to-image';
+  if (quality_mode === 'high') return use_case === 'product' || use_case === 'ecommerce' ? 'qwen/text-to-image' : 'nano-banana-pro';
+  if (use_case === 'product' || use_case === 'ecommerce') return 'qwen/text-to-image';
   return 'nano-banana-pro';
+}
+
+function getTemplateDefaults(templateName) {
+  return templates.templates[templateName] || null;
+}
+
+function getPlatformRecommendation(platformName) {
+  return templates.smart_recommendations[platformName] || null;
 }
 
 function sleep(ms) {
@@ -109,16 +118,82 @@ function rewritePrompt(input) {
   const tone = input.tone ? `${input.tone} ` : '';
   const audience = input.audience ? ` for ${input.audience}` : '';
   const base = `${input.goal}: ${input.raw_prompt}`.trim();
+  
+  // Apply template if specified
+  let templateSuffix = '';
+  let templateInfo = null;
+  if (input.template) {
+    templateInfo = getTemplateDefaults(input.template);
+    if (templateInfo) {
+      templateSuffix = templateInfo.prompt_suffix;
+    }
+  }
+  
+  const refinedPrompt = templateSuffix 
+    ? `Create a ${tone}${input.use_case} image${audience}. ${base}. ${templateSuffix}`
+    : `Create a ${tone}${input.use_case} image${audience}. ${base}. Clean composition, commercially usable, strong visual clarity.`;
+  
   return {
     ok: true,
-    refined_prompt: `Create a ${tone}${input.use_case} image${audience}. ${base}. Clean composition, commercially usable, strong visual clarity.`,
-    suggested_style: input.tone || 'premium',
-    suggested_aspect_ratio: input.use_case === 'landing' ? '16:9' : '1:1',
+    refined_prompt: refinedPrompt,
+    suggested_style: input.tone || (templateInfo ? templateInfo.style_hints[0] : 'premium'),
+    suggested_aspect_ratio: templateInfo ? templateInfo.default_aspect_ratio : (input.use_case === 'landing' ? '16:9' : '1:1'),
+    template_applied: input.template || null,
     notes: ['Local prompt rewrite flow', 'Can be upgraded later without blocking monetization path']
   };
 }
 
+function recommendImageSize(input) {
+  const recommendation = getPlatformRecommendation(input.platform);
+  if (!recommendation) {
+    return {
+      ok: false,
+      error: 'unknown_platform',
+      message: `Platform "${input.platform}" not found in recommendations`
+    };
+  }
+  
+  return {
+    ok: true,
+    platform: input.platform,
+    recommendation: recommendation,
+    notes: ['Based on platform best practices', 'May vary by specific use case']
+  };
+}
+
 async function estimateCost(input) {
+  // Apply template defaults if specified
+  let appliedDefaults = {};
+  if (input.template) {
+    const template = getTemplateDefaults(input.template);
+    if (template) {
+      if (!input.aspect_ratio) {
+        input.aspect_ratio = template.default_aspect_ratio;
+        appliedDefaults.aspect_ratio = template.default_aspect_ratio;
+      }
+      if (!input.resolution) {
+        input.resolution = template.default_resolution;
+        appliedDefaults.resolution = template.default_resolution;
+      }
+    }
+  }
+  
+  // Apply platform recommendations if specified
+  let platformRec = null;
+  if (input.platform) {
+    platformRec = getPlatformRecommendation(input.platform);
+    if (platformRec) {
+      if (!input.aspect_ratio) {
+        input.aspect_ratio = platformRec.aspect_ratio;
+        appliedDefaults.aspect_ratio = platformRec.aspect_ratio;
+      }
+      if (!input.resolution) {
+        input.resolution = platformRec.resolution;
+        appliedDefaults.resolution = platformRec.resolution;
+      }
+    }
+  }
+  
   const model = routeModel(input);
   const authError = ensureLiveAuth();
   if (authError) return authError;
@@ -131,6 +206,8 @@ async function estimateCost(input) {
       recommended_model: model,
       estimated_credits: estimated,
       price_version: 'draft-mock-v1',
+      applied_defaults: appliedDefaults,
+      platform_recommendation: platformRec,
       notes: ['Mock estimate only', 'Set RYNJER_USE_LIVE=1 and RYNJER_ACCESS_TOKEN to use live endpoint']
     };
   }
@@ -154,6 +231,8 @@ async function estimateCost(input) {
       live: true,
       recommended_model: model,
       api_status: res.status,
+      applied_defaults: appliedDefaults,
+      platform_recommendation: platformRec,
       ...summary,
       raw_response: res.data
     };
@@ -206,6 +285,38 @@ async function pollImageResult(input) {
 }
 
 async function generateImage(input) {
+  // Apply template defaults if specified
+  let appliedDefaults = {};
+  if (input.template) {
+    const template = getTemplateDefaults(input.template);
+    if (template) {
+      if (!input.aspect_ratio) {
+        input.aspect_ratio = template.default_aspect_ratio;
+        appliedDefaults.aspect_ratio = template.default_aspect_ratio;
+      }
+      if (!input.resolution) {
+        input.resolution = template.default_resolution;
+        appliedDefaults.resolution = template.default_resolution;
+      }
+    }
+  }
+  
+  // Apply platform recommendations if specified
+  let platformRec = null;
+  if (input.platform) {
+    platformRec = getPlatformRecommendation(input.platform);
+    if (platformRec) {
+      if (!input.aspect_ratio) {
+        input.aspect_ratio = platformRec.aspect_ratio;
+        appliedDefaults.aspect_ratio = platformRec.aspect_ratio;
+      }
+      if (!input.resolution) {
+        input.resolution = platformRec.resolution;
+        appliedDefaults.resolution = platformRec.resolution;
+      }
+    }
+  }
+  
   const model = routeModel(input);
   const authError = ensureLiveAuth();
   if (authError) return authError;
@@ -218,6 +329,9 @@ async function generateImage(input) {
       image_urls: ['https://example.com/mock/generated-image.png'],
       model_used: model,
       credits_used: used,
+      applied_defaults: appliedDefaults,
+      template_used: input.template || null,
+      platform_used: input.platform || null,
       result_notes: ['Mock generation response', 'Set RYNJER_USE_LIVE=1 and RYNJER_ACCESS_TOKEN to use live endpoint'],
       next_actions: ['Generate a second variation', 'Refine the prompt', 'View pricing', 'Get API access']
     };
@@ -248,6 +362,9 @@ async function generateImage(input) {
       request_id: requestId,
       model_used: model,
       api_status: res.status,
+      applied_defaults: appliedDefaults,
+      template_used: input.template || null,
+      platform_used: input.platform || null,
       task_id: payload.task_id || null,
       provider_task_id: payload.provider_task_id || null,
       status: payload.status || 'unknown',
@@ -303,6 +420,7 @@ async function main() {
   else if (toolName === 'estimate_image_cost') result = await estimateCost(input);
   else if (toolName === 'generate_image') result = await generateImage(input);
   else if (toolName === 'poll_image_result') result = await pollImageResult(input);
+  else if (toolName === 'recommend_image_size') result = recommendImageSize(input);
   else {
     console.error(`Unknown tool: ${toolName}`);
     console.error(`Available tools: ${tools.tools.map(t => t.name).join(', ')}`);

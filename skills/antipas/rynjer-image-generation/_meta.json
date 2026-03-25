@@ -1,11 +1,17 @@
 {
   "owner": "antipas",
   "slug": "rynjer-image-generation",
-  "displayName": "Rynjer Image Generation for Agents",
+  "displayName": "Agent-first Marketing Image Generation",
   "latest": {
-    "version": "0.1.1",
-    "publishedAt": 1773839140226,
-    "commit": "https://github.com/openclaw/skills/commit/ea263c29e3c18e911ed052c7ec93408bff9d452b"
+    "version": "0.3.0",
+    "publishedAt": 1773935333391,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "0.1.1",
+      "publishedAt": 1773839140226,
+      "commit": "https://github.com/openclaw/skills/commit/ea263c29e3c18e911ed052c7ec93408bff9d452b"
+    }
+  ]
 }

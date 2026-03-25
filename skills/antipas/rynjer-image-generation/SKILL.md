@@ -1,138 +1,240 @@
 ---
 name: rynjer-image-generation
-version: 0.1.0
-summary: Agent-first image generation with prompt rewrite, cost estimate, live execution, and polling.
+version: 0.3.0
+summary: Agent-first marketing image generation — templates for landing/ad/blog/ecommerce, smart size recommendations, prompt rewrite, cost estimate, and fast execution.
 ---
 
-# Rynjer Image Generation for Agents
+# Agent-first Marketing Image Generation
 
-Agent-first image generation with prompt rewrite, cost estimate, live execution, and polling.
+**不是大而全创作平台，而是面向 Agent 和工作流的短路径出图工具。**
+
+---
 
 ## Why install this
 
-Use this skill when an agent needs a usable image with a low-friction path from:
+Use this skill when you need a **usable marketing image fast**, with a low-friction path from:
 
-**task → prompt → cost → image**
+**rough request → prompt rewrite → cost estimate → image**
 
-This skill is best for agents that care about:
-- predictable cost before generation
-- fast execution without manual model hunting
-- workflow-ready outputs for real tasks
-- a practical path from trial to production API usage
-
-## Start here
-
-Recommended first run:
-1. `rewrite_image_prompt`
-2. `estimate_image_cost`
-3. `generate_image`
-4. `poll_image_result` if the task is still pending
-
-## Best for
-
-- landing-page images
-- product and ecommerce visuals
+This skill is built for:
+- landing page hero images
 - blog and article covers
-- ad and social creatives
-- workflow-driven image tasks
+- ad creative variations
+- ecommerce product visuals
+- any agent workflow that needs quick, predictable image outputs
+
+### What makes this different
+
+| Others | Rynjer |
+|--------|--------|
+| Creative playground, explore options | Execute task, get usable result |
+| Manual prompt engineering | Auto rewrite from rough input |
+| Generate first, cost unknown | Cost estimate before execution |
+| Project-based studio workflow | Short path API for agents |
+| Guess platform specs | Smart size recommendations built-in |
+
+---
+
+## Quick Start — Use a Template
+
+Fastest way to get started with optimized defaults:
+
+```javascript
+// Generate a landing page hero image
+await rynjer.generate_image({
+  goal: "SaaS product homepage",
+  prompt: "AI-powered analytics dashboard, modern tech style",
+  use_case: "landing",
+  template: "landing",  // Auto-applies 16:9, 2K, landing-optimized style
+  quality_mode: "balanced",
+  count: 1
+});
+```
+
+**Available templates:**
+- `landing` — Landing page hero (16:9, 2K)
+- `ad` — Social media ads (1:1, 1K)
+- `blog` — Blog/article covers (16:9, 1K)
+- `ecommerce` — Product images (1:1, 2K)
+
+---
+
+## Start here — 4 steps to your first image
+
+1. **rewrite_image_prompt** — describe your goal, get a better prompt
+2. **estimate_image_cost** — see cost before spending credits
+3. **generate_image** — execute with your approved prompt and budget
+4. **poll_image_result** — wait for completion and get the result
+
+---
 
 ## What it does
 
 ### Rewrite image prompts
-Turn rough requests into stronger prompts for commercial and workflow-oriented image generation.
+Turn rough requests into optimized prompts for business and marketing use.
 
-Typical inputs:
-- `goal`
-- `raw_prompt`
-- `use_case`
-- `tone` (optional)
-- `audience` (optional)
+**Input:**
+- `goal` — what you need the image for
+- `raw_prompt` — your rough description
+- `use_case` — landing page, blog cover, ad creative, etc.
+- `template` (optional) — apply template defaults
+- `tone` (optional) — brand voice or mood
+- `audience` (optional) — target audience
+
+**Output:** ready-to-generate prompt optimized for your use case.
 
 ### Estimate image cost
-Estimate credits before execution so the agent can make budget-aware decisions.
+Know the cost before you commit. Essential for budget-aware agent workflows.
 
-Typical inputs:
+**Input:**
 - `use_case`
-- `count`
-- `resolution`
-- `aspect_ratio`
-- `quality_mode`
-- `price_version` (optional)
+- `count` — how many images
+- `resolution` — 1K, 2K, 4K
+- `aspect_ratio` — 16:9, 1:1, 9:16, etc.
+- `quality_mode` — fast, balanced, high
+- `template` (optional) — auto-apply template defaults
+- `platform` (optional) — get platform-optimized recommendations
+
+**Output:** estimated credits required.
+
+### Smart size recommendations
+Get platform-optimized size settings without guesswork.
+
+```javascript
+// Get Instagram post recommendations
+await rynjer.recommend_image_size({
+  platform: "instagram_post"
+});
+// Returns: { aspect_ratio: "1:1", resolution: "1K", size_px: "1080x1080" }
+```
+
+**Supported platforms:**
+- `instagram_post` — 1:1, 1080x1080
+- `instagram_story` — 9:16, 1080x1920
+- `facebook_ad` — 1.91:1, 1200x628
+- `twitter_card` — 1.91:1, 1200x628
+- `linkedin_ad` — 1.91:1, 1200x627
+- `blog_cover` — 1.91:1, 1200x630
+- `youtube_thumbnail` — 16:9, 1280x720
+- `app_store` — 16:9, 1920x1080
 
 ### Generate images
-Generate usable images for business and workflow-driven tasks.
+Execute generation with your approved prompt and budget.
 
-Typical inputs:
-- `prompt`
+**Input:**
+- `prompt` — rewritten or custom
 - `use_case`
+- `template` (optional) — apply template defaults
+- `platform` (optional) — use platform-optimized settings
 - `aspect_ratio`
-- `resolution` (optional)
+- `resolution`
 - `quality_mode`
 - `count`
-- `scene` (optional)
-- `request_id` (optional)
 - `auto_poll` (optional)
 
-### Poll image results
-Poll a previously submitted generation request until completion.
+**Output:** generation request submitted.
 
-Typical input:
+### Poll image results
+Check status and download completed images.
+
+**Input:**
 - `request_id`
 
-## Why this is credible
+**Output:** image URLs or download ready.
 
-This is an early-access image-only v1, but it is not mock-only shelfware.
-The live flow has been verified across:
+---
 
-- register
-- owner bind UI
-- API key creation
-- cost estimate
-- generate
-- poll
+## Templates — One-line setup
 
-One real product constraint also verified in practice:
-- owner-granted scopes in the bind flow constrain later API key creation scopes
+Templates automatically configure optimal settings for common use cases:
 
-## Positioning
+| Template | Aspect Ratio | Resolution | Best For |
+|----------|--------------|------------|----------|
+| `landing` | 16:9 | 2K | Homepage hero, product showcases |
+| `ad` | 1:1 | 1K | Social media ads, quick tests |
+| `blog` | 16:9 | 1K | Article covers, content marketing |
+| `ecommerce` | 1:1 | 2K | Product images, white backgrounds |
 
-This is not a generic creative playground.
-It is an agent-facing image generation entry point focused on:
+**Usage:**
+```javascript
+// Use template
+generate_image({ template: "ecommerce", ... })
 
-- low-friction execution
-- predictable cost
-- default routing over manual model-picking
-- repeatable workflow use
+// Use template + override specific settings
+generate_image({ 
+  template: "ad", 
+  aspect_ratio: "16:9",  // Override template default
+  ... 
+})
+```
 
-## Pricing boundary
+---
 
-Recommended v1 boundary:
-- **Free:** prompt rewrite, routing help, cost estimate
-- **Paid:** image generation via Rynjer credits or API access
+## Best for
+
+| Use Case | Why it works |
+|----------|--------------|
+| **Landing page hero** | Fast iteration on homepage visuals |
+| **Blog/article cover** | Consistent cover images at scale |
+| **Ad creative variations** | Test multiple concepts cheaply |
+| **Ecommerce visuals** | Product images, lifestyle shots |
+| **Social posts** | Quick turnaround for content calendars |
+
+---
 
 ## Good fit
 
-Use this skill when an agent needs a usable image quickly for:
-- landing pages
-- product pages
-- blogs
-- social posts
-- ads
+Use this skill when:
+- You need **usable images fast**, not artistic exploration
+- You want **cost predictability** before generation
+- You're building an **agent workflow** that needs image generation
+- You want to **skip manual model selection** and prompt tuning
+- You're producing **marketing assets** (landing, blog, ads, ecommerce)
+- You want **smart defaults** without guessing platform specs
+
+---
 
 ## Not a good fit
 
-This v1 is not designed for:
+This v1 is **intentionally not** designed for:
 - video generation
-- music generation
-- complex asset management
-- multi-step studio pipelines
-- large-scale brand systems
+- music/audio generation
+- complex multi-step creative pipelines
+- large-scale brand asset management systems
+- creator studio workflows with collaboration features
+
+**For those, consider full creative platforms instead.**
+
+---
 
 ## Reality check
 
-This package should be treated as:
+This is:
 - soft launch
 - early-access
 - image-only v1
 
-It is suitable for real usage, but the clearest path is still the recommended happy path above.
+The core flow (rewrite → estimate → generate → poll) is live and verified. Templates and smart recommendations are ready for use. It works for real tasks, but the clearest path is still the recommended workflow above.
+
+---
+
+## Pricing
+
+- **Free:** prompt rewrite, routing help, cost estimate, size recommendations
+- **Paid:** image generation via Rynjer credits or API access
+
+---
+
+## Positioning
+
+Rynjer is **not** a generic creative playground or full studio platform.
+
+It is a **business-facing image generation entry point** focused on:
+- low-friction execution
+- predictable cost
+- smart defaults (templates + platform recommendations)
+- default routing over manual model-picking
+- repeatable, workflow-ready use
+
+**If you need a full creative studio with video, storyboards, and collaboration — this isn't it.**
+**If you need fast, cost-transparent image generation for marketing tasks — this is.**
