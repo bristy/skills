@@ -3,11 +3,16 @@
   "slug": "korean-booking",
   "displayName": "Korean Aesthetic Booking Guide",
   "latest": {
-    "version": "2.2.9",
-    "publishedAt": 1774520590048,
-    "commit": "https://github.com/openclaw/skills/commit/06427708b706de57c5959875f093d03f08a2f533"
+    "version": "2.3.0",
+    "publishedAt": 1774522127968,
+    "commit": null
   },
   "history": [
+    {
+      "version": "2.2.9",
+      "publishedAt": 1774520590048,
+      "commit": "https://github.com/openclaw/skills/commit/06427708b706de57c5959875f093d03f08a2f533"
+    },
     {
       "version": "2.2.0",
       "publishedAt": 1774350149396,
