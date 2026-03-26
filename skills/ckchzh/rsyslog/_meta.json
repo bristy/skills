@@ -1,0 +1,11 @@
+{
+  "owner": "ckchzh",
+  "slug": "rsyslog",
+  "displayName": "Rsyslog",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774336657263,
+    "commit": null
+  },
+  "history": []
+}
