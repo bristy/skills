@@ -1,0 +1,11 @@
+{
+  "owner": "tencent-adm",
+  "slug": "tencentmap-jsapi-gl-skill",
+  "displayName": "tencentmap-jsapi-gl-skill",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774439722637,
+    "commit": null
+  },
+  "history": []
+}
