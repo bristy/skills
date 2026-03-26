@@ -1,0 +1,11 @@
+{
+  "owner": "zaferliu",
+  "slug": "fortune-luck",
+  "displayName": "每日运势计算",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774366656637,
+    "commit": null
+  },
+  "history": []
+}
