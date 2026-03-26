@@ -1,0 +1,11 @@
+{
+  "owner": "tinle2",
+  "slug": "vecml-automl",
+  "displayName": "VecML AutoML",
+  "latest": {
+    "version": "1.1.0",
+    "publishedAt": 1774470588319,
+    "commit": null
+  },
+  "history": []
+}
