@@ -1,0 +1,11 @@
+{
+  "owner": "ryanlee-gemini",
+  "slug": "postgres-skill",
+  "displayName": "PostgreSQL Skill - 高级数据库管理",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774246693353,
+    "commit": null
+  },
+  "history": []
+}
