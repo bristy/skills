@@ -1,0 +1,11 @@
+{
+  "owner": "exenvitor",
+  "slug": "k8s-prefect-flow-builder",
+  "displayName": "K8s Prefect Flow Builder",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774260307904,
+    "commit": null
+  },
+  "history": []
+}
