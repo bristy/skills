@@ -1,0 +1,23 @@
+{
+  "name": "social-media-auto",
+  "version": "1.0.0",
+  "description": "自媒体内容生成技能 - 热点抓取 + AI 创作 + 多平台适配",
+  "author": "linzmin1927",
+  "license": "MIT-0",
+  "keywords": [
+    "openclaw",
+    "skill",
+    "social-media",
+    "content-generation",
+    "wechat",
+    "xiaohongshu",
+    "douyin"
+  ],
+  "scripts": {
+    "test": "./tests/test-social-media.sh",
+    "fetch": "./scripts/fetch-trending.js",
+    "generate": "./scripts/generate-content.js",
+    "format": "./scripts/format-platform.js",
+    "save": "./scripts/save-draft.js"
+  }
+}
