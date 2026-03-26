@@ -1,0 +1,11 @@
+{
+  "owner": "xueyetianya",
+  "slug": "journald",
+  "displayName": "Journald",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774304293476,
+    "commit": null
+  },
+  "history": []
+}
