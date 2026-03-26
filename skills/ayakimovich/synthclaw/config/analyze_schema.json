@@ -1,0 +1,16 @@
+{
+    "name": "analyze_blender_file",
+    "description": "Headlessly analyzes a Blender file to extract its manipulatable procedural node parameters AND evaluates its mathematical complexity to return a natural-language description of how realistic the imagery would be.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "blend_file": {
+                "type": "string",
+                "description": "Full path to .blend file (e.g., assets/high.blend)"
+            }
+        },
+        "required": [
+            "blend_file"
+        ]
+    }
+}

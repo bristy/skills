@@ -1,0 +1,37 @@
+{
+  "name": "render_procedural_scene",
+  "description": "Renders a procedural scene. Pass node names as keys and floats as values.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "blend_file": {
+        "type": "string",
+        "description": "Full path to .blend file"
+      },
+      "output_path": {
+        "type": "string",
+        "description": "Where to save the PNG"
+      },
+      "parameters": {
+        "type": "object",
+        "description": "Dictionary of Blender Value Node names and their new values.",
+        "additionalProperties": {
+          "type": "number"
+        }
+      },
+      "reference_image": {
+        "type": "string",
+        "description": "Optional complete path to a real-world reference image for LPIPS and Naturalness Delta computation."
+      },
+      "compute_metrics": {
+        "type": "boolean",
+        "description": "Optional flag to compute and return image quality metrics. Default is false."
+      }
+    },
+    "required": [
+      "blend_file",
+      "output_path",
+      "parameters"
+    ]
+  }
+}
