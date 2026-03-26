@@ -3,9 +3,15 @@
   "slug": "startup-researcher",
   "displayName": "startup-researcher",
   "latest": {
-    "version": "1.3.1",
-    "publishedAt": 1774416373443,
-    "commit": "https://github.com/openclaw/skills/commit/83972eb0c3b738136dda9882a420071bd82c23d6"
+    "version": "1.3.2",
+    "publishedAt": 1774420786340,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.3.1",
+      "publishedAt": 1774416373443,
+      "commit": "https://github.com/openclaw/skills/commit/83972eb0c3b738136dda9882a420071bd82c23d6"
+    }
+  ]
 }
