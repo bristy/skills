@@ -1,0 +1,11 @@
+{
+  "owner": "tencent-adm",
+  "slug": "tencent-channel-community",
+  "displayName": "腾讯频道Skill",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1774454904817,
+    "commit": null
+  },
+  "history": []
+}
