@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rm:*)",
+      "WebFetch(domain:api-docs.ollang.com)",
+      "Bash(curl:*)"
+    ]
+  }
+}
