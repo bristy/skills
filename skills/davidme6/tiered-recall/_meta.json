@@ -3,9 +3,15 @@
   "slug": "tiered-recall",
   "displayName": "Tiered Recall",
   "latest": {
-    "version": "1.0.1",
-    "publishedAt": 1774408018021,
-    "commit": "https://github.com/openclaw/skills/commit/04c761a804a73ab4571259a9b20accc3bfcb7a9f"
+    "version": "1.1.0",
+    "publishedAt": 1774416677055,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.1",
+      "publishedAt": 1774408018021,
+      "commit": "https://github.com/openclaw/skills/commit/04c761a804a73ab4571259a9b20accc3bfcb7a9f"
+    }
+  ]
 }

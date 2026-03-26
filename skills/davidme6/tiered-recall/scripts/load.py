@@ -80,9 +80,13 @@ def load_by_topic(index: dict, topic: str, memory_dir: Path) -> list[dict]:
         if "f" in entry:
             filepath = memory_dir / entry["f"]
             lines_str = entry["l"]
+            title = entry.get("t", "")
+            summary = entry.get("s", "")  # 极致摘要
         else:
             filepath = memory_dir / entry["file"]
             lines_str = entry["lines"]
+            title = entry.get("section", "")
+            summary = entry.get("summary", "")
         
         if not filepath.exists():
             continue
@@ -95,6 +99,8 @@ def load_by_topic(index: dict, topic: str, memory_dir: Path) -> list[dict]:
         
         results.append({
             "file": filepath.name,
+            "title": title,
+            "summary": summary,
             "content": section_content,
         })
     
@@ -117,9 +123,13 @@ def load_by_project(project_name: str, output_dir: Path, memory_dir: Path, index
                 if "f" in entry:
                     filepath = memory_dir / entry["f"]
                     lines_str = entry["l"]
+                    title = entry.get("t", "")
+                    summary = entry.get("s", "")
                 else:
                     filepath = memory_dir / entry["file"]
                     lines_str = entry["lines"]
+                    title = entry.get("section", "")
+                    summary = entry.get("summary", "")
                 
                 if filepath.exists():
                     content = filepath.read_text(encoding="utf-8")
@@ -128,6 +138,8 @@ def load_by_project(project_name: str, output_dir: Path, memory_dir: Path, index
                     
                     result["entries"].append({
                         "date": filepath.name.replace(".md", ""),
+                        "title": title,
+                        "summary": summary,
                         "content": "\n".join(lines[start-1:end]),
                     })
     
@@ -282,7 +294,14 @@ def main():
         print(f"\n🔍 加载主题: {args.topic}")
         results = load_by_topic(index, args.topic, memory_dir)
         for r in results:
-            print(f"\n### {r['file']} - {r['section']}")
+            title = r.get('title', '')
+            summary = r.get('summary', '')
+            if title and summary:
+                print(f"\n### {r['file']} - {title} 【{summary}】")
+            elif title:
+                print(f"\n### {r['file']} - {title}")
+            else:
+                print(f"\n### {r['file']}")
             print(r['content'][:500])
         return
     

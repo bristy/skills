@@ -72,21 +72,28 @@ def classify_topic(text: str) -> list[str]:
     return topics
 
 
-def summarize_section(lines: list[str], max_length: int = 50) -> str:
-    """生成章节摘要（精简版，只保留标题和关键信息）"""
-    # 只提取第一个非空行作为摘要
-    for line in lines[:5]:
+def summarize_section(lines: list[str], max_length: int = 10) -> str:
+    """生成极致摘要（10字以内，用于区分同标题条目）"""
+    # 提取第一个有意义的行
+    for line in lines[:10]:
         line = line.strip()
-        if line and not line.startswith("|") and not line.startswith("---") and not line.startswith("```"):
-            return line[:max_length]
+        # 跳过空行、表格、分隔线、代码块
+        if not line or line.startswith("|") or line.startswith("---") or line.startswith("```") or line.startswith("#"):
+            continue
+        # 提取关键词：去掉常见前缀
+        for prefix in ["- ", "* ", "1. ", "2. ", "3. ", "### ", "**", "【", "（"]:
+            if line.startswith(prefix):
+                line = line[len(prefix):]
+        # 截取前10个有效字符
+        return line[:max_length].replace("**", "").replace("【", "").replace("】", "")
     return ""
 
 
 def build_index(memory_dir: Path, output_dir: Path):
     """构建记忆索引（精简版，只保留定位信息）"""
     index = {
-        "version": "1.0.1",
-        "lastUpdated": datetime.now().isoformat(),
+        "v": "1.0.1",  # 版本（缩写）
+        "t": datetime.now().isoformat(),  # 时间（缩写）
         "topics": defaultdict(list),
     }
     
@@ -108,21 +115,24 @@ def build_index(memory_dir: Path, output_dir: Path):
             topics = classify_topic(section["title"] + " " + " ".join(section["content_lines"][:5]))
             
             for topic in topics:
-                # 精简版：只保留文件名和行号
+                # 索引格式：文件名+行号+标题+极致摘要（10字内）
+                summary = summarize_section(section["content_lines"])
                 index["topics"][topic].append({
-                    "f": file.name,  # 文件名（缩写）
-                    "l": f"{section['start_line']}-{section['end_line']}",  # 行号（缩写）
+                    "f": file.name,  # 文件名
+                    "l": f"{section['start_line']}-{section['end_line']}",  # 行号
+                    "t": section["title"][:50],  # 章节标题（限制50字符）
+                    "s": summary,  # 极致摘要（10字内）
                 })
     
     # 转换 defaultdict 为普通 dict
     index["topics"] = dict(index["topics"])
     
-    # 保存索引（无缩进，更紧凑）
+    # 保存索引（紧凑格式）
     output_dir.mkdir(parents=True, exist_ok=True)
     index_file = output_dir / "index.json"
     
     with open(index_file, "w", encoding="utf-8") as f:
-        json.dump(index, f, ensure_ascii=False, separators=(',', ':'))  # 紧凑格式
+        json.dump(index, f, ensure_ascii=False, separators=(',', ':'))
     
     print(f"✅ 索引已生成: {index_file}")
     print(f"   - 主题数: {len(index['topics'])}")
