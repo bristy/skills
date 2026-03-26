@@ -1,0 +1,11 @@
+{
+  "owner": "pioneer-weirdo",
+  "slug": "env-ops-standard",
+  "displayName": "Safe .env Manager",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774440640134,
+    "commit": null
+  },
+  "history": []
+}
