@@ -1,0 +1,11 @@
+{
+  "owner": "mova-compact",
+  "slug": "mova-complaints-handler",
+  "displayName": "Mova Complaints Handler",
+  "latest": {
+    "version": "2.0.1",
+    "publishedAt": 1774364136601,
+    "commit": null
+  },
+  "history": []
+}
