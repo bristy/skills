@@ -1,0 +1,11 @@
+{
+  "owner": "bytesagain",
+  "slug": "starknet",
+  "displayName": "Starknet",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774297027804,
+    "commit": null
+  },
+  "history": []
+}
