@@ -1,0 +1,11 @@
+{
+  "owner": "cyrushuang1995-cmyk",
+  "slug": "gws-google-workspace",
+  "displayName": "Google Workspace CLI (GWS)",
+  "latest": {
+    "version": "2.1.1",
+    "publishedAt": 1774489632082,
+    "commit": null
+  },
+  "history": []
+}
