@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fotor OpenAPI SDK"
+  short_description: "Generate images and videos via Fotor AI"
+  default_prompt: "Use $fotor-openapi-sdk to generate an image from this description."
