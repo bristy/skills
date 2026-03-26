@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "paystack",
+  "displayName": "Paystack",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774404163162,
+    "commit": null
+  },
+  "history": []
+}
