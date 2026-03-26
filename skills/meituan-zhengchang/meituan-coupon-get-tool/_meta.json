@@ -1,0 +1,11 @@
+{
+  "owner": "meituan-zhengchang",
+  "slug": "meituan-coupon-get-tool",
+  "displayName": "美团优惠领取工具",
+  "latest": {
+    "version": "1.0.6",
+    "publishedAt": 1774497233259,
+    "commit": null
+  },
+  "history": []
+}
