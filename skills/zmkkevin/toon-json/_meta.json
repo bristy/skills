@@ -1,0 +1,11 @@
+{
+  "owner": "zmkkevin",
+  "slug": "toon-json",
+  "displayName": "Shrink JSON in Prompts (TOON Encoder/Decoder)",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774427604922,
+    "commit": null
+  },
+  "history": []
+}
