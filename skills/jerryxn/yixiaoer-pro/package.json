@@ -1,0 +1,8 @@
+{
+  "name": "yixiaoer-pro",
+  "version": "1.0.0",
+  "description": "蚁小二专业版发布技能：上传 → 发布 → 查询状态，支持按账号/分组/平台批量发布",
+  "license": "MIT",
+  "homepage": "https://www.yixiaoer.cn",
+  "keywords": ["yixiaoer", "自媒体", "视频发布", "抖音", "小红书"]
+}
