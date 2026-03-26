@@ -1,0 +1,11 @@
+{
+  "owner": "idrs",
+  "slug": "dhl-tracking",
+  "displayName": "DHL Tracking",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774448890243,
+    "commit": null
+  },
+  "history": []
+}
