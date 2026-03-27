@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "oxford-dictionaries",
+  "displayName": "Oxford Dictionaries",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774558972997,
+    "commit": null
+  },
+  "history": []
+}
