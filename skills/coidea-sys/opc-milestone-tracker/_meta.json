@@ -1,0 +1,11 @@
+{
+  "owner": "coidea-sys",
+  "slug": "opc-milestone-tracker",
+  "displayName": "OPC Milestone Tracker",
+  "latest": {
+    "version": "2.2.0",
+    "publishedAt": 1774549674774,
+    "commit": null
+  },
+  "history": []
+}
