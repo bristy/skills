@@ -1,0 +1,11 @@
+{
+  "owner": "ryanlee-gemini",
+  "slug": "openclaw-plugin-upgrade",
+  "displayName": "Openclaw Plugin Upgrade",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774587078715,
+    "commit": null
+  },
+  "history": []
+}
