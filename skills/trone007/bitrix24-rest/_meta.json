@@ -1,0 +1,11 @@
+{
+  "owner": "trone007",
+  "slug": "bitrix24-rest",
+  "displayName": "Bitrix24 REST API",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1774540763025,
+    "commit": null
+  },
+  "history": []
+}
