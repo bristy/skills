@@ -1,0 +1,11 @@
+{
+  "owner": "aipoch-ai",
+  "slug": "medical-scribe-dictation",
+  "displayName": "Medical Scribe (Dictation)",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774513407715,
+    "commit": null
+  },
+  "history": []
+}
