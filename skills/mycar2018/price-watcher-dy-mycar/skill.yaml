@@ -1,0 +1,30 @@
+slug: price-watcher-dy-mycar  # 把 skill_id 改成 slug
+name: 抖音价格监控与竞品分析工具
+version: 1.0.0               # 保持不变，格式正确
+author: krys
+contact: 745934958@qq.com
+description: >
+  实时监控抖音商品价格，支持阈值告警、AI竞品分析报告与价格趋势可视化，
+  专为抖音电商卖家与无货源模式打造。
+tags:
+  - 抖音
+  - 电商
+  - 价格监控
+  - 竞品分析
+  - 告警
+  - 企业微信
+  - 店铺管理
+  - 抖音电商
+  - 无货源
+  - 小店运营
+triggers:
+  - 监控抖音商品
+  - 追踪价格
+  - 竞品分析
+  - 价格告警
+entrypoint: main.py
+runtime: python3.8
+permissions:
+  - network
+  - file
+  - config
