@@ -1,7 +1,7 @@
 ---
 name: clarity-ai
 description: AI-Powered Intent Parser - Transform messy input into crystal-clear instructions. Converts verbose Chinese/English input into structured intent. Supports 7 intent types + 20+ programming languages. Privacy-first, millisecond response.
-version: 2.0.2
+version: 2.1.0
 author: Boss
 ---
 

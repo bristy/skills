@@ -1,15 +1,17 @@
 # Clarity AI
 
-<h1 align="center">智能意图解析器</h1>
+<h1 align="center">
+  🎯 AI Intent Parser for Crystal-Clear Instructions
+</h1>
 
 <p align="center">
-  <em>Transform messy input into crystal-clear instructions</em>
+  Transform messy, verbose input into structured, precise instructions that AI understands perfectly.
 </p>
 
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.1-blue?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.1.0-blue?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/platform-OpenClaw-green?style=flat-square" alt="Platform">
   <img src="https://img.shields.io/badge/privacy-100%25-red?style=flat-square" alt="Privacy">
   <img src="https://img.shields.io/badge/speed-millisecond-yellow?style=flat-square" alt="Speed">
@@ -18,11 +20,25 @@
 
 ---
 
-## What is Clarity AI?
+## ⚡ One-Command Install
 
-**Clarity AI** is an intelligent intent parser that transforms your verbose, conversational input into structured, precise instructions that AI assistants understand perfectly.
+```bash
+curl -sL https://raw.githubusercontent.com/yjin94606-art/clarity-ai/main/install.sh | bash
+```
 
-No more vague questions. No more back-and-forth clarification. Just clear, actionable instructions.
+Or:
+
+```bash
+clawhub install clarity-ai
+```
+
+---
+
+## What It Does
+
+| Messy Input | Clean Structured Output |
+|-------------|------------------------|
+| "Hi, about Python for loops, why is it running so slow?" | **Intent:** Performance<br>**Language:** Python<br>**Goal:** Analyze slow loop |
 
 ---
 
@@ -30,20 +46,11 @@ No more vague questions. No more back-and-forth clarification. Just clear, actio
 
 | Feature | Description |
 |---------|-------------|
-| 🎯 **Smart Recognition** | Accurately identifies 7 intent types |
-| ⚡ **Millisecond Response** | Local rule engine, no waiting |
-| 🔒 **Privacy First** | 100% local processing |
-| 🌏 **Bilingual** | Chinese & English support |
-| 🔧 **Extensible** | Optional Ollama AI enhancement |
-
----
-
-## 📊 Before vs After
-
-| Messy Input | Clean Output |
-|-------------|--------------|
-| "Hi, I was wondering, about Python for loops, why is it running so slow?" | **Intent:** Performance Optimization<br>**Language:** Python<br>**Goal:** Analyze why for loop is slow |
-| "Can you help me check this code, what might be the problem?" | **Intent:** Code Debug<br>**Goal:** Find and fix code issues |
+| 🎯 **7 Intent Types** | Debug, Performance, Create, Explain, Modify, Review, Learn |
+| ⚡ **Millisecond** | Local rule engine, no waiting |
+| 🔒 **Privacy** | 100% local processing |
+| 🌏 **Bilingual** | Chinese & English |
+| 🔧 **Optional AI** | Ollama enhancement for smarter parsing |
 
 ---
 
@@ -61,34 +68,30 @@ No more vague questions. No more back-and-forth clarification. Just clear, actio
 
 ---
 
-## 💻 Supported Languages
-
-**Backend:** JavaScript, TypeScript, Python, Java, C, C++, C#, Go, Rust, PHP, Ruby, Swift, Kotlin
-
-**Frontend:** HTML, CSS, React, Vue, Next.js, Angular
-
-**Other:** SQL, Flutter/Dart, Shell/Bash
-
----
-
 ## 🚀 Quick Start
 
-### Installation
+### 1. Install
 
 ```bash
 clawhub install clarity-ai
 ```
 
-### Usage
+### 2. Activate
 
-**Activate:**
 ```
-You: 开启精准模式 / Enable precision mode
+开启精准模式
+```
+or
+```
+Enable precision mode
 ```
 
-**Transform:**
+### 3. Use
+
+Just describe your problem naturally!
+
 ```
-You: Can you help me check this Python code, it seems to have some issues, thanks!
+Can you help me check this Python code? It seems to have some issues, thanks!
 ```
 
 **Output:**
@@ -99,52 +102,39 @@ You: Can you help me check this Python code, it seems to have some issues, thank
 **💻 Language:** Python
 
 **🎯 Goal:** Find and fix code issues
-
-**💡 To help you better, please provide:**
-- Code content
-- Error message (if any)
 ```
 
-**Deactivate:**
+### 4. Deactivate
+
 ```
-You: 关闭精准模式 / Disable precision mode
+关闭精准模式
+```
+or
+```
+Disable precision mode
 ```
 
 ---
 
-## 🏗️ Architecture
+## 💻 Supported Languages
 
-```
-┌─────────────────────────────────────┐
-│           User Input                 │
-└─────────────────────────────────────┘
-                  ↓
-┌─────────────────────────────────────┐
-│        Rule Engine (Core)           │
-│   Millisecond · Deterministic       │
-└─────────────────────────────────────┘
-                  ↓ (optional)
-┌─────────────────────────────────────┐
-│       Ollama Local AI              │
-│    Smarter Semantic Understanding   │
-└─────────────────────────────────────┘
-                  ↓
-┌─────────────────────────────────────┐
-│     Structured Precision Output     │
-└─────────────────────────────────────┘
-```
+**Backend:** JavaScript, TypeScript, Python, Java, C, C++, C#, Go, Rust, PHP, Ruby, Swift, Kotlin
+
+**Frontend:** HTML, CSS, React, Vue, Next.js, Angular
+
+**Other:** SQL, Flutter/Dart, Shell/Bash
 
 ---
 
 ## 🔧 Advanced: Ollama Enhancement
 
-Enable local AI for smarter understanding:
+For smarter semantic understanding:
 
 ```bash
 # Install Ollama
 brew install ollama
 
-# Download model (394MB)
+# Download model
 ollama pull qwen:0.5b
 
 # Start service
@@ -153,10 +143,10 @@ brew services start ollama
 
 ---
 
-## 📈 Comparison
+## 📊 Engine vs Ollama Enhanced
 
-| Aspect | Engine | Ollama Enhanced |
-|--------|--------|----------------|
+| Aspect | Rule Engine | Ollama Enhanced |
+|--------|-------------|-----------------|
 | Speed | ⚡⚡⚡⚡ Millisecond | ⚡⚡⚡ Fast |
 | Intelligence | ⭐⭐⭐ | ⭐⭐⭐⭐ |
 | Dependencies | None | Ollama |
@@ -175,9 +165,9 @@ brew services start ollama
 
 ---
 
-## 📝 Examples
+## 📝 Example Transformations
 
-### Example 1: Performance Issue
+### Performance Issue
 
 **Input:**
 > Hi, about Python for loops, why is it running so slow, thanks
@@ -193,7 +183,7 @@ brew services start ollama
 **🎯 Goal:** Analyze why for loop is slow
 ```
 
-### Example 2: Code Creation
+### Code Creation
 
 **Input:**
 > Could you please help me write a user login function?
@@ -214,18 +204,12 @@ brew services start ollama
 
 ---
 
-## 🤝 Contributing
-
-Issues and pull requests are welcome!
-
----
-
 ## 📄 License
 
 MIT License
 
 ---
 
-<h3 align="center">
+<p align="center">
   Made with ❤️ for better AI communication
-</h3>
+</p>
