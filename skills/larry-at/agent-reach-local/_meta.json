@@ -1,0 +1,11 @@
+{
+  "owner": "larry-at",
+  "slug": "agent-reach-local",
+  "displayName": "Agent Reach Local",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774524959704,
+    "commit": null
+  },
+  "history": []
+}
