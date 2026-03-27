@@ -118,7 +118,7 @@ When receiving user message, check in the following order, stop on first match:
 | "Regenerate" / "重新生成" / "再试一次" (for existing result) | Retry | `--action repeat_last_task` + `--last-task-id` |
 | "Replace content with XX" / "把内容换成XX" (for existing result) | Retry | `--action switch_content` + `--article <new content>` + `--last-task-id` |
 | "Change to 16:9" / "landscape" / "portrait" / "换成16:9" / "横版" / "竖版" (change ratio) | Retry | `--action switch_content` + `--last-task-id` + `--article <original content>` + `--aspect-ratio <new ratio>` |
-| "Generate N infographics in a series" / "生成N张系列信息图" | Batch | `--count N` |
+| "Generate N infographics in a series" / "生成N张系列信息图" | Batch | `--count N` + `--child-reference-type` (see Batch rules below) |
 
 **Important: When user requests a ratio change, must pass `--aspect-ratio` (e.g. 16:9 / 4:3 / 1:1 / 3:4 / 9:16), otherwise default 3:4 will be used.**
 
@@ -207,7 +207,11 @@ When information-complete: First send user a message via message send saying "Ge
 - Wait for user confirmation before calling create
 - Complete in one message, don't ask across multiple turns
 
-**Batch (count >= 2, information incomplete):** First plan quantity, style consistency (style_transfer vs content_rewrite), sub-topic division, then pass complete content via `--article` after user confirms.
+**Batch (count >= 2, information incomplete):** First plan quantity, style consistency, sub-topic division, then pass complete content via `--article` after user confirms.
+
+**Batch `--child-reference-type` selection rule:**
+- `content_rewrite` (default for batch): User wants a coherent series with unified/consistent style (e.g. "统一风格", "连贯的", "series", "consistent look", "like a PPT deck"). The first infographic becomes the layout template, subsequent ones rewrite content while preserving visual consistency. **When in doubt, use `content_rewrite`.**
+- `style_transfer`: User provides a specific external reference image and says "use this style for all N infographics". Only applies when there is an uploaded reference image to transfer style from — NOT for maintaining consistency within a batch.
 
 ```bash
 python3 ${CLAUDE_SKILL_DIR}/scripts/create_infographic.py create \
