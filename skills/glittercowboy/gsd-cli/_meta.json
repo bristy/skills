@@ -1,0 +1,11 @@
+{
+  "owner": "glittercowboy",
+  "slug": "gsd-cli",
+  "displayName": "GSD CLI (→ gsd-orchestrator)",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774563035300,
+    "commit": null
+  },
+  "history": []
+}
