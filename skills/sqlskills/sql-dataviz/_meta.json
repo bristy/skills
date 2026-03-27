@@ -1,0 +1,11 @@
+{
+  "owner": "sqlskills",
+  "slug": "sql-dataviz",
+  "displayName": "SQL Dataviz",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1774607613832,
+    "commit": null
+  },
+  "history": []
+}
