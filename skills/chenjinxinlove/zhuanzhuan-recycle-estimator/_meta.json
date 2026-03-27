@@ -1,0 +1,11 @@
+{
+  "owner": "chenjinxinlove",
+  "slug": "zhuanzhuan-recycle-estimator",
+  "displayName": "用户询问回收、估价、报价、回收价、值多少钱、能卖多少、转转回收时触发，支持全品类商品回收估价，结合图片、文字、型号、规格、成色等信息给出参考回收价",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774578115499,
+    "commit": null
+  },
+  "history": []
+}
