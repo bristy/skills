@@ -1,0 +1,11 @@
+{
+  "owner": "doradx",
+  "slug": "openclaw-backup-rclone",
+  "displayName": "OpenClaw Backup Rclone",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1774579748851,
+    "commit": null
+  },
+  "history": []
+}
